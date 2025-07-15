@@ -1,8 +1,9 @@
+// USER PROFILE PAGE
 "use client";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import Link from "next/link";
 
 interface Post {
@@ -31,7 +32,7 @@ interface Comment {
     _id: string;
     content: string;
     user: {
-        _id: string;
+        _id: string | undefined;
         username: string;
     };
     createdAt: string;
@@ -48,6 +49,7 @@ interface Data {
     posts: Post[];
     photos: Photo[];
 }
+
 const PostContainer = styled.article`
   max-width: 30rem;
   margin: 40px auto;
@@ -83,6 +85,13 @@ const PostContent = styled.div`
   flex-direction: column;
   padding-top: 1rem;
   gap: 0.5rem;
+
+  img {
+    max-width: 450px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
 `;
 
 const CommentsWrapper = styled.div`
@@ -157,34 +166,30 @@ const ButtonIcon = styled.button`
 
 `;
 
-export default function HomePage() {
+const UserProfile = ({ params }: { params: { username: string } }) => {
     const [profileUser, setProfileUser] = useState<Data | null>(null);
     const [posts, setPosts] = useState<Post[]>([]);
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>({});
-    const [commentInputsByPost, setCommentInputsByPost] = useState<Record<string, string>>({});
+    const [commentInputsPost, setCommentInputsPost] = useState<Record<string, string>>({});
     const [commentsByPhoto, setCommentsByPhoto] = useState<Record<string, Comment[]>>({});
-    const [commentInputsByPhoto, setCommentInputsByPhoto] = useState<Record<string, string>>({});
+    const [commentInputsPhoto, setCommentInputsPhoto] = useState<Record<string, string>>({});
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    console.log(posts);
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const token = localStorage.getItem("token");
-                if (token) {
-                    const decoded: any = jwtDecode(token);
-                    const userId = decoded?.userId;
-                    const { data: user } = await axios.get(`/user/id/${userId}`);
-                    setProfileUser(user);
-                }
+                const { data: user } = await axios.get(`/user/${params.username}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setProfileUser(user);
             } catch (error) {
-                console.error("Invalid token", error);
-                setIsAuthenticated(false);
+                console.error("Error fetching user data:", error);
             }
         };
+
         fetchUserData();
-    }, []);
+    }, [params.username]);
 
     const handleAuthentication = () => {
         const token = localStorage.getItem("token");
@@ -209,10 +214,46 @@ export default function HomePage() {
         }
     }, [profileUser]);
 
+    useEffect(() => {
+        const fetchPostsPhotosAndComments = async () => {
+            if (!profileUser) return;
+
+            try {
+                const userPosts = profileUser?.posts || [];
+                const userPhotos = profileUser?.photos || [];
+                setPosts(userPosts);
+                setPhotos(userPhotos);
+
+                const commentsPromisesPosts = posts.map((post: Post) => axios.get(`/posts/${post._id}/comments`));
+                const commentsResponsesPosts = await Promise.all(commentsPromisesPosts);
+
+                const commentsPromisesPhotos = photos.map((photo: Photo) => axios.get(`/photos/${photo._id}/comments`));
+                const commentsResponsesPhotos = await Promise.all(commentsPromisesPhotos);
+
+                const commentsDataPosts: Record<string, Comment[]> = {};
+                commentsResponsesPosts.forEach((response, index) => {
+                    commentsDataPosts[posts[index]._id] = response.data;
+                });
+
+                const commentsDataPhotos: Record<string, Comment[]> = {};
+                commentsResponsesPhotos.forEach((response, index) => {
+                    commentsDataPhotos[photos[index]._id] = response.data;
+                });
+
+                setCommentsByPost(commentsDataPosts);
+                setCommentsByPhoto(commentsDataPhotos);
+            } catch (error) {
+                console.error("Error fetching posts or comments:", error);
+            }
+        };
+
+        fetchPostsPhotosAndComments();
+    }, [profileUser]);
+
     const addCommentPost = async (postId: string, e: React.FormEvent) => {
         e.preventDefault();
 
-        const content = commentInputsByPost[postId]?.trim();
+        const content = commentInputsPost[postId]?.trim();
         if (!content) return;
 
         try {
@@ -224,10 +265,10 @@ export default function HomePage() {
                 [postId]: updatedComments,
             }));
 
-            setCommentInputsByPhoto((prev) => ({
+            setCommentInputsPost((prev) => ({
                 ...prev,
                 [postId]: "",
-            }));
+            })); // Clear input field after submission
         } catch (error) {
             console.error("Failed to add comment:", error);
         }
@@ -236,7 +277,7 @@ export default function HomePage() {
     const addCommentPhoto = async (photoId: string, e: React.FormEvent) => {
         e.preventDefault();
 
-        const content = commentInputsByPhoto[photoId]?.trim();
+        const content = commentInputsPhoto[photoId]?.trim();
         if (!content) return;
 
         try {
@@ -248,7 +289,7 @@ export default function HomePage() {
                 [photoId]: updatedComments,
             }));
 
-            setCommentInputsByPhoto((prev) => ({
+            setCommentInputsPhoto((prev) => ({
                 ...prev,
                 [photoId]: "",
             }));
@@ -256,53 +297,6 @@ export default function HomePage() {
             console.error("Failed to add comment:", error);
         }
     };
-
-    useEffect(() => {
-        const fetchPostsPhotosAndComments = async () => {
-            try {
-                const response = await fetch("api/posts", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                });
-                const postsData = await response.json();
-                setPosts(postsData);
-                const photos = await fetch("api/photos", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                });
-                const photosData = await photos.json();
-                setPhotos(photosData);
-                console.log("Posts:", posts);
-
-                // const commentsPromisesPosts = posts.map((post: Post) => axios.get(`/posts/${post._id}/comments`));
-                // const commentsResponsesPosts = await Promise.all(commentsPromisesPosts);
-
-                // const commentsPromisesPhotos = photos.map((photo: Photo) => axios.get(`/photos/${photo._id}/comments`));
-                // const commentsResponsesPhotos = await Promise.all(commentsPromisesPhotos);
-
-                // const commentsDataPosts: Record<string, Comment[]> = {};
-                // commentsResponsesPosts.forEach((response, index) => {
-                //     commentsDataPosts[posts[index]._id] = response.data;
-                // });
-
-                // const commentsDataPhotos: Record<string, Comment[]> = {};
-                // commentsResponsesPhotos.forEach((response, index) => {
-                //     commentsDataPhotos[photos[index]._id] = response.data;
-                // });
-
-                // setCommentsByPost(commentsDataPosts);
-                // setCommentsByPhoto(commentsDataPhotos);
-            } catch (error) {
-                console.error("Error fetching posts or comments:", error);
-            }
-        };
-
-        fetchPostsPhotosAndComments();
-    }, []);
 
     const deleteCommentPost = async (postId: string, commentId: string) => {
         try {
@@ -364,13 +358,13 @@ export default function HomePage() {
                 "title" in item ? (
                     <PostWrapper key={item._id}>
                         <UserContent>
-                            <Link href={`/${item.user.username}`}>
+                            <Link href={`/${profileUser?.user.username}`}>
                                 <img width="40px" height="40px" src={process.env.PUBLIC_URL + "/user.png"} alt="user" />
                             </Link>
-                            <Link href={`/${item.user.username}`}>
-                                <strong>@{item.user.username}</strong>
+                            <Link href={`/${profileUser?.user.username}`}>
+                                <strong>@{profileUser?.user.username}</strong>
                             </Link>
-                            {isAuthenticated && item.user._id === profileUser?.user._id && (
+                            {isAuthenticated && item.user.toString() === profileUser?.user._id && (
                                 <ButtonIcon onClick={() => deletePost(item._id)}>
                                     <img width="16px" height="16px" src={process.env.PUBLIC_URL + "/delete.png"} alt="user" />
                                 </ButtonIcon>
@@ -394,9 +388,9 @@ export default function HomePage() {
                             <AddCommentForm onSubmit={(e) => addCommentPost(item._id, e)}>
                                 <Input
                                     type="text"
-                                    value={commentInputsByPost[item._id] || ""}
+                                    value={commentInputsPost[item._id] || ""}
                                     onChange={(e) =>
-                                        setCommentInputsByPost((prev) => ({
+                                        setCommentInputsPost((prev) => ({
                                             ...prev,
                                             [item._id]: e.target.value,
                                         }))
@@ -414,19 +408,17 @@ export default function HomePage() {
                                     </Link>
                                     <div className="comment-content">
                                         <div className="comment-user">
-                                            <div>
-                                                <Link href={`/${item.user.username}`}>
-                                                    <strong>@{comment.user.username} </strong>
-                                                </Link>
-                                                <span>· </span>
-                                                <span className="text-muted">
-                                                    {new Intl.DateTimeFormat("en-US", {
-                                                        month: "short",
-                                                        day: "numeric",
-                                                    }).format(new Date(item.createdAt))}
-                                                </span>
-                                            </div>
-                                            {isAuthenticated && item.user._id === profileUser?.user._id && (
+                                            <Link href={`/${item.user.username}`}>
+                                                <strong>@{comment.user.username} </strong>{" "}
+                                            </Link>
+                                            <span>· </span>
+                                            <span className="text-muted">
+                                                {new Intl.DateTimeFormat("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                }).format(new Date(item.createdAt))}
+                                            </span>
+                                            {isAuthenticated && item.user.toString() === profileUser?.user._id && (
                                                 <ButtonIcon onClick={() => deleteCommentPost(item._id, comment._id)}>
                                                     <img width="16px" height="16px" src={process.env.PUBLIC_URL + "/delete.png"} alt="user" />
                                                 </ButtonIcon>
@@ -441,17 +433,17 @@ export default function HomePage() {
                 ) : (
                     <PostWrapper key={item._id}>
                         <UserContent>
-                            <Link href={`/${item.user.username}`}>
+                            <Link href={`/${profileUser?.user.username}`}>
                                 <img width="40px" height="40px" src={process.env.PUBLIC_URL + "/user.png"} alt="user" />
                             </Link>
-                            <Link href={`/${item.user.username}`}>
-                                <strong>@{item.user.username}</strong>
+                            <Link href={`/${profileUser?.user.username}`}>
+                                <strong>@{profileUser?.user.username}</strong>
                             </Link>
-                            {isAuthenticated && item.user._id === profileUser?.user._id && (
+                            {isAuthenticated && item.user.toString() === profileUser?.user._id && (
                                 <ButtonIcon onClick={() => deletePhoto(item._id)}>
                                     <img width="16px" height="16px" src={process.env.PUBLIC_URL + "/delete.png"} alt="user" />
                                 </ButtonIcon>
-                            )}
+                            )}{" "}
                         </UserContent>
                         <PostContent>
                             <h3>{item.description}</h3>
@@ -472,9 +464,9 @@ export default function HomePage() {
                             <AddCommentForm onSubmit={(e) => addCommentPhoto(item._id, e)}>
                                 <Input
                                     type="text"
-                                    value={commentInputsByPhoto[item._id] || ""}
+                                    value={commentInputsPhoto[item._id] || ""}
                                     onChange={(e) =>
-                                        setCommentInputsByPhoto((prev) => ({
+                                        setCommentInputsPhoto((prev) => ({
                                             ...prev,
                                             [item._id]: e.target.value,
                                         }))
@@ -498,7 +490,7 @@ export default function HomePage() {
                                                     day: "numeric",
                                                 }).format(new Date(item.createdAt))}
                                             </span>
-                                            {isAuthenticated && item.user._id === profileUser?.user._id && (
+                                            {isAuthenticated && item.user.toString() === profileUser?.user._id && (
                                                 <ButtonIcon onClick={() => deleteCommentPhoto(item._id, comment._id)}>
                                                     <img width="16px" height="16px" src={process.env.PUBLIC_URL + "/delete.png"} alt="user" />
                                                 </ButtonIcon>
@@ -514,4 +506,6 @@ export default function HomePage() {
             )}
         </PostContainer>
     );
-}
+};
+
+export default UserProfile;
