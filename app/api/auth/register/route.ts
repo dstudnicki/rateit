@@ -6,12 +6,12 @@ import bcrypt from "bcryptjs";
 export async function POST(request: NextRequest) {
     try {
         await dbConnect();
-        const { username, email, password } = await request.json();
+        const { email, password } = await request.json();
         const existingUser = await User.findOne({ email });
 
         if (existingUser) return NextResponse.json({ message: "Email already registered!" }, { status: 400 });
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { username, email, password: hashedPassword };
+        const newUser = { email, password: hashedPassword };
         const result = await User.insertOne(newUser);
 
         if (result.acknowledged) {

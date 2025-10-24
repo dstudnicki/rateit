@@ -5,11 +5,11 @@ import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-export async function GET(request: NextRequest, { params }: { params: { username: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { email: string } }) {
     try {
         await dbConnect();
-        const username = params.username;
-        const user = await User.findOne({ username });
+        const email = params.email;
+        const user = await User.findOne({ email });
 
         if (!user) {
             return NextResponse.json({ message: "User not found." }, { status: 404 });
@@ -26,14 +26,12 @@ export async function PUT(request: NextRequest, { params }: { params: { userId: 
     try {
         await dbConnect();
         const userId = params.userId;
-        const { username, email, password } = await request.json();
+        const { email, password } = await request.json();
         const user = await User.findById(userId);
 
         if (!user) {
             return NextResponse.json({ message: "User not found." }, { status: 404 });
         }
-
-        if (username) user.username = username;
 
         if (email) user.email = email;
 
@@ -47,11 +45,11 @@ export async function PUT(request: NextRequest, { params }: { params: { userId: 
     }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { username: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: { email: string } }) {
     try {
         await dbConnect();
-        const username = params.username;
-        const user = await User.findOneAndDelete({ username });
+        const email = params.email;
+        const user = await User.findOneAndDelete({ email });
 
         if (!user) {
             return NextResponse.json({ message: "User not found." }, { status: 404 });

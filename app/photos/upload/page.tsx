@@ -6,58 +6,58 @@ import axios from "axios";
 import { redirect } from "next/navigation";
 
 const PhotoContainer = styled.div`
-  max-width: 27rem;
-  margin: 100px auto;
-  padding: 1.5rem;
-  border: 1px solid;
-  border-radius: 1rem;
-  border-color: #E1E0E9;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+    max-width: 27rem;
+    margin: 100px auto;
+    padding: 1.5rem;
+    border: 1px solid;
+    border-radius: 1rem;
+    border-color: #e1e0e9;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
 `;
 
 const PhotoSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 1.5rem;
 `;
 
 const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 `;
 
 const InputContainer = styled.div`
-  display: grid;
-  gap: 0.35rem;
+    display: grid;
+    gap: 0.35rem;
 `;
 
 const Label = styled.label`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #333;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
 `;
 
 const Input = styled.input`
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
 `;
 
 const Button = styled.button`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
-  font-size: medium;
-  width: 100%;
-  background-color: #1D1C24;
-  color: #fff;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    font-size: medium;
+    width: 100%;
+    background-color: #1d1c24;
+    color: #fff;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
 `;
 
 const UploadPhotoForm = () => {

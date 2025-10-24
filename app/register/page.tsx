@@ -6,13 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 const RegisterContainer = styled.div`
-  max-width: 27rem;
-  margin: 100px auto;
-  padding: 1.5rem;
-  border: 1px solid;
-  border-radius: 1rem;
-  border-color: #E1E0E9;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+    max-width: 27rem;
+    margin: 100px auto;
+    padding: 1.5rem;
+    border: 1px solid;
+    border-radius: 1rem;
+    border-color: #e1e0e9;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
 `;
 
 const RegisterSection = styled.div`
@@ -20,8 +20,7 @@ const RegisterSection = styled.div`
     flex-direction: column;
     gap: 0.5rem;
     padding-bottom: 1.5rem;
-
-    `;
+`;
 
 const Form = styled.form`
     display: flex;
@@ -43,7 +42,7 @@ const Label = styled.label`
 const Input = styled.input`
     display: flex;
     height: 2.5rem;
-    border: 1px solid #E1E0E9;
+    border: 1px solid #e1e0e9;
     border-radius: 0.375rem;
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
     padding: 0 0.5rem;
@@ -56,7 +55,7 @@ const Button = styled.button`
     padding: 0.75rem 1.25rem;
     font-size: medium;
     width: 100%;
-    background-color: #1D1C24;
+    background-color: #1d1c24;
     color: #fff;
     border: none;
     border-radius: 0.375rem;
@@ -64,23 +63,22 @@ const Button = styled.button`
 `;
 
 const RegisterContent = styled.div`
-display: flex;
-justify-content: center;
-gap: 0.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
 `;
 
 const Register = () => {
     const { register } = useAuth();
     const { login } = useAuth();
-    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await register(username, email, password);
-            await login(username, email, password);
+            await register(email, password);
+            await login(email, password);
         } catch (error) {
             console.error("Login failed:", error);
         }
@@ -93,13 +91,18 @@ const Register = () => {
                 <p>Provide your credentials below to register your account</p>
             </RegisterSection>
             <Form onSubmit={handleSubmit}>
-                <InputContainer>
+                {/* <InputContainer>
                     <Label>Username</Label>
                     <Input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-                </InputContainer>
+                </InputContainer> */}
                 <InputContainer>
                     <Label>Email</Label>
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="johndoe@example.com" />
+                    <Input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="johndoe@example.com"
+                    />
                 </InputContainer>
                 <InputContainer>
                     <Label>Password</Label>

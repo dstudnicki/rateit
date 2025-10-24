@@ -6,32 +6,32 @@ export const useAuth = () => {
     const [user, setUser] = useState<{ _id: string; username: string; email: string } | null>(null);
 
     // Login function
-    const login = async (username: string, email: string, password: string) => {
+    const login = async (email: string, password: string) => {
         try {
-            const { data } = await axios.post("api/auth/login", { username, email, password });
+            const { data } = await axios.post("api/auth/login", { email, password });
             const token = data.token;
             const expirationTime = Date.now() + 3600 * 1000;
             localStorage.setItem("token", token);
             localStorage.setItem("tokenExpiration", expirationTime.toString());
             setTokenExpiry();
-            await fetchMyProfile(username);
+            await fetchMyProfile(email);
             redirect("/");
         } catch (error) {
             console.error("Login failed:", error);
         }
     };
 
-    const register = async (username: string, email: string, password: string) => {
+    const register = async (email: string, password: string) => {
         try {
-            await axios.post("api/auth/register", { username, email, password });
+            await axios.post("api/auth/register", { email, password });
         } catch (error) {
             console.error("Registration failed:", error);
         }
     };
 
-    const fetchMyProfile = async (username: string) => {
+    const fetchMyProfile = async (email: string) => {
         try {
-            const { data } = await axios.get(`/api/user/${username}`, {
+            const { data } = await axios.get(`/api/user/${email}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
@@ -42,12 +42,12 @@ export const useAuth = () => {
         }
     };
 
-    const fetchUserByUsername = async (username: string) => {
+    const fetchUserByEmail = async (email: string) => {
         try {
-            const { data } = await axios.get(`/api/user/${username}`);
+            const { data } = await axios.get(`/api/user/${email}`);
             return data;
         } catch (error) {
-            console.error("Failed to fetch user by username:", error);
+            console.error("Failed to fetch user by email:", error);
             throw error;
         }
     };
@@ -76,5 +76,5 @@ export const useAuth = () => {
         setTokenExpiry();
     }, []);
 
-    return { user, login, register, logout, fetchMyProfile, fetchUserByUsername };
+    return { user, login, register, logout, fetchMyProfile, fetchUserByEmail };
 };

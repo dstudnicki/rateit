@@ -29,7 +29,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
             return NextResponse.json({ message: "Post not found." }, { status: 404 });
         }
 
-        post.comments = post.comments.filter((comment: { _id: { toString: () => string } }) => comment._id.toString() !== commentId);
+        post.comments = post.comments.filter(
+            (comment: { _id: { toString: () => string } }) => comment._id.toString() !== commentId,
+        );
         await post.save();
 
         return NextResponse.json({ message: "Comment deleted successfully!" }, { status: 200 });

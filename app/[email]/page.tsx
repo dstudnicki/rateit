@@ -51,107 +51,105 @@ interface Data {
 }
 
 const PostContainer = styled.article`
-  max-width: 30rem;
-  margin: 40px auto;
-  border: 1px solid;
-  border-radius: 1rem;
-  border-color: #E1E0E9;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
-  padding-top: 1.5rem;
+    max-width: 30rem;
+    margin: 40px auto;
+    border: 1px solid;
+    border-radius: 1rem;
+    border-color: #e1e0e9;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+    padding-top: 1.5rem;
 
-  .text:last-of-type {
-    font-weight: bold;
-    padding-top: 0.75rem;
-    display: inline-block;
-    font-size: 0.85rem;
-
-  }
+    .text:last-of-type {
+        font-weight: bold;
+        padding-top: 0.75rem;
+        display: inline-block;
+        font-size: 0.85rem;
+    }
 `;
 
 const PostWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 0 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.5rem 1.5rem;
 `;
 
 const UserContent = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 `;
 
 const PostContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding-top: 1rem;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    padding-top: 1rem;
+    gap: 0.5rem;
 
-  img {
-    max-width: 450px;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  }
+    img {
+        max-width: 450px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
 `;
 
 const CommentsWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding-top: 1.25rem;
-
-  .comment {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid #ccc;
-    padding: 1rem 0;
-  }
-
-  .comment-content {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-  }
+    padding-top: 1.25rem;
 
-  .comment-user {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
+    .comment {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid #ccc;
+        padding: 1rem 0;
+    }
+
+    .comment-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .comment-user {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
     .text-muted {
         color: #696969;
     }
-
 `;
 
 const AddCommentForm = styled.form`
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
-    `;
+`;
 
 const Input = styled.input`
-  display: flex;
-  height: 2.5rem;
-  width: 100%;
-  border: 1px solid #E1E0E9;
-  border-radius: 0.375rem;
-  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
-  padding: 0 0.5rem;
+    display: flex;
+    height: 2.5rem;
+    width: 100%;
+    border: 1px solid #e1e0e9;
+    border-radius: 0.375rem;
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
+    padding: 0 0.5rem;
 `;
 
 const Button = styled.button`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0 1.25rem;
-  font-size: medium;
-  background-color: #1D1C24;
-  color: #fff;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 1.25rem;
+    font-size: medium;
+    background-color: #1d1c24;
+    color: #fff;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
 
     .invert {
         filter: invert(1);
@@ -159,11 +157,10 @@ const Button = styled.button`
 `;
 
 const ButtonIcon = styled.button`
-   background-color: #FFFFFF;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-
+    background-color: #ffffff;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
 `;
 
 const UserProfile = ({ params }: { params: { username: string } }) => {
@@ -398,7 +395,13 @@ const UserProfile = ({ params }: { params: { username: string } }) => {
                                     placeholder="Add a comment"
                                 />
                                 <Button type="submit">
-                                    <img className="invert" width="16px" height="16px" src={process.env.PUBLIC_URL + "/send.png"} alt="send" />
+                                    <img
+                                        className="invert"
+                                        width="16px"
+                                        height="16px"
+                                        src={process.env.PUBLIC_URL + "/send.png"}
+                                        alt="send"
+                                    />
                                 </Button>
                             </AddCommentForm>
                             {commentsByPost[item._id]?.map((comment) => (
@@ -420,7 +423,12 @@ const UserProfile = ({ params }: { params: { username: string } }) => {
                                             </span>
                                             {isAuthenticated && item.user.toString() === profileUser?.user._id && (
                                                 <ButtonIcon onClick={() => deleteCommentPost(item._id, comment._id)}>
-                                                    <img width="16px" height="16px" src={process.env.PUBLIC_URL + "/delete.png"} alt="user" />
+                                                    <img
+                                                        width="16px"
+                                                        height="16px"
+                                                        src={process.env.PUBLIC_URL + "/delete.png"}
+                                                        alt="user"
+                                                    />
                                                 </ButtonIcon>
                                             )}
                                         </div>
@@ -474,7 +482,13 @@ const UserProfile = ({ params }: { params: { username: string } }) => {
                                     placeholder="Add a comment"
                                 />
                                 <Button type="submit">
-                                    <img className="invert" width="16px" height="16px" src={process.env.PUBLIC_URL + "/send.png"} alt="send" />
+                                    <img
+                                        className="invert"
+                                        width="16px"
+                                        height="16px"
+                                        src={process.env.PUBLIC_URL + "/send.png"}
+                                        alt="send"
+                                    />
                                 </Button>
                             </AddCommentForm>
                             {commentsByPhoto[item._id]?.map((comment) => (
@@ -492,7 +506,12 @@ const UserProfile = ({ params }: { params: { username: string } }) => {
                                             </span>
                                             {isAuthenticated && item.user.toString() === profileUser?.user._id && (
                                                 <ButtonIcon onClick={() => deleteCommentPhoto(item._id, comment._id)}>
-                                                    <img width="16px" height="16px" src={process.env.PUBLIC_URL + "/delete.png"} alt="user" />
+                                                    <img
+                                                        width="16px"
+                                                        height="16px"
+                                                        src={process.env.PUBLIC_URL + "/delete.png"}
+                                                        alt="user"
+                                                    />
                                                 </ButtonIcon>
                                             )}
                                         </div>
@@ -502,7 +521,7 @@ const UserProfile = ({ params }: { params: { username: string } }) => {
                             ))}
                         </CommentsWrapper>
                     </PostWrapper>
-                )
+                ),
             )}
         </PostContainer>
     );
