@@ -1,7 +1,7 @@
 // GET POST  COMMENTS FOR PHOTO
 
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { getClient } from "@/lib/mongoose";
 import Photo from "@/models/Photo";
 import jwt from "jsonwebtoken";
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     try {
-        await dbConnect();
+        await getClient();
         const photoId = params.id;
         const { userId, content } = await request.json();
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
 export async function GET({ params }: { params: { id: string } }) {
     try {
-        await dbConnect();
+        await getClient();
         const photoId = params.id;
         const photo = await Photo.findById(photoId).populate("comments.user", "username email");
 

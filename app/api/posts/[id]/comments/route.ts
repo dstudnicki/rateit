@@ -1,7 +1,7 @@
 // GET POST  COMMENTS FOR POST
 
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
 import jwt from "jsonwebtoken";
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     try {
-        await dbConnect();
+        await getClient();
         const user = jwt.decode(token) as { userId: string };
         const postId = params.id;
         const { content } = await request.json();
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
 export async function GET({ params }: { params: { id: string } }) {
     try {
-        await dbConnect();
+        await getClient();
         const postId = params.id;
         const post = await Post.findById(postId).populate("comments.user", "username email");
 

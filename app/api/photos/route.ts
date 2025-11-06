@@ -1,6 +1,6 @@
 // GET AND POST PHOTO
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { getClient } from "@/lib/mongoose";
 import Photo from "@/models/Photo";
 import jwt from "jsonwebtoken";
 
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        await dbConnect();
+        await getClient();
         const user = jwt.decode(token) as { userId: string };
         const { filename, description } = await request.json();
         const newPhoto = { filename, description, user, createdAt: new Date() };
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
     try {
-        await dbConnect();
+        await getClient();
         const photos = await Photo.find().sort({ createdAt: -1 });
         return NextResponse.json(photos, { status: 200 });
     } catch (error) {

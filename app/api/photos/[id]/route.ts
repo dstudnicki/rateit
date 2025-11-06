@@ -1,6 +1,6 @@
 // DELETE PHOTO BY ID
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { getClient } from "@/lib/mongoose";
 import Photo from "@/models/Photo";
 import jwt from "jsonwebtoken";
 
@@ -19,7 +19,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     try {
-        await dbConnect();
+        await getClient();
         const photoId = params.id;
         const result = await Photo.findByIdAndDelete(photoId);
 

@@ -2,7 +2,6 @@
 import Link from "next/link";
 import styled from "styled-components";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 
 const Nav = styled.nav`
     font-size: 18px;
@@ -61,37 +60,11 @@ const ButtonOutline = styled.button`
 `;
 
 const Navbar = () => {
-    const { logout, user, fetchMyProfile } = useAuth();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-    const handleAuthentication = async () => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            await fetchMyProfile();
-            setIsAuthenticated(true);
-        } else {
-            setIsAuthenticated(false);
-        }
-    };
+    const handleAuthentication = async () => {};
 
-    const handleLogout = () => {
-        logout();
-        handleAuthentication();
-    };
-
-    useEffect(() => {
-        const onStorageChange = () => handleAuthentication();
-        if (user) {
-            fetchMyProfile();
-        }
-        handleAuthentication();
-
-        window.addEventListener("storage", onStorageChange);
-
-        return () => {
-            window.removeEventListener("storage", onStorageChange);
-        };
-    }, []);
+    const handleLogout = () => {};
 
     return (
         <Nav>
@@ -114,7 +87,7 @@ const Navbar = () => {
                     </NavLi>
                 </LeftGroup>
                 <RightGroup>
-                    {isAuthenticated ? (
+                    {/* {isAuthenticated ? (
                         <>
                             <NavLi>
                                 <Link href={user?.username || "#"}>Profile</Link>
@@ -136,7 +109,7 @@ const Navbar = () => {
                                 </Link>
                             </NavLi>
                         </>
-                    )}
+                    )} */}
                 </RightGroup>
             </MainNav>
         </Nav>
