@@ -1,7 +1,7 @@
 // DELETE COMMENT BY POST ID
 
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
 import jwt from "jsonwebtoken";
 
@@ -20,7 +20,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     try {
-        await dbConnect();
+        await getClient();
         const postId = params.id;
         const commentId = params.commentId;
 

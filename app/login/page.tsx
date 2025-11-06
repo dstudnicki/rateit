@@ -1,115 +1,49 @@
-// LOGIN PAGE
 "use client";
-import React, { useState } from "react";
-import styled from "styled-components";
-import { useAuth } from "@/hooks/useAuth";
-import Link from "next/link";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import LoginForm from "@/components/forms/login/client";
+import { Icons } from "@/components/ui/icons";
 
-const LoginContainer = styled.div`
-    max-width: 27rem;
-    margin: 100px auto;
-    padding: 1.5rem;
-    border: 1px solid;
-    border-radius: 1rem;
-    border-color: #e1e0e9;
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
-`;
-
-const LoginSection = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding-bottom: 1.5rem;
-`;
-
-const Form = styled.form`
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-`;
-
-const InputContainer = styled.div`
-    display: grid;
-    gap: 0.35rem;
-`;
-
-const Label = styled.label`
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #333;
-`;
-
-const Input = styled.input`
-    display: flex;
-    height: 2.5rem;
-    border: 1px solid #e1e0e9;
-    border-radius: 0.375rem;
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
-    padding: 0 0.5rem;
-`;
-
-const Button = styled.button`
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0.75rem 1.25rem;
-    font-size: medium;
-    width: 100%;
-    background-color: #1d1c24;
-    color: #fff;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-`;
-
-const RegisterContent = styled.div`
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-`;
-
-const Login = () => {
-    const { login } = useAuth();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await login(email, password);
-        } catch (error) {
-            console.error("Login failed:", error);
-        }
-    };
+export default function LoginPage() {
+    const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
     return (
-        <LoginContainer>
-            <LoginSection>
-                <h1>Login</h1>
-                <p>Enter your email below to login to your account</p>
-            </LoginSection>
-            <Form onSubmit={handleSubmit}>
-                <InputContainer>
-                    <Label>Email</Label>
-                    <Input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="johndoe@example.com"
-                    />
-                </InputContainer>
-                <InputContainer>
-                    <Label>Password</Label>
-                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                </InputContainer>
-                <Button type="submit">Login</Button>
-                <RegisterContent>
-                    Don&apos;t have an account?
-                    <Link href="/register">Sign up</Link>
-                </RegisterContent>
-            </Form>
-        </LoginContainer>
+        <main className="px-4 sm:px-8 lg:px-12 xl:px-0 xl:container mx-auto">
+            <div className="lg:p-8">
+                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+                    <div className="flex flex-col space-y-2 text-center">
+                        <h1 className="text-2xl font-semibold tracking-tight">Log into your account.</h1>
+                        <p className="text-sm text-muted-foreground">Please enter your credentials below.</p>
+                    </div>
+                    <LoginForm />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2 max-w-2xl mx-auto">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                    </div>
+                </div>
+                <Button variant="outline" type="button" disabled={isLoading}>
+                    {isLoading ? (
+                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Icons.google className="mr-2 h-4 w-4" />
+                    )}{" "}
+                    Google
+                </Button>
+                <Button variant="outline" type="button" disabled={isLoading}>
+                    {isLoading ? (
+                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Icons.gitHub className="mr-2 h-4 w-4" />
+                    )}{" "}
+                    GitHub
+                </Button>
+            </div>
+        </main>
     );
-};
-
-export default Login;
+}

@@ -1,13 +1,12 @@
 // GET USER PROFILE, EDIT PROFILE, AND DELETE ACCOUNT
 import { type NextRequest, NextResponse } from "next/server";
 
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import { getClient } from "@/lib/mongoose";
 import bcrypt from "bcryptjs";
 
 export async function GET(request: NextRequest, { params }: { params: { email: string } }) {
     try {
-        await dbConnect();
+        await getClient();
         const email = params.email;
         const user = await User.findOne({ email });
 
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: { email: s
 
 export async function PUT(request: NextRequest, { params }: { params: { userId: string } }) {
     try {
-        await dbConnect();
+        await getClient();
         const userId = params.userId;
         const { email, password } = await request.json();
         const user = await User.findById(userId);
@@ -47,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: { params: { userId: 
 
 export async function DELETE(request: NextRequest, { params }: { params: { email: string } }) {
     try {
-        await dbConnect();
+        await getClient();
         const email = params.email;
         const user = await User.findOneAndDelete({ email });
 

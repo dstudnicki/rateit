@@ -1,6 +1,6 @@
 // GET AND POST POSTS
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        await dbConnect();
+        await getClient();
         const user = jwt.decode(token) as { userId: string };
 
         const { title, content } = await request.json();
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
     try {
-        await dbConnect();
+        await getClient();
 
         const posts = await Post.find().populate("user", "username email").sort({ createdAt: -1 });
         return NextResponse.json(posts, { status: 200 });
