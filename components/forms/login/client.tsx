@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FieldGroup, FieldLabel } from "@/components/ui/field";
+import { useRouter } from "next/navigation";
 import { redirect } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
@@ -34,6 +35,7 @@ const formSchema = z.object({
 
 export default function LoginForm() {
     const [formError, setFormError] = useState<string | null>(null);
+    const router = useRouter();
 
     const form = useForm({
         defaultValues: {
@@ -57,7 +59,7 @@ export default function LoginForm() {
                             setFormError(error.message);
                         },
                         onSuccess: () => {
-                            redirect("/");
+                            router.push("/");
                         },
                     },
                 );

@@ -2,29 +2,24 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
-import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
 
-    if (!token) {
+
+    if (!session) {
         return NextResponse.json({ message: "Missing authentication token." }, { status: 401 });
     }
 
     try {
-        jwt.verify(token, process.env.JWT_SECRET!);
-    } catch {
-        return NextResponse.json({ message: "Invalid or expired token." }, { status: 401 });
-    }
-
-    try {
         await getClient();
-        const user = jwt.decode(token) as { userId: string };
 
         const { title, content } = await request.json();
-        const newPost = { title, content, user: new mongoose.Types.ObjectId(user.userId), createdAt: new Date() };
+        const newPost = { title, content, user: session.user.id, createdAt: new Date() };
         const result = await Post.create(newPost);
         if (result) {
             return NextResponse.json({ message: "Post created successfully!" }, { status: 201 });
@@ -39,10 +34,25 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
     try {
-        await getClient();
+        const db = await getClient();
 
-        const posts = await Post.find().populate("user", "username email").sort({ createdAt: -1 });
-        return NextResponse.json(posts, { status: 200 });
+        const posts = await Post.find().sort({ createdAt: -1 }).lean();
+
+        // Manually populate user data from better-auth's user collection
+        const postsWithUsers = await Promise.all(
+            posts.map(async (post) => {
+                if (post.user) {
+                    const user = await db.collection('user').findOne(
+                        { _id: post.user },
+                        { projection: { name: 1, email: 1} }
+                    );
+                    return { ...post, user };
+                }
+                return post;
+            })
+        );
+
+        return NextResponse.json(postsWithUsers, { status: 200 });
     } catch (error) {
         console.error("Error fetching posts:", error);
         return NextResponse.json({ message: "Internal server error." }, { status: 500 });
