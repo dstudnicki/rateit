@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FieldGroup, FieldLabel } from "@/components/ui/field";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
@@ -45,6 +45,7 @@ const formSchema = z
 
 export default function RegisterForm() {
     const [formError, setFormError] = useState<string | null>(null);
+    const router = useRouter();
 
     const form = useForm({
         defaultValues: {
@@ -78,10 +79,10 @@ export default function RegisterForm() {
                                 },
                                 {
                                     onSuccess: () => {
-                                        redirect("/");
+                                        router.push("/");
                                     },
                                     onError: () => {
-                                        redirect("/login");
+                                        router.push("/login");
                                     },
                                 },
                             );

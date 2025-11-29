@@ -1,0 +1,51 @@
+"use client";
+import React, { use, useState } from "react";
+import axios from "axios";
+import { authClient } from "@/lib/auth-client";
+import { PostCard } from "@/components/ui/posts";
+
+import { PostActions } from "@/components/ui/post-actions";
+import { Comments } from "@/components/ui/comments";
+
+interface Post {
+    _id: string;
+    title: string;
+    content: string;
+    user: {
+        _id: string | undefined;
+        name: string;
+    };
+    createdAt: string;
+}
+
+export function PostListClient({ posts }: { posts: Promise<Post[]> }) {
+
+    const allPosts = use(posts);
+    // const [posts, setPosts] = useState<Post[]>(allPosts.posts);
+
+    const session = authClient.useSession();
+    const currentUserId = session.data?.user?.id;
+    console.log(allPosts)
+
+    // const deletePost = async (postId: string) => {
+    //     try {
+    //         await axios.delete(`/api/posts/${postId}`);
+    //
+    //         setPosts((prev) => prev.filter((post) => post._id !== postId));
+    //     } catch (error) {
+    //         console.error("Failed to delete post:", error);
+    //     }
+    // };
+
+    return (
+        <div className="max-w-[30rem] mx-auto my-10 space-y-6">
+            {allPosts.map((post) => (
+                <PostCard
+                    key={post._id}
+                    post={post}
+                    // actions={<PostActions postId={post._id} isOwner={post.user._id === currentUserId} onDelete={deletePost} />}
+                ></PostCard>
+            ))}
+        </div>
+    );
+}

@@ -2,8 +2,8 @@
 "use client";
 import React, { useState } from "react";
 import styled from "styled-components";
-import { redirect } from "next/navigation";
-import axios from "axios";
+import { useRouter } from "next/navigation";
+import { createPost } from "@/app/actions/posts";
 
 const PostContainer = styled.div`
     max-width: 27rem;
@@ -63,6 +63,7 @@ const Button = styled.button`
 `;
 
 const AddPost = () => {
+    const router = useRouter();
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
 
@@ -70,21 +71,13 @@ const AddPost = () => {
         e.preventDefault();
         if (!content) return alert("Please write a content.");
 
-        const postData = {
-            title,
-            content,
-        };
+        const result = await createPost(title, content);
 
-        try {
-            await axios.post("/posts", postData, {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-        } catch (error) {
-            console.error("Failed to upload post:", error);
+        if (result.success) {
+            router.push("/posts");
+        } else {
+            alert("Failed to create post");
         }
-        redirect("/posts");
     };
 
     return (

@@ -7,9 +7,8 @@ const commentSchema = new Schema({
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "user",
         required: true,
-        indedx: true,
     },
     createdAt: {
         type: Date,
@@ -28,7 +27,7 @@ const postSchema = new Schema({
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "user",
         required: true,
     },
     comments: [commentSchema],

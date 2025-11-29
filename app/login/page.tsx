@@ -3,6 +3,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import LoginForm from "@/components/forms/login/client";
 import { Icons } from "@/components/ui/icons";
+import { Suspense } from "react";
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -15,7 +16,9 @@ export default function LoginPage() {
                         <h1 className="text-2xl font-semibold tracking-tight">Log into your account.</h1>
                         <p className="text-sm text-muted-foreground">Please enter your credentials below.</p>
                     </div>
+                    <Suspense fallback={<p>Loading...</p>}>
                     <LoginForm />
+                    </Suspense>
                 </div>
             </div>
             <div className="flex flex-col gap-2 max-w-2xl mx-auto">

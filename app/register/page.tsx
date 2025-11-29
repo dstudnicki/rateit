@@ -4,6 +4,7 @@ import * as React from "react";
 import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import RegisterForm from "@/components/forms/register/client";
+import { Suspense } from "react";
 
 export default function RegisterPage() {
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -25,7 +26,9 @@ export default function RegisterPage() {
                         <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
                         <p className="text-sm text-muted-foreground">Enter your email below to create your account</p>
                     </div>
+                    <Suspense fallback={<p>Loading...</p>}>
                     <RegisterForm />
+                    </Suspense>
                 </div>
             </div>
             <div className="flex flex-col gap-2 max-w-2xl mx-auto">

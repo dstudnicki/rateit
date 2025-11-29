@@ -7,9 +7,6 @@ export async function middleware(request: NextRequest) {
         headers: await headers(),
     });
 
-    // THIS IS NOT SECURE!
-    // This is the recommended approach to optimistically redirect users
-    // We recommend handling auth checks in each page/route
     if (!session) {
         return NextResponse.redirect(new URL("/sign-in", request.url));
     }
