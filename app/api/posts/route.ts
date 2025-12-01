@@ -7,9 +7,8 @@ import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({
-        headers: await headers()
-    })
-
+        headers: await headers(),
+    });
 
     if (!session) {
         return NextResponse.json({ message: "Missing authentication token." }, { status: 401 });
@@ -18,8 +17,8 @@ export async function POST(request: NextRequest) {
     try {
         await getClient();
 
-        const { title, content } = await request.json();
-        const newPost = { title, content, user: session.user.id, createdAt: new Date() };
+        const { content } = await request.json();
+        const newPost = { content, user: session.user.id, createdAt: new Date() };
         const result = await Post.create(newPost);
         if (result) {
             return NextResponse.json({ message: "Post created successfully!" }, { status: 201 });
@@ -38,18 +37,14 @@ export async function GET() {
 
         const posts = await Post.find().sort({ createdAt: -1 }).lean();
 
-        // Manually populate user data from better-auth's user collection
         const postsWithUsers = await Promise.all(
             posts.map(async (post) => {
                 if (post.user) {
-                    const user = await db.collection('user').findOne(
-                        { _id: post.user },
-                        { projection: { name: 1, email: 1} }
-                    );
+                    const user = await db.collection("user").findOne({ _id: post.user }, { projection: { name: 1, email: 1 } });
                     return { ...post, user };
                 }
                 return post;
-            })
+            }),
         );
 
         return NextResponse.json(postsWithUsers, { status: 200 });

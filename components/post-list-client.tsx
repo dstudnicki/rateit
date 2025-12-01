@@ -5,7 +5,6 @@ import { authClient } from "@/lib/auth-client";
 import { PostCard } from "@/components/ui/posts";
 
 import { PostActions } from "@/components/ui/post-actions";
-import { Comments } from "@/components/ui/comments";
 
 interface Post {
     _id: string;
@@ -25,7 +24,6 @@ export function PostListClient({ posts }: { posts: Promise<Post[]> }) {
 
     const session = authClient.useSession();
     const currentUserId = session.data?.user?.id;
-    console.log(allPosts)
 
     // const deletePost = async (postId: string) => {
     //     try {
@@ -38,7 +36,7 @@ export function PostListClient({ posts }: { posts: Promise<Post[]> }) {
     // };
 
     return (
-        <div className="max-w-[30rem] mx-auto my-10 space-y-6">
+        <div className="mt-4 space-y-4">
             {allPosts.map((post) => (
                 <PostCard
                     key={post._id}

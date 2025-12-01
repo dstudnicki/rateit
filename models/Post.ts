@@ -17,10 +17,6 @@ const commentSchema = new Schema({
 });
 
 const postSchema = new Schema({
-    title: {
-        type: String,
-        required: [true, "Please provide a title"],
-    },
     content: {
         type: String,
         required: [true, "Please provide content"],
