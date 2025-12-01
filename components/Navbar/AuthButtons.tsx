@@ -2,6 +2,22 @@
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    User,
+    Settings,
+    HelpCircle,
+    LogOut,
+    ChevronDown,
+} from "lucide-react"
 
 export default function AuthButtons() {
     const {data: sessionData} = authClient.useSession()
@@ -12,14 +28,39 @@ export default function AuthButtons() {
         <ul className="list-none flex items-center gap-2">
             {sessionData ? (
                 <>
-                    <li className="text-center">
-                        <Link href={sessionData?.user.name || "#"} className="hover:underline">
-                            Profile
-                        </Link>
-                    </li>
-                    <li className="text-center">
-                        <Button onClick={handleLogout}>Log out</Button>
-                    </li>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="flex items-center gap-2 h-14 pl-2 border-l ml-2">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src="/diverse-user-avatars.png" />
+                                    <AvatarFallback>ME</AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs font-medium hidden lg:inline">Me</span>
+                                <ChevronDown className="h-4 w-4 hidden lg:inline" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                                <User className="mr-2 h-4 w-4" />
+                                <span>View Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings & Privacy</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>Help Center</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                    <Button className="p-0" variant={"link"} onClick={handleLogout}>Log out</Button>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </>
             ) : (
                 <>
