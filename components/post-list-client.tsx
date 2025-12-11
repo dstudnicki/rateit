@@ -2,9 +2,18 @@
 import React, { use, useState } from "react";
 import axios from "axios";
 import { authClient } from "@/lib/auth-client";
-import { PostCard } from "@/components/ui/posts";
-
 import { PostActions } from "@/components/ui/post-actions";
+import { PostCard } from "@/components/ui/post";
+
+interface Comment {
+    _id: string;
+    content: string;
+    user: {
+        _id: string | undefined;
+        username: string;
+    };
+    createdAt: string;
+}
 
 interface Post {
     _id: string;
@@ -15,6 +24,7 @@ interface Post {
         name: string;
     };
     createdAt: string;
+    comments: Comment[]
 }
 
 export function PostListClient({ posts }: { posts: Promise<Post[]> }) {
@@ -41,8 +51,7 @@ export function PostListClient({ posts }: { posts: Promise<Post[]> }) {
                 <PostCard
                     key={post._id}
                     post={post}
-                    // actions={<PostActions postId={post._id} isOwner={post.user._id === currentUserId} onDelete={deletePost} />}
-                ></PostCard>
+                />
             ))}
         </div>
     );

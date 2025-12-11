@@ -10,6 +10,29 @@ const commentSchema = new Schema({
         ref: "user",
         required: true,
     },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+    }],
+    replies: [{
+        content: {
+            type: String,
+            required: [true, "Please provide content"],
+        },
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user",
+            required: true,
+        },
+        likes: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user",
+        }],
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+    }],
     createdAt: {
         type: Date,
         default: Date.now,

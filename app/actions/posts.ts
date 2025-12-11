@@ -3,9 +3,6 @@
 import { updateTag } from "next/cache";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { getSession } from "@/lib/auth-client";
 import { requireUser } from "@/app/data/user/require-user";
 
 export async function createPost(content: string) {
@@ -16,7 +13,10 @@ export async function createPost(content: string) {
         const newPost = { content, user: session.user.id, createdAt: new Date() };
         await Post.create(newPost);
 
-        updateTag("posts");
+        // Invalidate current time bucket so user sees their post immediately
+        const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+        updateTag(`posts-feed-${cacheBucket}`);
+
         return { success: true };
     } catch (error) {
         console.error("Failed to create post:", error);

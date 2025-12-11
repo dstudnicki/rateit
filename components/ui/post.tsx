@@ -7,6 +7,17 @@ import { Card } from "@/components/ui/card"
 import { Heart, MessageCircle, Repeat2, Send, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link";
+import { CommentSection } from "@/components/comment-section";
+
+interface Comment {
+    _id: string;
+    content: string;
+    user: {
+        _id: string | undefined;
+        username: string;
+    };
+    createdAt: string;
+}
 
 interface Post {
     _id: string
@@ -19,7 +30,7 @@ interface Post {
     content: string
     // timestamp: string
     // likes: number
-    // comments: number
+    comments: Comment[]
     // image?: string
     createdAt: string
 }
@@ -31,10 +42,16 @@ interface PostCardProps {
 export function PostCard({post }:PostCardProps) {
     const [isLiked, setIsLiked] = useState(false)
     const [likesCount, setLikesCount] = useState(0)
+    const [showComments, setShowComments] = useState(false)
+    const [commentsCount, setCommentsCount] = useState(post.comments.length)
 
     const handleLike = () => {
         setIsLiked(!isLiked)
         setLikesCount(isLiked ? likesCount - 1 : likesCount + 1)
+    }
+
+    const handleCommentClick = () => {
+        setShowComments(!showComments)
     }
 
     return (
@@ -83,8 +100,16 @@ export function PostCard({post }:PostCardProps) {
 
                     {/* Engagement Stats */}
                     <div className="flex items-center gap-4 mt-3 pt-2 border-t text-xs text-muted-foreground">
-                        <span>{likesCount.toLocaleString()} likes</span>
-                        {/*<span>{post.comments} comments</span>*/}
+                        <button
+                            onClick={handleLike}
+                            className={cn(
+                                "flex items-center gap-1.5 text-xs font-medium transition-colors hover:text-destructive",
+                                isLiked ? "text-destructive" : "text-muted-foreground",
+                            )}
+                        >
+                            <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} />
+                            {likesCount > 0 && <span>{likesCount}</span>}
+                        </button>
                     </div>
 
                     {/* Action Buttons */}
@@ -98,7 +123,13 @@ export function PostCard({post }:PostCardProps) {
                             <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
                             <span className="text-sm font-medium">Like</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="flex-1 gap-2 h-9">
+
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn("flex-1 gap-2 h-9", showComments && "bg-secondary")}
+                            onClick={handleCommentClick}
+                        >
                             <MessageCircle className="h-4 w-4" />
                             <span className="text-sm font-medium">Comment</span>
                         </Button>
@@ -107,6 +138,12 @@ export function PostCard({post }:PostCardProps) {
                             <span className="text-sm font-medium">Share</span>
                         </Button>
                     </div>
+                    {/* Comment Section */}
+                    {showComments && (
+                        <div className="mt-4 pt-4 border-t">
+                            <CommentSection postId={post._id} />
+                        </div>
+                    )}
                 </div>
             </div>
         </Card>
