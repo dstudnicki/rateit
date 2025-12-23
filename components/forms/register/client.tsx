@@ -79,7 +79,8 @@ export default function RegisterForm() {
                                 },
                                 {
                                     onSuccess: () => {
-                                        router.push("/");
+                                        // Redirect to /profile which will create the profile and redirect to slug
+                                        router.push("/profile");
                                     },
                                     onError: () => {
                                         router.push("/login");
@@ -168,7 +169,7 @@ export default function RegisterForm() {
                         </form.Field>
                         <div className="space-x-1">
                             <span>Already have an account?</span>
-                            <Link className="font-bold" href="./login">
+                            <Link className="font-bold" href="/login">
                                 Log in.
                             </Link>
                         </div>

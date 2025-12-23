@@ -34,20 +34,52 @@ export async function POST(request: NextRequest) {
 export async function GET() {
     try {
         const db = await getClient();
+        const { ObjectId } = require('mongodb');
 
         const posts = await Post.find().sort({ createdAt: -1 }).lean();
 
-        const postsWithUsers = await Promise.all(
+        const postsWithUsersAndProfiles = await Promise.all(
             posts.map(async (post) => {
                 if (post.user) {
-                    const user = await db.collection("user").findOne({ _id: post.user }, { projection: { name: 1, email: 1 } });
-                    return { ...post, user };
+                    const userIdString = typeof post.user === 'string' ? post.user : post.user.toString();
+
+                    let user;
+                    try {
+                        user = await db.collection("user").findOne(
+                            { _id: new ObjectId(userIdString) },
+                            { projection: { name: 1, email: 1, _id: 1 } }
+                        );
+                    } catch (e) {
+                        user = await db.collection("user").findOne(
+                            { _id: userIdString },
+                            { projection: { name: 1, email: 1, _id: 1 } }
+                        );
+                    }
+
+                    if (user) {
+                        const profile = await db.collection("profiles").findOne(
+                            { userId: userIdString },
+                            { projection: { slug: 1, fullName: 1, headline: 1} }
+                        );
+
+                        return {
+                            ...post,
+                            user: {
+                                name: user.name,
+                                email: user.email,
+                                _id: userIdString,
+                                slug: profile?.slug || user.name,
+                                fullName: profile?.fullName || null,
+                                headline: profile?.headline || null,
+                            }
+                        };
+                    }
                 }
                 return post;
             }),
         );
 
-        return NextResponse.json(postsWithUsers, { status: 200 });
+        return NextResponse.json(postsWithUsersAndProfiles, { status: 200 });
     } catch (error) {
         console.error("Error fetching posts:", error);
         return NextResponse.json({ message: "Internal server error." }, { status: 500 });

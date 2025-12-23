@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,13 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-    User,
-    Settings,
-    HelpCircle,
-    LogOut,
-    ChevronDown,
-} from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import { User, Settings, HelpCircle, LogOut, ChevronDown } from "lucide-react";
 
 export default function AuthButtons() {
-    const {data: sessionData} = authClient.useSession()
+    const { data: sessionData } = authClient.useSession();
     const handleLogout = async () => {
-        await authClient.signOut()
+        await authClient.signOut();
     };
     return (
         <ul className="list-none flex items-center gap-2">
@@ -44,7 +38,7 @@ export default function AuthButtons() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>
                                 <User className="mr-2 h-4 w-4" />
-                                <span>View Profile</span>
+                                <Link href="/profile">View Profile</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                                 <Settings className="mr-2 h-4 w-4" />
@@ -55,9 +49,11 @@ export default function AuthButtons() {
                                 <span>Help Center</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <DropdownMenuItem>
                                 <LogOut className="mr-2 h-4 w-4" />
-                                    <Button className="p-0" variant={"link"} onClick={handleLogout}>Log out</Button>
+                                <Button className="p-0 text-destructive focus:text-destructive" variant={"link"} onClick={handleLogout}>
+                                    Log out
+                                </Button>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -65,14 +61,14 @@ export default function AuthButtons() {
             ) : (
                 <>
                     <li className="text-center">
-                        <Link href="/login">
-                            <Button>Login</Button>
-                        </Link>
+                        <Button asChild>
+                            <Link href="/login">Login</Link>
+                        </Button>
                     </li>
                     <li className="text-center">
-                        <Link href="/register">
-                            <Button variant="outline">Register</Button>
-                        </Link>
+                        <Button variant="outline" asChild>
+                            <Link href="/login">Register</Link>
+                        </Button>
                     </li>
                 </>
             )}
