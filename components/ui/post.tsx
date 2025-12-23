@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Heart, MessageCircle, Repeat2, Send, MoreHorizontal } from "lucide-react"
+import { Heart, MessageCircle, Send, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link";
 import { CommentSection } from "@/components/comment-section";
@@ -24,14 +24,12 @@ interface Post {
     user: {
         _id: string | undefined;
         name: string
-        // title: string
-        // avatar: string
+        slug?: string
+        fullName?: string | null
+        headline?: string | null
     }
     content: string
-    // timestamp: string
-    // likes: number
     comments: Comment[]
-    // image?: string
     createdAt: string
 }
 
@@ -43,7 +41,11 @@ export function PostCard({post }:PostCardProps) {
     const [isLiked, setIsLiked] = useState(false)
     const [likesCount, setLikesCount] = useState(0)
     const [showComments, setShowComments] = useState(false)
-    const [commentsCount, setCommentsCount] = useState(post.comments.length)
+
+    const displayName = post.user.fullName || post.user.name
+    const profileSlug = post.user.slug || post.user.name
+    const headline = post.user.headline
+    const location = post.user.location
 
     const handleLike = () => {
         setIsLiked(!isLiked)
@@ -58,19 +60,20 @@ export function PostCard({post }:PostCardProps) {
         <Card className="p-4 hover:bg-secondary/50 transition-colors">
             {/* Post Header */}
             <div className="flex items-start gap-3">
-                <Link href={`/${post.user.name}`}>
+                <Link href={`/${profileSlug}`}>
                     <Avatar>
-                        <AvatarImage src={process.env.PUBLIC_URL + "/user.png"} alt={post.user.name} />
-                        <AvatarFallback>{post.user.name.toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={process.env.PUBLIC_URL + "/user.png"} alt={displayName} />
+                        <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </Link>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between">
                         <div>
-                            <h3 className="font-semibold text-sm leading-tight">{post.user.name}</h3>
-                            {/*<p className="text-xs text-muted-foreground leading-tight">{post.user.title}</p>*/}
-                            {/* <p className="text-xs text-muted-foreground mt-0.5">{post.timestamp}</p>*/}
+                            <Link href={`/${profileSlug}`}>
+                                <h3 className="font-semibold text-sm leading-tight hover:underline mb-0.5">{displayName}</h3>
+                            </Link>
+                            <p className="text-xs text-muted-foreground leading-tight">{headline}</p>
                             <span className="text-xs text-muted-foreground mt-0.5">
                     {new Intl.DateTimeFormat("en-US", {
                         hour: "numeric",
