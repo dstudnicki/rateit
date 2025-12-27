@@ -44,10 +44,6 @@ export async function addReply(content: string, postId: string, commentId: strin
             return { success: false, error: "Comment not found" };
         }
 
-        if (comment.user.toString() === session.user.id) {
-            return { success: false, error: "Cannot reply to your own comment" };
-        }
-
         const replyContent = replyToUsername ? `@${replyToUsername} ${content}` : content;
         const newReply = { content: replyContent, user: session.user.id, createdAt: new Date(), likes: [] };
 
@@ -136,3 +132,136 @@ export async function toggleReplyLike(postId: string, commentId: string, replyId
     }
 }
 
+export async function updateComment(postId: string, commentId: string, content: string) {
+    const session = await requireUser();
+
+    try {
+        await getClient();
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return { success: false, error: "Post not found" };
+        }
+
+        const comment = post.comments.id(commentId);
+        if (!comment) {
+            return { success: false, error: "Comment not found" };
+        }
+
+        if (comment.user.toString() !== session.user.id) {
+            return { success: false, error: "Not authorized to edit this comment" };
+        }
+
+        comment.content = content;
+        await post.save();
+
+        updateTag("comments");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update comment:", error);
+        return { success: false, error: "Failed to update comment" };
+    }
+}
+
+export async function deleteComment(postId: string, commentId: string) {
+    const session = await requireUser();
+
+    try {
+        await getClient();
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return { success: false, error: "Post not found" };
+        }
+
+        const comment = post.comments.id(commentId);
+        if (!comment) {
+            return { success: false, error: "Comment not found" };
+        }
+
+        if (comment.user.toString() !== session.user.id) {
+            return { success: false, error: "Not authorized to delete this comment" };
+        }
+
+        post.comments.pull(commentId);
+        await post.save();
+
+        updateTag("comments");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete comment:", error);
+        return { success: false, error: "Failed to delete comment" };
+    }
+}
+
+export async function updateReply(postId: string, commentId: string, replyId: string, content: string) {
+    const session = await requireUser();
+
+    try {
+        await getClient();
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return { success: false, error: "Post not found" };
+        }
+
+        const comment = post.comments.id(commentId);
+        if (!comment) {
+            return { success: false, error: "Comment not found" };
+        }
+
+        const reply = comment.replies.id(replyId);
+        if (!reply) {
+            return { success: false, error: "Reply not found" };
+        }
+
+        if (reply.user.toString() !== session.user.id) {
+            return { success: false, error: "Not authorized to edit this reply" };
+        }
+
+        reply.content = content;
+        await post.save();
+
+        updateTag("comments");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update reply:", error);
+        return { success: false, error: "Failed to update reply" };
+    }
+}
+
+export async function deleteReply(postId: string, commentId: string, replyId: string) {
+    const session = await requireUser();
+
+    try {
+        await getClient();
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return { success: false, error: "Post not found" };
+        }
+
+        const comment = post.comments.id(commentId);
+        if (!comment) {
+            return { success: false, error: "Comment not found" };
+        }
+
+        const reply = comment.replies.id(replyId);
+        if (!reply) {
+            return { success: false, error: "Reply not found" };
+        }
+
+        if (reply.user.toString() !== session.user.id) {
+            return { success: false, error: "Not authorized to delete this reply" };
+        }
+
+        comment.replies.pull(replyId);
+        await post.save();
+
+        updateTag("comments");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete reply:", error);
+        return { success: false, error: "Failed to delete reply" };
+    }
+}

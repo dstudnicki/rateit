@@ -1,17 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, MessageCircle, Send } from "lucide-react"
+import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { addReply, toggleCommentLike, toggleReplyLike } from "@/app/actions/comments"
+import { addReply, toggleCommentLike, toggleReplyLike, updateComment, deleteComment, updateReply, deleteReply } from "@/app/actions/comments"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Link from "next/link"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface ReplyData {
   _id: string
   user: {
     _id: string | undefined;
     name: string;
+    slug?: string;
+    fullName?: string | null;
+    image?: string | null;
   };
   content: string
   likes: string[]
@@ -23,6 +34,9 @@ interface CommentData {
   user: {
     _id: string | undefined;
     name: string;
+    slug?: string;
+    fullName?: string | null;
+    image?: string | null;
   };
   content: string
   likes: string[]
@@ -45,20 +59,20 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
   const [isReplying, setIsReplying] = useState(false)
   const [replyContent, setReplyContent] = useState("")
   const [replies, setReplies] = useState<ReplyData[]>(comment.replies || [])
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedContent, setEditedContent] = useState(comment.content)
+  const [isPending, startTransition] = useTransition()
 
-  // Update replies when comment.replies changes (when parent fetches new data)
   useEffect(() => {
     setReplies(comment.replies || [])
   }, [comment.replies])
 
-  // This is the comment ID to add replies to (either itself or its parent)
   const targetCommentId = parentCommentId || comment._id
-
-  // Check if this is the current user's comment (cannot reply to own comment)
-  const isOwnComment = comment.user._id === currentUserId
+  const isOwnComment = currentUserId === comment.user._id
+  const displayName = comment.user.fullName || comment.user.name
+  const profileSlug = comment.user.slug || comment.user.name
 
   const handleLike = async () => {
-    // If this is a reply (has parentCommentId), use toggleReplyLike, otherwise toggleCommentLike
     const result = parentCommentId
       ? await toggleReplyLike(postId, parentCommentId, comment._id)
       : await toggleCommentLike(postId, comment._id)
@@ -78,40 +92,132 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
       setIsReplying(false)
       onUpdate?.()
     } else {
-      // Show error message if validation fails
       alert(result.error || "Failed to add reply")
+    }
+  }
+
+  const handleEdit = () => {
+    setIsEditing(true)
+  }
+
+  const handleSaveEdit = () => {
+    startTransition(async () => {
+      const result = parentCommentId
+        ? await updateReply(postId, parentCommentId, comment._id, editedContent)
+        : await updateComment(postId, comment._id, editedContent)
+
+      if (result.success) {
+        setIsEditing(false)
+        onUpdate?.()
+      } else {
+        alert(result.error || "Failed to update")
+      }
+    })
+  }
+
+  const handleCancelEdit = () => {
+    setEditedContent(comment.content)
+    setIsEditing(false)
+  }
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this comment?")) {
+      startTransition(async () => {
+        const result = parentCommentId
+          ? await deleteReply(postId, parentCommentId, comment._id)
+          : await deleteComment(postId, comment._id)
+
+        if (result.success) {
+          onUpdate?.()
+        } else {
+          alert(result.error || "Failed to delete")
+        }
+      })
     }
   }
 
   return (
     <div className={cn("space-y-3", depth > 0 && "ml-10")}>
       <div className="flex gap-3">
+        <Link href={`/${profileSlug}`}>
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={comment.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user.name}`}
+              alt={displayName}
+            />
+            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+        </Link>
+
         <div className="flex-1 min-w-0">
           <div className="bg-secondary/50 rounded-lg p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-sm">{comment.user.name}</h4>
+                <Link href={`/${profileSlug}`}>
+                  <h4 className="font-semibold text-sm hover:underline">{displayName}</h4>
+                </Link>
               </div>
+              {isOwnComment && !isEditing && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <MoreHorizontal className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleEdit} disabled={isPending}>
+                      <Pencil className="h-3.5 w-3.5 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleDelete}
+                      disabled={isPending}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
-            <p className="text-sm mt-1 leading-relaxed whitespace-pre-wrap text-balance">{comment.content}</p>
+            {isEditing ? (
+              <div className="mt-2 space-y-2">
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="min-h-[60px] text-sm"
+                  disabled={isPending}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveEdit} size="sm" disabled={isPending || !editedContent.trim()}>
+                    {isPending ? "Saving..." : "Save"}
+                  </Button>
+                  <Button onClick={handleCancelEdit} size="sm" variant="outline" disabled={isPending}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm mt-1 leading-relaxed whitespace-pre-wrap text-balance">{comment.content}</p>
+            )}
           </div>
 
           {/* Comment Actions */}
-          <div className="flex items-center gap-4 mt-2 px-2">
-            <button
-              onClick={handleLike}
-              className={cn(
-                "flex items-center gap-1.5 text-xs font-medium transition-colors hover:text-destructive",
-                isLiked ? "text-destructive" : "text-muted-foreground",
-              )}
-            >
-              <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} />
-              {likesCount > 0 && <span>{likesCount}</span>}
-            </button>
+          {!isEditing && (
+            <div className="flex items-center gap-4 mt-2 px-2">
+              <button
+                onClick={handleLike}
+                className={cn(
+                  "flex items-center gap-1.5 text-xs font-medium transition-colors hover:text-destructive",
+                  isLiked ? "text-destructive" : "text-muted-foreground",
+                )}
+              >
+                <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} />
+                {likesCount > 0 && <span>{likesCount}</span>}
+              </button>
 
-            {/* Only show Reply button if not own comment */}
-            {!isOwnComment && (
               <button
                 onClick={() => setIsReplying(!isReplying)}
                 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -119,21 +225,21 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                 <MessageCircle className="h-3.5 w-3.5" />
                 <span>Reply</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Reply Form */}
           {isReplying && (
             <div className="mt-3 ml-2">
               <div className="flex gap-2">
                 <Textarea
-                  placeholder={`Reply to ${comment.user.name}...`}
+                  placeholder={`Reply to ${displayName}...`}
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   className="min-h-[60px] resize-none text-sm"
                 />
                 <div className="flex flex-col gap-2">
-                  <Button onClick={() => handleReply(comment.user.name)} size="sm" disabled={!replyContent.trim()} className="gap-2">
+                  <Button onClick={() => handleReply(displayName)} size="sm" disabled={!replyContent.trim()} className="gap-2">
                     <Send className="h-4 w-4" />
                   </Button>
                   <Button onClick={() => setIsReplying(false)} size="sm" variant="outline">

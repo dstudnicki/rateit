@@ -47,19 +47,19 @@ export async function GET() {
                     try {
                         user = await db.collection("user").findOne(
                             { _id: new ObjectId(userIdString) },
-                            { projection: { name: 1, email: 1, _id: 1 } }
+                            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                         );
                     } catch (e) {
                         user = await db.collection("user").findOne(
                             { _id: userIdString },
-                            { projection: { name: 1, email: 1, _id: 1 } }
+                            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                         );
                     }
 
                     if (user) {
                         const profile = await db.collection("profiles").findOne(
                             { userId: userIdString },
-                            { projection: { slug: 1, fullName: 1, headline: 1} }
+                            { projection: { slug: 1, fullName: 1, headline: 1, location: 1 } }
                         );
 
                         return {
@@ -71,6 +71,8 @@ export async function GET() {
                                 slug: profile?.slug || user.name,
                                 fullName: profile?.fullName || null,
                                 headline: profile?.headline || null,
+                                location: profile?.location || null,
+                                image: user.image || null,
                             }
                         };
                     }

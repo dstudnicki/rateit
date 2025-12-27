@@ -1,13 +1,31 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useTransition } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Heart, MessageCircle, Send, MoreHorizontal } from "lucide-react"
+import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import Link from "next/link";
-import { CommentSection } from "@/components/comment-section";
+import Link from "next/link"
+import { CommentSection } from "@/components/comment-section"
+import { authClient } from "@/lib/auth-client"
+import { deletePost, updatePost } from "@/app/actions/posts"
+import { useRouter } from "next/navigation"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Comment {
     _id: string;
@@ -27,6 +45,7 @@ interface Post {
         slug?: string
         fullName?: string | null
         headline?: string | null
+        image?: string | null
     }
     content: string
     comments: Comment[]
@@ -41,11 +60,18 @@ export function PostCard({post }:PostCardProps) {
     const [isLiked, setIsLiked] = useState(false)
     const [likesCount, setLikesCount] = useState(0)
     const [showComments, setShowComments] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    const [editedContent, setEditedContent] = useState(post.content)
+    const [isPending, startTransition] = useTransition()
+    const router = useRouter()
+
+    const session = authClient.useSession()
+    const currentUserId = session.data?.user?.id
 
     const displayName = post.user.fullName || post.user.name
     const profileSlug = post.user.slug || post.user.name
     const headline = post.user.headline
-    const location = post.user.location
+    const isOwnPost = currentUserId === post.user._id
 
     const handleLike = () => {
         setIsLiked(!isLiked)
@@ -56,13 +82,50 @@ export function PostCard({post }:PostCardProps) {
         setShowComments(!showComments)
     }
 
+    const handleEdit = () => {
+        setIsEditing(true)
+    }
+
+    const handleSaveEdit = () => {
+        startTransition(async () => {
+            const result = await updatePost(post._id, editedContent)
+            if (result.success) {
+                setIsEditing(false)
+                router.refresh()
+            } else {
+                alert(result.error || "Failed to update post")
+            }
+        })
+    }
+
+    const handleCancelEdit = () => {
+        setEditedContent(post.content)
+        setIsEditing(false)
+    }
+
+    const handleDelete = () => {
+        if (confirm("Are you sure you want to delete this post?")) {
+            startTransition(async () => {
+                const result = await deletePost(post._id)
+                if (result.success) {
+                    router.refresh()
+                } else {
+                    alert(result.error || "Failed to delete post")
+                }
+            })
+        }
+    }
+
     return (
         <Card className="p-4 hover:bg-secondary/50 transition-colors">
             {/* Post Header */}
             <div className="flex items-start gap-3">
                 <Link href={`/${profileSlug}`}>
                     <Avatar>
-                        <AvatarImage src={process.env.PUBLIC_URL + "/user.png"} alt={displayName} />
+                        <AvatarImage
+                            src={post.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.name}`}
+                            alt={displayName}
+                        />
                         <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </Link>
@@ -85,9 +148,29 @@ export function PostCard({post }:PostCardProps) {
                     }).format(new Date(post.createdAt))}
                 </span>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1">
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        {isOwnPost && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={handleEdit} disabled={isPending}>
+                                        <Pencil className="h-4 w-4 mr-2" />
+                                        Edit post
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={handleDelete}
+                                        disabled={isPending}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete post
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
 
                     {/* Post Content */}
@@ -149,6 +232,40 @@ export function PostCard({post }:PostCardProps) {
                     )}
                 </div>
             </div>
+
+            {/* Edit Dialog */}
+            <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit post</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your post below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        placeholder="What do you want to talk about?"
+                        className="min-h-[120px]"
+                        disabled={isPending}
+                    />
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={handleCancelEdit}
+                            disabled={isPending}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveEdit}
+                            disabled={isPending || !editedContent.trim()}
+                        >
+                            {isPending ? "Saving..." : "Save changes"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     )
 }
