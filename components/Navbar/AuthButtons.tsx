@@ -36,10 +36,12 @@ export default function AuthButtons() {
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                                <User className="mr-2 h-4 w-4" />
-                                <Link href="/profile">View Profile</Link>
-                            </DropdownMenuItem>
+                            <Link href="/profile">
+                                <DropdownMenuItem>
+                                    <User className="mr-2 h-4 w-4" />
+                                    View Profile
+                                </DropdownMenuItem>
+                            </Link>
                             <DropdownMenuItem>
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Settings & Privacy</span>
@@ -51,7 +53,11 @@ export default function AuthButtons() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>
                                 <LogOut className="mr-2 h-4 w-4" />
-                                <Button className="p-0 text-destructive focus:text-destructive" variant={"link"} onClick={handleLogout}>
+                                <Button
+                                    className="p-0 text-destructive focus:text-destructive"
+                                    variant={"link"}
+                                    onClick={handleLogout}
+                                >
                                     Log out
                                 </Button>
                             </DropdownMenuItem>

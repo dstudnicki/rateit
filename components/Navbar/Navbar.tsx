@@ -41,27 +41,16 @@ export function Navbar() {
 
                         {/* Navigation */}
                         <nav className="hidden sm:flex items-center gap-1 lg:gap-6">
-                            <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5" asChild>
+                            <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex" asChild>
                                 <Link href="/" className="text-xs font-medium">
                                     <Home className="h-5 w-5" /> Home
                                 </Link>
                             </Button>
-                            {/*<Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5">*/}
-                            {/*    <Users className="h-5 w-5" />*/}
-                            {/*    <span className="text-xs font-medium">Network</span>*/}
-                            {/*</Button>*/}
-                            <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex">
-                                <Briefcase className="h-5 w-5" />
-                                <span className="text-xs font-medium">Jobs</span>
+                            <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex" asChild>
+                                <Link href="/companies" className="text-xs font-medium">
+                                    <Briefcase className="h-5 w-5" /> Companies
+                                </Link>
                             </Button>
-                            {/*<Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex">*/}
-                            {/*    <MessageSquare className="h-5 w-5" />*/}
-                            {/*    <span className="text-xs font-medium">Messages</span>*/}
-                            {/*</Button>*/}
-                            {/*<Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5">*/}
-                            {/*    <Bell className="h-5 w-5" />*/}
-                            {/*    <span className="text-xs font-medium">Notifications</span>*/}
-                            {/*</Button>*/}
                             <AuthButtons />
                         </nav>
                     </div>

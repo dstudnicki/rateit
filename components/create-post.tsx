@@ -74,18 +74,6 @@ export function CreatePost() {
                   <ImageIcon className="h-4 w-4" />
                   <span className="hidden sm:inline">Photo</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="gap-2" disabled={isSubmitting}>
-                  <Video className="h-4 w-4" />
-                  <span className="hidden sm:inline">Video</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="gap-2" disabled={isSubmitting}>
-                  <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Article</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="gap-2" disabled={isSubmitting}>
-                  <Smile className="h-4 w-4" />
-                  <span className="hidden sm:inline">Feeling</span>
-                </Button>
               </div>
 
               {/* Post Actions */}
