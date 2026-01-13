@@ -1,6 +1,7 @@
 import { CompanyHeader } from "@/components/companies/company-header"
 import { CompanyTabs } from "@/components/companies/company-tabs"
 import { CompanyInfo } from "@/components/companies/company-info"
+import { CompanyViewTracker } from "@/components/companies/company-view-tracker"
 import { getCompanyBySlug } from "@/app/data/companies/get-company"
 import { notFound } from "next/navigation"
 
@@ -25,6 +26,7 @@ export default async function CompanyPage(props: CompanyPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <CompanyViewTracker companyId={company._id} />
       <main className="container max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">

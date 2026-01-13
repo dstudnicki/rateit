@@ -1,16 +1,100 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
+import Profile from "@/models/Profile";
 import { requireUser } from "@/app/data/user/require-user";
+import { requireAuth } from "@/lib/auth-helpers";
+import { validateCommentContent, sanitizeString } from "@/lib/validation";
+import { requireNotBanned } from "@/lib/ban-check";
 
-export async function addComment(content: string, postId: string) {
-    const session = await requireUser();
+// Toggle like on a POST
+export async function togglePostLike(postId: string) {
+    const user = await requireAuth();
 
     try {
         await getClient();
-        const newComment = { content, user: session.user.id, createdAt: new Date(), likes: [], replies: [] };
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return { success: false, error: "Post not found" };
+        }
+
+        // Initialize likes array if it doesn't exist
+        if (!Array.isArray(post.likes)) {
+            post.likes = [];
+        }
+
+        const userIdString = user.id;
+        const likeIndex = post.likes.findIndex((id: any) => id.toString() === userIdString);
+
+        let isLiking = false;
+        if (likeIndex > -1) {
+            // Unlike: remove user from likes
+            post.likes.splice(likeIndex, 1);
+        } else {
+            // Like: add user to likes
+            post.likes.push(userIdString);
+            isLiking = true;
+        }
+
+        await post.save();
+
+        // Track interaction in user's profile for content matching
+        if (isLiking) {
+            try {
+                const profile = await Profile.findOne({ userId: userIdString });
+                if (profile) {
+                    profile.interactionHistory.push({
+                        type: "like",
+                        targetId: postId,
+                        targetType: "post",
+                        timestamp: new Date(),
+                    });
+
+                    // Keep only last 100 interactions to avoid bloat
+                    if (profile.interactionHistory.length > 100) {
+                        profile.interactionHistory = profile.interactionHistory.slice(-100);
+                    }
+
+                    await profile.save();
+                    console.log(`[togglePostLike] Tracked like interaction for user ${userIdString}`);
+                }
+            } catch (error) {
+                console.error("[togglePostLike] Failed to track interaction:", error);
+                // Don't fail the like action if tracking fails
+            }
+        }
+
+        return {
+            success: true,
+            isLiked: isLiking,
+            likesCount: post.likes.length
+        };
+    } catch (error) {
+        console.error("Failed to toggle post like:", error);
+        return { success: false, error: "Failed to like post" };
+    }
+}
+
+export async function addComment(content: string, postId: string) {
+    const user = await requireAuth();
+
+    // Check if user is banned
+    await requireNotBanned();
+
+    // Validate and sanitize comment
+    const sanitizedContent = sanitizeString(content);
+    const validation = validateCommentContent(sanitizedContent);
+
+    if (!validation.valid) {
+        return { success: false, error: validation.error };
+    }
+
+    try {
+        await getClient();
+        const newComment = { content: sanitizedContent, user: user.id, createdAt: new Date(), likes: [], replies: [] };
 
         const post = await Post.findById(postId);
         if (!post) {
@@ -20,7 +104,30 @@ export async function addComment(content: string, postId: string) {
         post.comments.push(newComment);
         await post.save();
 
-        updateTag("comments");
+        // Track interaction in user's profile
+        try {
+            const profile = await Profile.findOne({ userId: user.id });
+            if (profile) {
+                profile.interactionHistory.push({
+                    type: "comment",
+                    targetId: postId,
+                    targetType: "post",
+                    timestamp: new Date(),
+                });
+
+                if (profile.interactionHistory.length > 100) {
+                    profile.interactionHistory = profile.interactionHistory.slice(-100);
+                }
+
+                await profile.save();
+                console.log(`[addComment] Tracked comment interaction for user ${user.id}`);
+            }
+        } catch (error) {
+            console.error("[addComment] Failed to track interaction:", error);
+        }
+
+
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Failed to create comment:", error);
@@ -50,7 +157,7 @@ export async function addReply(content: string, postId: string, commentId: strin
         comment.replies.push(newReply);
         await post.save();
 
-        updateTag(`comments-${postId}`);
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Failed to create reply:", error);
@@ -84,7 +191,7 @@ export async function toggleCommentLike(postId: string, commentId: string) {
 
         await post.save();
 
-        updateTag("comments");
+        revalidatePath("/");
         return { success: true, isLiked: likeIndex === -1, likesCount: comment.likes.length };
     } catch (error) {
         console.error("Failed to toggle like:", error);
@@ -124,7 +231,7 @@ export async function toggleReplyLike(postId: string, commentId: string, replyId
         await post.save();
 
         // Invalidate cache for this specific post's comments
-        updateTag(`comments-${postId}`);
+        revalidatePath("/");
         return { success: true, isLiked: likeIndex === -1, likesCount: reply.likes.length };
     } catch (error) {
         console.error("Failed to toggle reply like:", error);
@@ -155,7 +262,7 @@ export async function updateComment(postId: string, commentId: string, content: 
         comment.content = content;
         await post.save();
 
-        updateTag("comments");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Failed to update comment:", error);
@@ -186,7 +293,7 @@ export async function deleteComment(postId: string, commentId: string) {
         post.comments.pull(commentId);
         await post.save();
 
-        updateTag("comments");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Failed to delete comment:", error);
@@ -222,7 +329,7 @@ export async function updateReply(postId: string, commentId: string, replyId: st
         reply.content = content;
         await post.save();
 
-        updateTag("comments");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Failed to update reply:", error);
@@ -258,7 +365,7 @@ export async function deleteReply(postId: string, commentId: string, replyId: st
         comment.replies.pull(replyId);
         await post.save();
 
-        updateTag("comments");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         console.error("Failed to delete reply:", error);

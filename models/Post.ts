@@ -49,6 +49,20 @@ const postSchema = new Schema({
         ref: "user",
         required: true,
     },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+    }],
+    // Auto-detected tags for content matching
+    detectedCompanies: [{
+        type: String, // Company names mentioned in content
+    }],
+    detectedSkills: [{
+        type: String, // Skills mentioned (JavaScript, React, etc.)
+    }],
+    detectedIndustries: [{
+        type: String, // Industries mentioned (Technology, Finance, etc.)
+    }],
     comments: [commentSchema],
     createdAt: {
         type: Date,

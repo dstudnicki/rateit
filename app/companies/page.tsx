@@ -1,13 +1,14 @@
 import { CompanySearch } from "@/components/companies/company-search"
 import { CompanyList } from "@/components/companies/company-list"
-import { getCompanies } from "@/app/data/companies/get-companies"
+import { getPersonalizedCompanies } from "@/app/actions/companies"
 
 export default async function CompaniesPage({
   searchParams,
 }: {
   searchParams: { query?: string; industry?: string; location?: string; sortBy?: string }
 }) {
-  const companies = await getCompanies()
+  const result = await getPersonalizedCompanies()
+  const companies = result.companies || []
 
   return (
     <div className="min-h-screen bg-background">

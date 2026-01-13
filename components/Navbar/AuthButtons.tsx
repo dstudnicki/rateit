@@ -73,7 +73,7 @@ export default function AuthButtons() {
                     </li>
                     <li className="text-center">
                         <Button variant="outline" asChild>
-                            <Link href="/login">Register</Link>
+                            <Link href="/register">Register</Link>
                         </Button>
                     </li>
                 </>

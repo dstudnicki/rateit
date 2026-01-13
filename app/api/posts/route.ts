@@ -51,7 +51,7 @@ export async function GET() {
                         );
                     } catch (e) {
                         user = await db.collection("user").findOne(
-                            { _id: userIdString },
+                            { _id: userIdString as any },
                             { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                         );
                     }
@@ -68,10 +68,10 @@ export async function GET() {
                                 name: user.name,
                                 email: user.email,
                                 _id: userIdString,
-                                slug: profile?.slug || user.name,
-                                fullName: profile?.fullName || null,
-                                headline: profile?.headline || null,
-                                location: profile?.location || null,
+                                slug: (profile?.slug && profile.slug.trim()) || null,
+                                fullName: (profile?.fullName && profile.fullName.trim()) || null,
+                                headline: (profile?.headline && profile.headline.trim()) || null,
+                                location: (profile?.location && profile.location.trim()) || null,
                                 image: user.image || null,
                             }
                         };

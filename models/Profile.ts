@@ -25,6 +25,20 @@ export interface ISkill {
     endorsements: number;
 }
 
+export interface IInteraction {
+    type: "like" | "comment" | "view";
+    targetId: string;
+    targetType: "post" | "company" | "profile";
+    timestamp: Date;
+}
+
+export interface IPreferences {
+    industries: string[];
+    skills: string[];
+    companies: string[]; // Company IDs user wants to follow
+    onboardingCompleted: boolean;
+}
+
 export interface IProfile extends Document {
     userId: string; // Reference to Better Auth user ID
     slug?: string; // URL-friendly slug for profile (optional for backwards compatibility)
@@ -36,6 +50,8 @@ export interface IProfile extends Document {
     education: IEducation[];
     skills: ISkill[];
     connections: number;
+    preferences: IPreferences;
+    interactionHistory: IInteraction[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -65,10 +81,24 @@ const SkillSchema = new Schema<ISkill>({
     endorsements: { type: Number, default: 0 },
 });
 
+const InteractionSchema = new Schema<IInteraction>({
+    type: { type: String, enum: ["like", "comment", "view"], required: true },
+    targetId: { type: String, required: true },
+    targetType: { type: String, enum: ["post", "company", "profile"], required: true },
+    timestamp: { type: Date, default: Date.now },
+});
+
+const PreferencesSchema = new Schema<IPreferences>({
+    industries: { type: [String], default: [] },
+    skills: { type: [String], default: [] },
+    companies: { type: [String], default: [] },
+    onboardingCompleted: { type: Boolean, default: false },
+});
+
 const ProfileSchema = new Schema(
     {
-        userId: { type: String, required: true, unique: true, index: true },
-        slug: { type: String, required: true, unique: true, index: true },
+        userId: { type: String, required: true, unique: true },
+        slug: { type: String, required: true, unique: true },
         fullName: { type: String },
         headline: { type: String },
         location: { type: String },
@@ -77,6 +107,8 @@ const ProfileSchema = new Schema(
         education: [EducationSchema],
         skills: [SkillSchema],
         connections: { type: Number, default: 0 },
+        preferences: { type: PreferencesSchema, default: () => ({ industries: [], skills: [], companies: [], onboardingCompleted: false }) },
+        interactionHistory: { type: [InteractionSchema], default: [] },
     },
     {
         timestamps: true,

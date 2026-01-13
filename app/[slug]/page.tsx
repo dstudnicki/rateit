@@ -4,6 +4,7 @@ import { ProfileExperience } from "@/components/profile/profile-experience";
 import { ProfileEducation } from "@/components/profile/profile-education";
 import { ProfileSkills } from "@/components/profile/profile-skills";
 import { ProfileActivity } from "@/components/profile/profile-activity";
+import { ProfileViewTracker } from "@/components/profile/profile-view-tracker";
 import { getProfileBySlug } from "@/app/actions/profile";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -41,6 +42,7 @@ export default async function ProfilePage(props: ProfilePageProps) {
 
     return (
         <div className="min-h-screen bg-background">
+            <ProfileViewTracker profileUserId={user.id} isOwnProfile={isOwnProfile} />
             <main className="container max-w-5xl mx-auto px-4 py-6">
                 <div className="grid grid-cols-1 gap-4">
                     <ProfileHeader user={user} profile={profile} isOwnProfile={isOwnProfile} />

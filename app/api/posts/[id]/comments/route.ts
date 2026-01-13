@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const { ObjectId } = require('mongodb');
 
         const { id: postId } = await params;
-        const post = await Post.findById(postId).lean();
+        const post: any = await Post.findById(postId).lean();
 
         if (!post) {
             return NextResponse.json({ message: "Post not found." }, { status: 404 });
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                         );
                     } catch (e) {
                         commentUser = await db.collection("user").findOne(
-                            { _id: userIdString },
+                            { _id: userIdString as any },
                             { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                         );
                     }
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                                 );
                             } catch (e) {
                                 replyUser = await db.collection("user").findOne(
-                                    { _id: userIdString },
+                                    { _id: userIdString as any },
                                     { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                                 );
                             }

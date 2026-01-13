@@ -5,10 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, MessageSquare, Star } from "lucide-react";
+import { Heart, MessageSquare, Star } from "lucide-react";
 import { toggleReviewLike } from "@/app/actions/companies";
 import { useRouter } from "next/navigation";
-import { ReviewCommentSection } from "@/components/companies/review-comment-section";
+import { ReviewCommentSection } from "./review-comment-section";
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface Review {
     _id: string;
@@ -20,6 +23,8 @@ interface Review {
     user: {
         _id: string;
         name: string;
+        slug?: string;
+        fullName?: string | null;
         image?: string;
         email?: string;
     };
@@ -71,6 +76,9 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
     const [expandedReview, setExpandedReview] = useState<string | null>(null);
     const [likingReviews, setLikingReviews] = useState<Set<string>>(new Set());
 
+    const session = authClient.useSession();
+    const currentUserId = session.data?.user?.id;
+
     // Filter reviews based on rating and type
     const filteredReviews = reviews.filter((review) => {
         if (filter === "all") return true;
@@ -117,20 +125,27 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                 const isExpanded = expandedReview === review._id;
                 const likesCount = review.likes?.length || 0;
                 const commentsCount = review.comments?.length || 0;
+                const isLiked = currentUserId ? review.likes?.includes(currentUserId) : false;
+                const displayName = review.user?.fullName || review.user?.name || "Anonymous";
+                const profileSlug = review.user?.slug || review.user?.name;
 
                 return (
                     <Card key={review._id} className="p-6">
                         <div className="flex items-start gap-4">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage src={review.user?.image || "/placeholder.svg"} />
-                                <AvatarFallback>{review.user?.name?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
-                            </Avatar>
+                            <Link href={`/${profileSlug}`}>
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={review.user?.image || "/placeholder.svg"} />
+                                    <AvatarFallback>{displayName?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
+                                </Avatar>
+                            </Link>
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold">{review.user?.name || "Anonymous"}</h3>
+                                            <Link href={`/${profileSlug}`}>
+                                                <h3 className="font-semibold hover:underline">{displayName}</h3>
+                                            </Link>
                                             <span className="text-sm text-muted-foreground">
                                                 {getTimeAgo(review.createdAt)}
                                             </span>
@@ -170,33 +185,55 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                                {/* Engagement Stats */}
+                                <div className="flex items-center gap-4 mt-3 pt-2 border-t text-xs text-muted-foreground">
+                                    {likesCount > 0 && (
+                                        <span className="flex items-center gap-1.5">
+                                            <Heart className="h-3.5 w-3.5 fill-current text-destructive" />
+                                            {likesCount}
+                                        </span>
+                                    )}
+                                    {commentsCount > 0 && (
+                                        <span className="flex items-center gap-1.5">
+                                            <MessageSquare className="h-3.5 w-3.5" />
+                                            {commentsCount} {commentsCount === 1 ? "comment" : "comments"}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-1 mt-2 pt-2 border-t">
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="gap-2"
+                                        className={cn("flex-1 gap-2 h-9", isLiked && "text-destructive hover:text-destructive")}
                                         onClick={() => handleLike(review._id)}
                                         disabled={likingReviews.has(review._id)}
                                     >
-                                        <ThumbsUp className="h-4 w-4" />
-                                        <span>{likesCount}</span>
+                                        <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                                        <span className="text-sm font-medium">Like</span>
                                     </Button>
+
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="gap-2"
+                                        className={cn("flex-1 gap-2 h-9", isExpanded && "bg-secondary")}
                                         onClick={() => setExpandedReview(isExpanded ? null : review._id)}
                                     >
                                         <MessageSquare className="h-4 w-4" />
-                                        <span>
-                                            {commentsCount} {commentsCount === 1 ? "comment" : "comments"}
-                                        </span>
+                                        <span className="text-sm font-medium">Comment</span>
                                     </Button>
                                 </div>
 
+                                {/* Comment Section */}
                                 {isExpanded && (
                                     <div className="mt-4 pt-4 border-t">
-                                      <ReviewCommentSection companyId={companyId} reviewId={review._id} comments={review.comments} onUpdate={() => router.refresh()}/>
+                                        <ReviewCommentSection
+                                            companyId={companyId}
+                                            reviewId={review._id}
+                                            comments={review.comments || []}
+                                            onUpdate={() => router.refresh()}
+                                        />
                                     </div>
                                 )}
                             </div>

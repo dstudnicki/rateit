@@ -113,6 +113,10 @@ const companySchema = new Schema({
         type: String,
         trim: true,
     },
+    // Auto-detected keywords for content matching from reviews
+    detectedKeywords: [{
+        type: String, // Skills, technologies, benefits mentioned in reviews
+    }],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
@@ -134,7 +138,6 @@ const companySchema = new Schema({
 
 // Index for search and filtering
 companySchema.index({ name: 1 });
-companySchema.index({ slug: 1 }, { unique: true, sparse: true });
 companySchema.index({ industry: 1 });
 companySchema.index({ location: 1 });
 companySchema.index({ averageRating: -1 });

@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
                     } catch (e) {
                         user = await db
                             .collection("user")
-                            .findOne({ _id: userIdString }, { projection: { name: 1, email: 1, _id: 1, image: 1 } });
+                            .findOne({ _id: userIdString as any }, { projection: { name: 1, email: 1, _id: 1, image: 1 } });
                     }
 
                     if (user) {

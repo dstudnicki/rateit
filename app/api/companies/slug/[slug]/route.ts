@@ -5,13 +5,13 @@ import { generateSlug } from "@/lib/slug";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { slug: string } }
+    { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
         const db = await getClient();
         const { ObjectId } = require('mongodb');
 
-        const companySlug = params.slug;
+        const { slug: companySlug } = await params;
         let company: any = await Company.findOne({ slug: companySlug }).lean();
 
         // If not found by slug, try to find by matching generated slug from name
@@ -44,7 +44,7 @@ export async function GET(
                     );
                 } catch (e) {
                     reviewUser = await db.collection("user").findOne(
-                        { _id: reviewUserIdString },
+                        { _id: reviewUserIdString as any },
                         { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                     );
                 }
@@ -71,7 +71,7 @@ export async function GET(
                             );
                         } catch (e) {
                             commentUser = await db.collection("user").findOne(
-                                { _id: commentUserIdString },
+                                { _id: commentUserIdString as any },
                                 { projection: { name: 1, image: 1 } }
                             );
                         }
@@ -89,7 +89,7 @@ export async function GET(
                                     );
                                 } catch (e) {
                                     replyUser = await db.collection("user").findOne(
-                                        { _id: replyUserIdString },
+                                        { _id: replyUserIdString as any },
                                         { projection: { name: 1, image: 1 } }
                                     );
                                 }
@@ -145,7 +145,7 @@ export async function GET(
                 );
             } catch (e) {
                 creator = await db.collection("user").findOne(
-                    { _id: creatorIdString },
+                    { _id: creatorIdString as any },
                     { projection: { name: 1, email: 1 } }
                 );
             }

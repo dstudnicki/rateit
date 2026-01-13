@@ -1,6 +1,7 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
+import { updateTag} from "next/cache";
 import { getClient } from "@/lib/mongoose";
 import Profile, { IExperience, IEducation } from "@/models/Profile";
 import { requireUser } from "@/app/data/user/require-user";
@@ -23,7 +24,7 @@ export async function getProfile(userId: string) {
                 );
             } catch (e) {
                 user = await db.collection("user").findOne(
-                    { _id: userId },
+                    { _id: userId as any },
                     { projection: { name: 1, email: 1, _id: 1 } }
                 );
             }
@@ -52,6 +53,13 @@ export async function getProfile(userId: string) {
                 education: [],
                 skills: [],
                 connections: 0,
+                preferences: {
+                    industries: [],
+                    skills: [],
+                    companies: [],
+                    onboardingCompleted: false,
+                },
+                interactionHistory: [],
             });
             profile = newProfile.toObject() as any;
         } else {
@@ -68,7 +76,7 @@ export async function getProfile(userId: string) {
                     );
                 } catch (e) {
                     user = await db.collection("user").findOne(
-                        { _id: userId },
+                        { _id: userId as any },
                         { projection: { name: 1, email: 1, _id: 1 } }
                     );
                 }
@@ -122,7 +130,7 @@ export async function getProfileBySlug(slug: string) {
             );
         } catch (e) {
             user = await db.collection("user").findOne(
-                { _id: profile.userId },
+                { _id: profile.userId as any },
                 { projection: { name: 1, email: 1, _id: 1 } }
             );
         }

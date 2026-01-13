@@ -309,7 +309,7 @@ export async function GET(request: NextRequest) {
                         );
                     } catch (e) {
                         user = await db.collection("user").findOne(
-                            { _id: userIdString },
+                            { _id: userIdString as any },
                             { projection: { name: 1, image: 1 } }
                         );
                     }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useTransition } from "react"
+import React, { useState, useTransition, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -10,6 +10,8 @@ import Link from "next/link"
 import { CommentSection } from "@/components/comment-section"
 import { authClient } from "@/lib/auth-client"
 import { deletePost, updatePost } from "@/app/actions/posts"
+import { togglePostLike } from "@/app/actions/comments"
+import { trackInteraction } from "@/app/actions/preferences"
 import { useRouter } from "next/navigation"
 import {
     DropdownMenu,
@@ -48,6 +50,7 @@ interface Post {
         image?: string | null
     }
     content: string
+    likes?: string[] // Array of user IDs who liked the post
     comments: Comment[]
     createdAt: string
 }
@@ -57,29 +60,93 @@ interface PostCardProps {
 }
 
 export function PostCard({post }:PostCardProps) {
-    const [isLiked, setIsLiked] = useState(false)
-    const [likesCount, setLikesCount] = useState(0)
+    const session = authClient.useSession()
+    const currentUserId = session.data?.user?.id
+
+    // Initialize likes based on post data
+    const initialLikesCount = Array.isArray(post.likes) ? post.likes.length : 0;
+    const initialIsLiked = currentUserId ? (Array.isArray(post.likes) && post.likes.includes(currentUserId)) : false;
+
+    const [isLiked, setIsLiked] = useState(initialIsLiked as boolean | undefined)
+    const [likesCount, setLikesCount] = useState(initialLikesCount)
     const [showComments, setShowComments] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [editedContent, setEditedContent] = useState(post.content)
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
 
-    const session = authClient.useSession()
-    const currentUserId = session.data?.user?.id
+    // Debug: Check what data we're receiving
+    useEffect(() => {
+        console.log('[PostCard] Post data:', {
+            userId: post.user._id,
+            userName: post.user.name,
+            userFullName: post.user.fullName,
+            userSlug: post.user.slug,
+            userHeadline: post.user.headline,
+        });
+    }, [post]);
 
-    const displayName = post.user.fullName || post.user.name
-    const profileSlug = post.user.slug || post.user.name
-    const headline = post.user.headline
+    // Use fallbacks that handle empty strings (not just null/undefined)
+    const displayName = (post.user.fullName && post.user.fullName.trim()) || post.user.name || "Anonymous User"
+    const profileSlug = (post.user.slug && post.user.slug.trim()) || post.user.name || "user"
+    const headline = (post.user.headline && post.user.headline.trim()) || ""
     const isOwnPost = currentUserId === post.user._id
 
-    const handleLike = () => {
-        setIsLiked(!isLiked)
-        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1)
+    // Update likes state when post data changes (after server refresh)
+    useEffect(() => {
+        const newLikesCount = Array.isArray(post.likes) ? post.likes.length : 0;
+        const newIsLiked = currentUserId ? (Array.isArray(post.likes) && post.likes.includes(currentUserId)) : false;
+
+        setLikesCount(newLikesCount);
+        setIsLiked(newIsLiked);
+    }, [post.likes, currentUserId]);
+
+    const handleLike = async () => {
+        if (!currentUserId) {
+            alert("Please log in to like posts");
+            return;
+        }
+
+        // Optimistic update
+        const wasLiked = isLiked;
+        const prevCount = likesCount;
+        setIsLiked(!isLiked);
+        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+
+        try {
+            // Save to database
+            const result = await togglePostLike(post._id);
+
+            if (result.success) {
+                // Update with server response
+                setIsLiked(result.isLiked);
+                setLikesCount(result.likesCount);
+
+                // Track interaction for personalization
+                if (result.isLiked) {
+                    trackInteraction(post._id, "post", "like").catch(console.error);
+                }
+            } else {
+                // Revert on error
+                setIsLiked(wasLiked);
+                setLikesCount(prevCount);
+                console.error("Failed to like post:", result.error);
+            }
+        } catch (error) {
+            // Revert on error
+            setIsLiked(wasLiked);
+            setLikesCount(prevCount);
+            console.error("Failed to like post:", error);
+        }
     }
 
     const handleCommentClick = () => {
         setShowComments(!showComments)
+
+        // Track interaction for personalization when opening comments
+        if (!showComments && currentUserId) {
+            trackInteraction(post._id, "post", "comment").catch(console.error);
+        }
     }
 
     const handleEdit = () => {
@@ -126,7 +193,7 @@ export function PostCard({post }:PostCardProps) {
                             src={post.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.name}`}
                             alt={displayName}
                         />
-                        <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{displayName?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </Link>
 

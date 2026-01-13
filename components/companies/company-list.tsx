@@ -1,12 +1,11 @@
 import { Card } from "@/components/ui/card"
 import { Star, MapPin, Clock } from "lucide-react"
 import Link from "next/link"
-import { generateSlug } from "@/lib/slug"
 
 interface Company {
   _id: string
   name: string
-  slug?: string
+  slug: string
   location: string
   industry: string
   averageRating: number
@@ -64,14 +63,10 @@ export function CompanyList({ companies }: CompanyListProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {companies.map((company) => {
-        // Generate slug from name if missing (for existing companies)
-        const companySlug = company.slug || generateSlug(company.name)
-
-        return (
-          <Link key={company._id} href={`/companies/${companySlug}`}>
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+    <div className="space-y-6">
+      {companies.map((company) => (
+        <Link key={company._id} href={`/companies/${company.slug}`}>
+          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-primary hover:underline">{company.name}</h3>
@@ -99,7 +94,7 @@ export function CompanyList({ companies }: CompanyListProps) {
             </div>
           </Card>
         </Link>
-      )})}
+      ))}
     </div>
   )
 }

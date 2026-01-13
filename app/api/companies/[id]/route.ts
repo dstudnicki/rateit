@@ -4,13 +4,13 @@ import Company from "@/models/Company";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const db = await getClient();
         const { ObjectId } = require('mongodb');
 
-        const companyId = params.id;
+        const { id: companyId } = await params;
         const company: any = await Company.findById(companyId).lean();
 
         if (!company) {
@@ -30,7 +30,7 @@ export async function GET(
                     );
                 } catch (e) {
                     reviewUser = await db.collection("user").findOne(
-                        { _id: reviewUserIdString },
+                        { _id: reviewUserIdString as any },
                         { projection: { name: 1, email: 1, _id: 1, image: 1 } }
                     );
                 }
@@ -57,7 +57,7 @@ export async function GET(
                             );
                         } catch (e) {
                             commentUser = await db.collection("user").findOne(
-                                { _id: commentUserIdString },
+                                { _id: commentUserIdString as any },
                                 { projection: { name: 1, image: 1 } }
                             );
                         }
@@ -75,7 +75,7 @@ export async function GET(
                                     );
                                 } catch (e) {
                                     replyUser = await db.collection("user").findOne(
-                                        { _id: replyUserIdString },
+                                        { _id: replyUserIdString as any },
                                         { projection: { name: 1, image: 1 } }
                                     );
                                 }
@@ -131,7 +131,7 @@ export async function GET(
                 );
             } catch (e) {
                 creator = await db.collection("user").findOne(
-                    { _id: creatorIdString },
+                    { _id: creatorIdString as any },
                     { projection: { name: 1, email: 1 } }
                 );
             }

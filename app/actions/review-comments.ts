@@ -1,8 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { getClient } from "@/lib/mongoose";
 import Company from "@/models/Company";
+import Profile from "@/models/Profile";
 import { requireUser } from "@/app/data/user/require-user";
 
 export async function addReviewComment(content: string, companyId: string, reviewId: string) {
@@ -31,8 +32,30 @@ export async function addReviewComment(content: string, companyId: string, revie
         review.comments.push(newComment);
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        // Track interaction in user's profile
+        try {
+            const profile = await Profile.findOne({ userId: session.user.id });
+            if (profile) {
+                profile.interactionHistory.push({
+                    type: "comment",
+                    targetId: companyId,
+                    targetType: "company",
+                    timestamp: new Date(),
+                });
+
+                if (profile.interactionHistory.length > 100) {
+                    profile.interactionHistory = profile.interactionHistory.slice(-100);
+                }
+
+                await profile.save();
+                console.log(`[addReviewComment] Tracked comment on company ${companyId}`);
+            }
+        } catch (error) {
+            console.error("[addReviewComment] Failed to track interaction:", error);
+        }
+
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true };
     } catch (error) {
         console.error("Failed to create comment:", error);
@@ -78,8 +101,8 @@ export async function addReviewReply(
         comment.replies.push(newReply);
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true };
     } catch (error) {
         console.error("Failed to create reply:", error);
@@ -118,8 +141,8 @@ export async function toggleReviewCommentLike(companyId: string, reviewId: strin
 
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true, isLiked: likeIndex === -1, likesCount: comment.likes.length };
     } catch (error) {
         console.error("Failed to toggle like:", error);
@@ -168,8 +191,8 @@ export async function toggleReviewReplyLike(
 
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true, isLiked: likeIndex === -1, likesCount: reply.likes.length };
     } catch (error) {
         console.error("Failed to toggle reply like:", error);
@@ -210,8 +233,8 @@ export async function updateReviewComment(
         comment.content = content;
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true };
     } catch (error) {
         console.error("Failed to update comment:", error);
@@ -247,8 +270,8 @@ export async function deleteReviewComment(companyId: string, reviewId: string, c
         review.comments.pull(commentId);
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true };
     } catch (error) {
         console.error("Failed to delete comment:", error);
@@ -295,8 +318,8 @@ export async function updateReviewReply(
         reply.content = content;
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true };
     } catch (error) {
         console.error("Failed to update reply:", error);
@@ -342,8 +365,8 @@ export async function deleteReviewReply(
         comment.replies.pull(replyId);
         await company.save();
 
-        updateTag(`company-${companyId}`);
-        updateTag(`company-slug-${company.slug}`);
+        revalidateTag(`company-${companyId}`, 'max');
+        revalidateTag(`company-slug-${company.slug}`, 'max');
         return { success: true };
     } catch (error) {
         console.error("Failed to delete reply:", error);
