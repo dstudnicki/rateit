@@ -49,9 +49,14 @@ export async function PersonalizedFeedServer() {
             const slugExists = await db.collection("profiles").findOne({ slug });
             const finalSlug = slugExists ? `${slug}-${Date.now()}` : slug;
 
+            // Get avatar from OAuth (GitHub or Google)
+            const avatarUrl = session.user.image || null;
+
             await db.collection("profiles").insertOne({
                 userId: session.user.id,
                 fullName: session.user.name || "User",
+                image: avatarUrl, // Avatar from GitHub/Google OAuth
+                backgroundImage: null, // User can upload later
                 headline: "",
                 bio: "",
                 location: "",
@@ -78,7 +83,7 @@ export async function PersonalizedFeedServer() {
                 updatedAt: new Date(),
             });
 
-            console.log(`[Feed] Created profile for OAuth user: ${session.user.id}`);
+            console.log(`[Feed] Created profile for OAuth user: ${session.user.id} with avatar: ${avatarUrl ? 'Yes' : 'No'}`);
 
             // Return redirect component for new users
             return <OnboardingRedirect />;

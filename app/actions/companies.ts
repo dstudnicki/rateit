@@ -12,6 +12,15 @@ import { updateCompanyKeywords } from "./company-keywords";
 import { requireAuth } from "@/lib/auth-helpers";
 import { validateCompanyReview, sanitizeString } from "@/lib/validation";
 import { requireNotBanned } from "@/lib/ban-check";
+import { put, del } from "@vercel/blob";
+import { headers } from "next/headers";
+
+type ActionResponse = {
+    success: boolean;
+    error?: string;
+    url?: string;
+    message?: string;
+};
 
 export async function createCompany(data: {
     name: string;
@@ -48,13 +57,13 @@ export async function createCompany(data: {
 
         // Generate slug from company name
         let slug = generateSlug(sanitizedData.name);
-        console.log('[createCompany] Generated slug:', slug, 'from name:', sanitizedData.name);
+        console.log("[createCompany] Generated slug:", slug, "from name:", sanitizedData.name);
 
         // Check if company with same slug already exists
         const existingCompany = await Company.findOne({ slug });
 
         if (existingCompany) {
-            console.log('[createCompany] Slug exists, generating new one');
+            console.log("[createCompany] Slug exists, generating new one");
             // Add a number suffix if slug exists
             let counter = 1;
             let newSlug = `${slug}-${counter}`;
@@ -63,7 +72,7 @@ export async function createCompany(data: {
                 newSlug = `${slug}-${counter}`;
             }
             slug = newSlug;
-            console.log('[createCompany] Final slug:', slug);
+            console.log("[createCompany] Final slug:", slug);
         }
 
         const newCompany = {
@@ -75,14 +84,14 @@ export async function createCompany(data: {
             averageRating: 0,
         };
 
-        console.log('[createCompany] Creating company with data:', { ...newCompany, slug });
+        console.log("[createCompany] Creating company with data:", { ...newCompany, slug });
 
         const result = await Company.create(newCompany);
 
-        console.log('[createCompany] Company created with _id:', result._id, 'slug:', result.slug);
+        console.log("[createCompany] Company created with _id:", result._id, "slug:", result.slug);
 
         const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
-        revalidateTag(`companies-list-${cacheBucket}`, 'max');
+        revalidateTag(`companies-list-${cacheBucket}`, "max");
 
         return { success: true, companyId: result._id.toString(), slug: result.slug };
     } catch (error) {
@@ -99,12 +108,22 @@ export async function addCompanyReview(
         rating: number;
         role: string;
         reviewType: "work" | "interview";
-    }
+        nick: string;
+    },
 ) {
     const user = await requireAuth();
 
     // Check if user is banned
     await requireNotBanned();
+
+    // Validate nick
+    if (!data.nick || data.nick.trim().length < 2) {
+        return { success: false, error: "Nickname must be at least 2 characters" };
+    }
+
+    if (data.nick.trim().length > 30) {
+        return { success: false, error: "Nickname is too long (max 30 characters)" };
+    }
 
     // Validate review data
     const validation = validateCompanyReview({
@@ -124,6 +143,7 @@ export async function addCompanyReview(
         rating: data.rating,
         role: sanitizeString(data.role),
         reviewType: data.reviewType,
+        nick: sanitizeString(data.nick.trim()),
     };
 
     if (!sanitizedData.title || sanitizedData.title.length === 0) {
@@ -144,9 +164,7 @@ export async function addCompanyReview(
         }
 
         // Check if user already reviewed this company
-        const existingReview = company.reviews.find(
-            (review: any) => review.user.toString() === user.id
-        );
+        const existingReview = company.reviews.find((review: any) => review.user.toString() === user.id);
 
         if (existingReview) {
             return { success: false, error: "You have already reviewed this company" };
@@ -171,10 +189,10 @@ export async function addCompanyReview(
         // Update company keywords based on new review content
         await updateCompanyKeywords(companyId);
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
-        revalidateTag(`companies-list-${cacheBucket}`, 'max');
+        revalidateTag(`companies-list-${cacheBucket}`, "max");
 
         return { success: true };
     } catch (error) {
@@ -191,7 +209,7 @@ export async function updateCompany(
         industry?: string;
         website?: string;
         description?: string;
-    }
+    },
 ) {
     const session = await requireUser();
 
@@ -212,10 +230,10 @@ export async function updateCompany(
         company.updatedAt = new Date();
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
-        revalidateTag(`companies-list-${cacheBucket}`, 'max');
+        revalidateTag(`companies-list-${cacheBucket}`, "max");
 
         return { success: true };
     } catch (error) {
@@ -244,10 +262,10 @@ export async function deleteCompany(companyId: string) {
 
         await Company.findByIdAndDelete(companyId);
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${companySlug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${companySlug}`, "max");
         const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
-        revalidateTag(`companies-list-${cacheBucket}`, 'max');
+        revalidateTag(`companies-list-${cacheBucket}`, "max");
 
         return { success: true };
     } catch (error) {
@@ -309,8 +327,8 @@ export async function toggleReviewLike(companyId: string, reviewId: string) {
             }
         }
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true, isLiked: isLiking, likesCount: review.likes.length };
     } catch (error) {
         console.error("Failed to toggle like:", error);
@@ -326,7 +344,7 @@ export async function updateReview(
         content?: string;
         rating?: number;
         role?: string;
-    }
+    },
 ) {
     const session = await requireUser();
 
@@ -358,8 +376,8 @@ export async function updateReview(
 
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to update review:", error);
@@ -399,8 +417,8 @@ export async function deleteReview(companyId: string, reviewId: string) {
 
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to delete review:", error);
@@ -408,21 +426,160 @@ export async function deleteReview(companyId: string, reviewId: string) {
     }
 }
 
+/**
+ * Add comment to review with anonymous nickname
+ */
+export async function addCommentToReview(companyId: string, reviewId: string, content: string, nick: string) {
+    const user = await requireAuth();
+    await requireNotBanned();
+
+    // Validate nick
+    if (!nick || nick.trim().length < 2) {
+        return { success: false, error: "Nickname must be at least 2 characters" };
+    }
+
+    if (nick.trim().length > 30) {
+        return { success: false, error: "Nickname is too long (max 30 characters)" };
+    }
+
+    // Validate content
+    if (!content || content.trim().length === 0) {
+        return { success: false, error: "Comment content is required" };
+    }
+
+    if (content.length > 1000) {
+        return { success: false, error: "Comment is too long (max 1000 characters)" };
+    }
+
+    const sanitizedContent = sanitizeString(content);
+    const sanitizedNick = sanitizeString(nick.trim());
+
+    try {
+        await getClient();
+        const company = await Company.findById(companyId);
+
+        if (!company) {
+            return { success: false, error: "Company not found" };
+        }
+
+        const review = company.reviews.id(reviewId);
+        if (!review) {
+            return { success: false, error: "Review not found" };
+        }
+
+        const newComment = {
+            content: sanitizedContent,
+            user: user.id,
+            nick: sanitizedNick,
+            likes: [],
+            replies: [],
+            createdAt: new Date(),
+        };
+
+        review.comments.push(newComment);
+        await company.save();
+
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to add comment:", error);
+        return { success: false, error: "Failed to add comment" };
+    }
+}
+
+/**
+ * Add reply to comment with anonymous nickname
+ */
+export async function addReplyToComment(companyId: string, reviewId: string, commentId: string, content: string, nick: string) {
+    const user = await requireAuth();
+    await requireNotBanned();
+
+    // Validate nick
+    if (!nick || nick.trim().length < 2) {
+        return { success: false, error: "Nickname must be at least 2 characters" };
+    }
+
+    if (nick.trim().length > 30) {
+        return { success: false, error: "Nickname is too long (max 30 characters)" };
+    }
+
+    // Validate content
+    if (!content || content.trim().length === 0) {
+        return { success: false, error: "Reply content is required" };
+    }
+
+    if (content.length > 1000) {
+        return { success: false, error: "Reply is too long (max 1000 characters)" };
+    }
+
+    const sanitizedContent = sanitizeString(content);
+    const sanitizedNick = sanitizeString(nick.trim());
+
+    try {
+        await getClient();
+        const company = await Company.findById(companyId);
+
+        if (!company) {
+            return { success: false, error: "Company not found" };
+        }
+
+        const review = company.reviews.id(reviewId);
+        if (!review) {
+            return { success: false, error: "Review not found" };
+        }
+
+        const comment = review.comments.id(commentId);
+        if (!comment) {
+            return { success: false, error: "Comment not found" };
+        }
+
+        const newReply = {
+            content: sanitizedContent,
+            user: user.id,
+            nick: sanitizedNick,
+            likes: [],
+            createdAt: new Date(),
+        };
+
+        comment.replies.push(newReply);
+        await company.save();
+
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to add reply:", error);
+        return { success: false, error: "Failed to add reply" };
+    }
+}
+
 // Helper to sanitize company data
 function sanitizeCompany(company: any): any {
     const plain: any = {
-        _id: String(company._id || ''),
-        name: String(company.name || ''),
-        slug: String(company.slug || ''),
-        location: String(company.location || ''),
-        industry: String(company.industry || ''),
+        _id: String(company._id || ""),
+        name: String(company.name || ""),
+        slug: String(company.slug || ""),
+        logo: company.logo ? String(company.logo) : null,
+        location: String(company.location || ""),
+        industry: String(company.industry || ""),
         website: company.website ? String(company.website) : null,
         description: company.description ? String(company.description) : null,
         detectedKeywords: Array.isArray(company.detectedKeywords) ? company.detectedKeywords.map((k: any) => String(k)) : [],
-        createdBy: String(company.createdBy || ''),
+        createdBy: String(company.createdBy || ""),
         averageRating: Number(company.averageRating || 0),
-        createdAt: company.createdAt ? (company.createdAt instanceof Date ? company.createdAt.toISOString() : String(company.createdAt)) : new Date().toISOString(),
-        updatedAt: company.updatedAt ? (company.updatedAt instanceof Date ? company.updatedAt.toISOString() : String(company.updatedAt)) : null,
+        createdAt: company.createdAt
+            ? company.createdAt instanceof Date
+                ? company.createdAt.toISOString()
+                : String(company.createdAt)
+            : new Date().toISOString(),
+        updatedAt: company.updatedAt
+            ? company.updatedAt instanceof Date
+                ? company.updatedAt.toISOString()
+                : String(company.updatedAt)
+            : null,
         reviews: [],
         reviewCount: 0,
         lastReviewDate: null,
@@ -431,22 +588,27 @@ function sanitizeCompany(company: any): any {
     // Sanitize reviews
     if (company.reviews && Array.isArray(company.reviews)) {
         plain.reviewCount = company.reviews.length;
-        plain.lastReviewDate = company.reviews.length > 0
-            ? (company.reviews[company.reviews.length - 1].createdAt instanceof Date
-                ? company.reviews[company.reviews.length - 1].createdAt.toISOString()
-                : String(company.reviews[company.reviews.length - 1].createdAt))
-            : null;
+        plain.lastReviewDate =
+            company.reviews.length > 0
+                ? company.reviews[company.reviews.length - 1].createdAt instanceof Date
+                    ? company.reviews[company.reviews.length - 1].createdAt.toISOString()
+                    : String(company.reviews[company.reviews.length - 1].createdAt)
+                : null;
 
         plain.reviews = company.reviews.map((r: any) => ({
-            _id: String(r._id || ''),
-            title: String(r.title || ''),
-            content: String(r.content || ''),
+            _id: String(r._id || ""),
+            title: String(r.title || ""),
+            content: String(r.content || ""),
             rating: Number(r.rating || 0),
-            role: String(r.role || ''),
-            reviewType: String(r.reviewType || 'work'),
-            user: String(r.user || ''),
+            role: String(r.role || ""),
+            reviewType: String(r.reviewType || "work"),
+            user: String(r.user || ""),
             likes: Array.isArray(r.likes) ? r.likes.map((l: any) => String(l)) : [],
-            createdAt: r.createdAt ? (r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt)) : new Date().toISOString(),
+            createdAt: r.createdAt
+                ? r.createdAt instanceof Date
+                    ? r.createdAt.toISOString()
+                    : String(r.createdAt)
+                : new Date().toISOString(),
             updatedAt: r.updatedAt ? (r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt)) : null,
             comments: [],
         }));
@@ -457,7 +619,7 @@ function sanitizeCompany(company: any): any {
 
 export async function getPersonalizedCompanies(limit: number = 20, skip: number = 0) {
     const session = await auth.api.getSession({
-        headers: await import("next/headers").then(m => m.headers()),
+        headers: await import("next/headers").then((m) => m.headers()),
     });
 
     if (!session) {
@@ -483,9 +645,10 @@ export async function getPersonalizedCompanies(limit: number = 20, skip: number 
             const genericCompanies = genericResult.success ? genericResult.companies : [];
 
             const allCompanies = [...personalizedCompanies, ...genericCompanies];
-            const uniqueCompanies = Array.from(
-                new Map(allCompanies.map(company => [company._id, company])).values()
-            ).slice(0, limit);
+            const uniqueCompanies = Array.from(new Map(allCompanies.map((company) => [company._id, company])).values()).slice(
+                0,
+                limit,
+            );
 
             return {
                 success: true,
@@ -502,9 +665,7 @@ export async function getPersonalizedCompanies(limit: number = 20, skip: number 
         const explorationCompanies = explorationResult.success ? explorationResult.companies : [];
 
         const allCompanies = [...personalizedCompanies, ...explorationCompanies];
-        const uniqueCompanies = Array.from(
-            new Map(allCompanies.map(company => [company._id, company])).values()
-        );
+        const uniqueCompanies = Array.from(new Map(allCompanies.map((company) => [company._id, company])).values());
 
         return {
             success: true,
@@ -517,10 +678,7 @@ export async function getPersonalizedCompanies(limit: number = 20, skip: number 
 }
 
 async function getPersonalizedCompaniesInternal(profile: any, limit: number, skip: number) {
-    const companies = await Company.find()
-        .sort({ createdAt: -1 })
-        .limit(100)
-        .lean();
+    const companies = await Company.find().sort({ createdAt: -1 }).limit(100).lean();
 
     const companiesPlain = companies.map((company: any) => sanitizeCompany(company));
 
@@ -537,9 +695,8 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
     const viewedCompanyIds = new Set<string>();
 
     // Get companies user has interacted with (last 30 days)
-    const recentCompanyInteractions = profile.interactionHistory.filter((int: any) =>
-        int.targetType === "company" &&
-        Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
+    const recentCompanyInteractions = profile.interactionHistory.filter(
+        (int: any) => int.targetType === "company" && Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000,
     );
 
     // Fetch those companies to learn preferences
@@ -560,10 +717,11 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
     });
 
     // Also learn from posts user has interacted with
-    const recentPostInteractions = profile.interactionHistory.filter((int: any) =>
-        int.targetType === "post" &&
-        int.type !== "view" &&
-        Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
+    const recentPostInteractions = profile.interactionHistory.filter(
+        (int: any) =>
+            int.targetType === "post" &&
+            int.type !== "view" &&
+            Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000,
     );
 
     const interactedPostIds = recentPostInteractions.map((int: any) => int.targetId);
@@ -600,16 +758,16 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
                 return true;
             }
 
-            const cleanExpCompany = expCompany
-                .replace(/\s+(group|inc|ltd|llc|corporation|corp|company|co\.?)$/i, '')
-                .trim();
+            const cleanExpCompany = expCompany.replace(/\s+(group|inc|ltd|llc|corporation|corp|company|co\.?)$/i, "").trim();
             const cleanCompanyName = companyNameLower
-                .replace(/\s+(group|inc|ltd|llc|corporation|corp|company|co\.?)$/i, '')
+                .replace(/\s+(group|inc|ltd|llc|corporation|corp|company|co\.?)$/i, "")
                 .trim();
 
-            return cleanExpCompany === cleanCompanyName ||
-                   cleanExpCompany.includes(cleanCompanyName) ||
-                   cleanCompanyName.includes(cleanExpCompany);
+            return (
+                cleanExpCompany === cleanCompanyName ||
+                cleanExpCompany.includes(cleanCompanyName) ||
+                cleanCompanyName.includes(cleanExpCompany)
+            );
         });
 
         if (hasWorkedHere) {
@@ -625,9 +783,7 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
 
         // 2. Skills match with company keywords - +10 points per match
         const matchingSkills = userSkills.filter((skill: string) =>
-            companyKeywords.some((keyword: string) =>
-                keyword.includes(skill) || skill.includes(keyword)
-            )
+            companyKeywords.some((keyword: string) => keyword.includes(skill) || skill.includes(keyword)),
         );
 
         if (matchingSkills.length > 0) {
@@ -635,29 +791,25 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
             score += points;
             matchReasons.push({
                 reason: `Matches your skills: ${matchingSkills.slice(0, 3).join(", ")}`,
-                points
+                points,
             });
         }
 
         // NEW: Match with learned keywords from interaction history (HIGHEST!)
-        const learnedKeywordMatches = companyKeywords.filter((keyword: string) =>
-            learnedKeywords.has(keyword)
-        );
+        const learnedKeywordMatches = companyKeywords.filter((keyword: string) => learnedKeywords.has(keyword));
 
         if (learnedKeywordMatches.length > 0) {
             const points = learnedKeywordMatches.length * 15;
             score += points;
             matchReasons.push({
                 reason: `Based on your activity: ${learnedKeywordMatches.slice(0, 3).join(", ")}`,
-                points
+                points,
             });
         }
 
         // 3. Preferred skills match with company keywords - +8 points per match
         const matchingPreferredSkills = preferredSkills.filter((skill: string) =>
-            companyKeywords.some((keyword: string) =>
-                keyword.includes(skill) || skill.includes(keyword)
-            )
+            companyKeywords.some((keyword: string) => keyword.includes(skill) || skill.includes(keyword)),
         );
 
         if (matchingPreferredSkills.length > 0) {
@@ -665,13 +817,13 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
             score += points;
             matchReasons.push({
                 reason: `Matches your interests: ${matchingPreferredSkills.slice(0, 3).join(", ")}`,
-                points
+                points,
             });
         }
 
         // 4. Industry match - +20 points
-        const industryMatch = preferredIndustries.some((industry: string) =>
-            companyIndustry.includes(industry) || industry.includes(companyIndustry)
+        const industryMatch = preferredIndustries.some(
+            (industry: string) => companyIndustry.includes(industry) || industry.includes(companyIndustry),
         );
 
         if (industryMatch) {
@@ -687,8 +839,9 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
 
         // 5. Experience in similar industry - +15 points
         const hasRelatedExperience = userExperience.some((exp: any) => {
-            return exp.title?.toLowerCase().includes(companyIndustry) ||
-                   exp.description?.toLowerCase().includes(companyIndustry);
+            return (
+                exp.title?.toLowerCase().includes(companyIndustry) || exp.description?.toLowerCase().includes(companyIndustry)
+            );
         });
 
         if (hasRelatedExperience) {
@@ -700,9 +853,7 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
         const userEducation = profile.education || [];
         const educationMatch = userEducation.some((edu: any) => {
             const field = edu.field?.toLowerCase() || "";
-            return companyKeywords.some((keyword: string) =>
-                keyword.includes(field) || field.includes(keyword)
-            );
+            return companyKeywords.some((keyword: string) => keyword.includes(field) || field.includes(keyword));
         });
 
         if (educationMatch) {
@@ -727,7 +878,7 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
             score += qualityBoost;
             matchReasons.push({
                 reason: `High quality (${averageRating.toFixed(1)}⭐, ${reviewCount} reviews)`,
-                points: qualityBoost
+                points: qualityBoost,
             });
         }
 
@@ -738,7 +889,7 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
             score += recencyBoost;
             matchReasons.push({
                 reason: `New company (${Math.round(daysSinceCreation)} days old)`,
-                points: Math.round(recencyBoost * 10) / 10
+                points: Math.round(recencyBoost * 10) / 10,
             });
         }
 
@@ -748,7 +899,7 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
     return scoredCompanies
         .sort((a, b) => b.score - a.score)
         .slice(skip, skip + limit)
-        .map(company => ({
+        .map((company) => ({
             ...company,
             matchScore: Math.round(company.score * 10) / 10,
         }));
@@ -758,10 +909,7 @@ export async function getGenericCompanies(limit: number = 20, skip: number = 0) 
     try {
         await getClient();
 
-        const companies = await Company.find()
-            .sort({ createdAt: -1 })
-            .limit(50)
-            .lean();
+        const companies = await Company.find().sort({ createdAt: -1 }).limit(50).lean();
 
         const companiesPlain = companies.map((company: any) => sanitizeCompany(company));
 
@@ -783,12 +931,10 @@ export async function getGenericCompanies(limit: number = 20, skip: number = 0) 
         const sortedCompanies = scoredCompanies
             .sort((a, b) => b.score - a.score)
             .slice(skip, skip + limit)
-            .map(company => ({
+            .map((company) => ({
                 ...company,
                 matchScore: Math.round(company.score * 10) / 10,
-                matchReasons: [
-                    { reason: `Generic feed (popularity-based)`, points: Math.round(company.score * 10) / 10 }
-                ]
+                matchReasons: [{ reason: `Generic feed (popularity-based)`, points: Math.round(company.score * 10) / 10 }],
             }));
 
         return {
@@ -798,5 +944,148 @@ export async function getGenericCompanies(limit: number = 20, skip: number = 0) 
     } catch (error) {
         console.error("Failed to get generic companies:", error);
         return { success: false, error: "Failed to load companies", companies: [] };
+    }
+}
+
+/**
+ * Upload company logo
+ */
+export async function uploadCompanyLogo(formData: FormData, companyId: string): Promise<ActionResponse> {
+    try {
+        // Check authentication
+        const user = await requireAuth();
+
+        const file = formData.get("file") as File;
+        if (!file) {
+            return { success: false, error: "No file provided" };
+        }
+
+        // Validate file
+        const validTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+        if (!validTypes.includes(file.type)) {
+            return { success: false, error: "Invalid file type. Please upload JPG, PNG, WebP, or SVG" };
+        }
+
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            return { success: false, error: "File size exceeds 5MB limit" };
+        }
+
+        await getClient();
+        const company = await Company.findById(companyId);
+
+        if (!company) {
+            return { success: false, error: "Company not found" };
+        }
+
+        // Check if user is creator of company or admin
+        const isCreator = company.createdBy.toString() === user.id;
+        const isAdmin = user.role === "admin";
+
+        if (!isCreator && !isAdmin) {
+            return { success: false, error: "You don't have permission to update this company's logo" };
+        }
+
+        // Delete old logo from Vercel Blob if exists
+        if (company.logo && company.logo.includes("blob.vercel-storage.com")) {
+            try {
+                await del(company.logo, {
+                    token: process.env.BLOB_READ_WRITE_TOKEN!,
+                });
+                console.log(`[Companies] Deleted old logo: ${company.logo}`);
+            } catch (error) {
+                console.warn(`[Companies] Could not delete old logo:`, error);
+            }
+        }
+
+        // Upload new logo with timestamp to avoid cache issues
+        const timestamp = Date.now();
+        const filename = `companies/logos/${companyId}-${timestamp}.${file.name.split(".").pop()}`;
+
+        const blob = await put(filename, file, {
+            access: "public",
+            token: process.env.BLOB_READ_WRITE_TOKEN!,
+        });
+
+        // Update company logo in DB
+        company.logo = blob.url;
+        await company.save();
+
+        // Revalidate cache
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
+        const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+        revalidateTag(`companies-list-${cacheBucket}`, "max");
+
+        console.log(`[Companies] Updated logo for ${company.name}: ${blob.url}`);
+
+        return {
+            success: true,
+            url: blob.url,
+            message: "Company logo updated successfully",
+        };
+    } catch (error) {
+        console.error(`[Companies] Logo upload error:`, error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to upload logo",
+        };
+    }
+}
+
+/**
+ * Delete company logo
+ */
+export async function deleteCompanyLogo(companyId: string): Promise<ActionResponse> {
+    try {
+        // Check authentication and admin role
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            return { success: false, error: "Authentication required" };
+        }
+
+        const user = await requireAuth();
+        if (user.role !== "admin") {
+            return { success: false, error: "Admin access required" };
+        }
+
+        await getClient();
+        const company = await Company.findById(companyId);
+
+        if (!company) {
+            return { success: false, error: "Company not found" };
+        }
+
+        // Delete from Vercel Blob if exists
+        if (company.logo && company.logo.includes("blob.vercel-storage.com")) {
+            try {
+                await del(company.logo, {
+                    token: process.env.BLOB_READ_WRITE_TOKEN!,
+                });
+                console.log(`[Companies] Deleted logo: ${company.logo}`);
+            } catch (error) {
+                console.warn(`[Companies] Could not delete logo:`, error);
+            }
+        }
+
+        // Remove logo from company
+        company.logo = undefined;
+        await company.save();
+
+        console.log(`[Companies] Removed logo for ${company.name}`);
+
+        return {
+            success: true,
+            message: "Company logo removed successfully",
+        };
+    } catch (error) {
+        console.error(`[Companies] Logo delete error:`, error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to delete logo",
+        };
     }
 }

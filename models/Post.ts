@@ -49,6 +49,9 @@ const postSchema = new Schema({
         ref: "user",
         required: true,
     },
+    images: [{
+        type: String, // URLs to images in Vercel Blob
+    }],
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",

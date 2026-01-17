@@ -8,6 +8,7 @@ interface CompanyHeaderProps {
   company: {
     _id: string
     name: string
+      logo: string
     location: string
     industry: string
     averageRating: number
@@ -45,8 +46,12 @@ export function CompanyHeader({ company }: CompanyHeaderProps) {
   return (
     <Card className="p-6">
       <div className="flex items-start gap-6">
-        <Avatar className="h-20 w-20 rounded-lg">
-          <AvatarImage src="/generic-company-logo.png" />
+        <Avatar className="size-24 rounded-lg">
+          <AvatarImage
+            src={company.logo}
+            className="object-cover object-center p-2 bg-white"
+            alt={`${company.name} logo`}
+          />
           <AvatarFallback className="rounded-lg text-2xl">{initials}</AvatarFallback>
         </Avatar>
 

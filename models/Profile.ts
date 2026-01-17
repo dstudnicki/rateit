@@ -43,6 +43,8 @@ export interface IProfile extends Document {
     userId: string; // Reference to Better Auth user ID
     slug?: string; // URL-friendly slug for profile (optional for backwards compatibility)
     fullName?: string;
+    image?: string; // Avatar URL (from OAuth or uploaded)
+    backgroundImage?: string; // Profile banner/background image
     headline?: string;
     location?: string;
     about?: string;
@@ -100,6 +102,8 @@ const ProfileSchema = new Schema(
         userId: { type: String, required: true, unique: true },
         slug: { type: String, required: true, unique: true },
         fullName: { type: String },
+        image: { type: String }, // Avatar from OAuth or uploaded
+        backgroundImage: { type: String }, // Profile banner
         headline: { type: String },
         location: { type: String },
         about: { type: String },

@@ -31,103 +31,60 @@ export async function GET(
             return NextResponse.json({ message: "Company not found." }, { status: 404 });
         }
 
-        // Populate user data for reviews and their comments
+        // Populate comments with user data (reviews now use nick, no need to populate user)
         const reviewsWithUsers = await Promise.all(
             (company.reviews || []).map(async (review: any) => {
-                let reviewUser;
                 const reviewUserIdString = typeof review.user === 'string' ? review.user : review.user.toString();
-
-                try {
-                    reviewUser = await db.collection("user").findOne(
-                        { _id: new ObjectId(reviewUserIdString) },
-                        { projection: { name: 1, email: 1, _id: 1, image: 1 } }
-                    );
-                } catch (e) {
-                    reviewUser = await db.collection("user").findOne(
-                        { _id: reviewUserIdString as any },
-                        { projection: { name: 1, email: 1, _id: 1, image: 1 } }
-                    );
-                }
-
-                // Populate profile data
-                let profile = null;
-                if (reviewUser) {
-                    profile = await db.collection("profiles").findOne(
-                        { userId: reviewUserIdString },
-                        { projection: { slug: 1, fullName: 1, headline: 1 } }
-                    );
-                }
 
                 // Populate comments with user data
                 const commentsWithUsers = await Promise.all(
                     (review.comments || []).map(async (comment: any) => {
                         const commentUserIdString = typeof comment.user === 'string' ? comment.user : comment.user.toString();
 
-                        let commentUser;
-                        try {
-                            commentUser = await db.collection("user").findOne(
-                                { _id: new ObjectId(commentUserIdString) },
-                                { projection: { name: 1, image: 1 } }
-                            );
-                        } catch (e) {
-                            commentUser = await db.collection("user").findOne(
-                                { _id: commentUserIdString as any },
-                                { projection: { name: 1, image: 1 } }
-                            );
-                        }
+                        // Populate replies - no need for user data, we use nick
+                        const repliesWithUsers = (comment.replies || []).map((reply: any) => {
+                            const replyUserIdString = typeof reply.user === 'string' ? reply.user : reply.user.toString();
 
-                        // Populate replies with user data
-                        const repliesWithUsers = await Promise.all(
-                            (comment.replies || []).map(async (reply: any) => {
-                                const replyUserIdString = typeof reply.user === 'string' ? reply.user : reply.user.toString();
-
-                                let replyUser;
-                                try {
-                                    replyUser = await db.collection("user").findOne(
-                                        { _id: new ObjectId(replyUserIdString) },
-                                        { projection: { name: 1, image: 1 } }
-                                    );
-                                } catch (e) {
-                                    replyUser = await db.collection("user").findOne(
-                                        { _id: replyUserIdString as any },
-                                        { projection: { name: 1, image: 1 } }
-                                    );
-                                }
-
-                                return {
-                                    ...reply,
-                                    user: replyUser ? {
-                                        name: replyUser.name,
-                                        _id: replyUserIdString,
-                                        image: replyUser.image || null,
-                                    } : null
-                                };
-                            })
-                        );
+                            return {
+                                _id: reply._id?.toString() || reply._id,
+                                content: reply.content,
+                                nick: reply.nick, // ✅ Explicitly pass nick
+                                user: {
+                                    _id: replyUserIdString,
+                                },
+                                likes: reply.likes || [],
+                                createdAt: reply.createdAt,
+                            };
+                        });
 
                         return {
-                            ...comment,
-                            user: commentUser ? {
-                                name: commentUser.name,
+                            _id: comment._id?.toString() || comment._id,
+                            content: comment.content,
+                            nick: comment.nick, // ✅ Explicitly pass nick
+                            user: {
                                 _id: commentUserIdString,
-                                image: commentUser.image || null,
-                            } : null,
+                            },
+                            likes: comment.likes || [],
+                            createdAt: comment.createdAt,
                             replies: repliesWithUsers
                         };
                     })
                 );
 
                 return {
-                    ...review,
-                    user: reviewUser ? {
-                        name: reviewUser.name,
-                        email: reviewUser.email,
+                    _id: review._id?.toString() || review._id,
+                    title: review.title,
+                    content: review.content,
+                    rating: review.rating,
+                    role: review.role,
+                    reviewType: review.reviewType,
+                    nick: review.nick, // ✅ Explicitly pass nick
+                    user: {
                         _id: reviewUserIdString,
-                        image: reviewUser.image || null,
-                        slug: profile?.slug || reviewUser.name,
-                        fullName: profile?.fullName || null,
-                        headline: profile?.headline || null,
-                    } : null,
+                    },
+                    likes: review.likes || [],
+                    createdAt: review.createdAt,
+                    updatedAt: review.updatedAt,
                     comments: commentsWithUsers
                 };
             })

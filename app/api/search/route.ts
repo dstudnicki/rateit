@@ -189,12 +189,12 @@ export async function GET(request: NextRequest) {
                     try {
                         user = await db.collection("user").findOne(
                             { _id: new ObjectId(profile.userId) },
-                            { projection: { name: 1, email: 1, image: 1 } }
+                            { projection: { name: 1, email: 1, image: 1, userImage: 1 } }
                         );
                     } catch (e) {
                         user = await db.collection("user").findOne(
                             { _id: profile.userId },
-                            { projection: { name: 1, email: 1, image: 1 } }
+                            { projection: { name: 1, email: 1, image: 1, userImage: 1 } }
                         );
                     }
 
@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
                         user: {
                             name: user.name || '',
                             email: user.email || '',
-                            image: user.image || null,
+                            image: user.userImage || user.image || null,
                         },
                         score: calculateScore({ ...profile, user }, query, 'profile'),
                     };
@@ -305,12 +305,12 @@ export async function GET(request: NextRequest) {
                     try {
                         user = await db.collection("user").findOne(
                             { _id: new ObjectId(userIdString) },
-                            { projection: { name: 1, image: 1 } }
+                            { projection: { name: 1, image: 1, userImage: 1 } }
                         );
                     } catch (e) {
                         user = await db.collection("user").findOne(
                             { _id: userIdString as any },
-                            { projection: { name: 1, image: 1 } }
+                            { projection: { name: 1, image: 1, userImage: 1 } }
                         );
                     }
 
@@ -330,7 +330,7 @@ export async function GET(request: NextRequest) {
                             name: user.name || '',
                             headline: profile?.headline || null,
                             slug: profile?.slug || user.name,
-                            image: user.image || null,
+                            image: user.userImage || user.image || null,
                         },
                         score: calculateScore(post, query, 'post'),
                     };
@@ -380,4 +380,3 @@ export async function GET(request: NextRequest) {
         );
     }
 }
-

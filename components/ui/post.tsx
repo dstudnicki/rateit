@@ -1,33 +1,21 @@
-"use client"
+"use client";
 
-import React, { useState, useTransition, useEffect } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
-import { CommentSection } from "@/components/comment-section"
-import { authClient } from "@/lib/auth-client"
-import { deletePost, updatePost } from "@/app/actions/posts"
-import { togglePostLike } from "@/app/actions/comments"
-import { trackInteraction } from "@/app/actions/preferences"
-import { useRouter } from "next/navigation"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
+import React, { useState, useTransition, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { CommentSection } from "@/components/comment-section";
+import { authClient } from "@/lib/auth-client";
+import { deletePost, updatePost } from "@/app/actions/posts";
+import { togglePostLike } from "@/app/actions/comments";
+import { trackInteraction } from "@/app/actions/preferences";
+import { useRouter } from "next/navigation";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Comment {
     _id: string;
@@ -40,44 +28,45 @@ interface Comment {
 }
 
 interface Post {
-    _id: string
+    _id: string;
     user: {
         _id: string | undefined;
-        name: string
-        slug?: string
-        fullName?: string | null
-        headline?: string | null
-        image?: string | null
-    }
-    content: string
-    likes?: string[] // Array of user IDs who liked the post
-    comments: Comment[]
-    createdAt: string
+        name: string;
+        slug?: string;
+        fullName?: string | null;
+        headline?: string | null;
+        image?: string | null;
+    };
+    content: string;
+    images?: string[];
+    likes?: string[]; // Array of user IDs who liked the post
+    comments: Comment[];
+    createdAt: string;
 }
 
 interface PostCardProps {
     post: Post;
 }
 
-export function PostCard({post }:PostCardProps) {
-    const session = authClient.useSession()
-    const currentUserId = session.data?.user?.id
+export function PostCard({ post }: PostCardProps) {
+    const session = authClient.useSession();
+    const currentUserId = session.data?.user?.id;
 
     // Initialize likes based on post data
     const initialLikesCount = Array.isArray(post.likes) ? post.likes.length : 0;
-    const initialIsLiked = currentUserId ? (Array.isArray(post.likes) && post.likes.includes(currentUserId)) : false;
+    const initialIsLiked = currentUserId ? Array.isArray(post.likes) && post.likes.includes(currentUserId) : false;
 
-    const [isLiked, setIsLiked] = useState(initialIsLiked as boolean | undefined)
-    const [likesCount, setLikesCount] = useState(initialLikesCount)
-    const [showComments, setShowComments] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
-    const [editedContent, setEditedContent] = useState(post.content)
-    const [isPending, startTransition] = useTransition()
-    const router = useRouter()
+    const [isLiked, setIsLiked] = useState(initialIsLiked as boolean | undefined);
+    const [likesCount, setLikesCount] = useState(initialLikesCount);
+    const [showComments, setShowComments] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedContent, setEditedContent] = useState(post.content);
+    const [isPending, startTransition] = useTransition();
+    const router = useRouter();
 
     // Debug: Check what data we're receiving
     useEffect(() => {
-        console.log('[PostCard] Post data:', {
+        console.log("[PostCard] Post data:", {
             userId: post.user._id,
             userName: post.user.name,
             userFullName: post.user.fullName,
@@ -87,15 +76,15 @@ export function PostCard({post }:PostCardProps) {
     }, [post]);
 
     // Use fallbacks that handle empty strings (not just null/undefined)
-    const displayName = (post.user.fullName && post.user.fullName.trim()) || post.user.name || "Anonymous User"
-    const profileSlug = (post.user.slug && post.user.slug.trim()) || post.user.name || "user"
-    const headline = (post.user.headline && post.user.headline.trim()) || ""
-    const isOwnPost = currentUserId === post.user._id
+    const displayName = (post.user.fullName && post.user.fullName.trim()) || post.user.name || "Anonymous User";
+    const profileSlug = (post.user.slug && post.user.slug.trim()) || post.user.name || "user";
+    const headline = (post.user.headline && post.user.headline.trim()) || "";
+    const isOwnPost = currentUserId === post.user._id;
 
     // Update likes state when post data changes (after server refresh)
     useEffect(() => {
         const newLikesCount = Array.isArray(post.likes) ? post.likes.length : 0;
-        const newIsLiked = currentUserId ? (Array.isArray(post.likes) && post.likes.includes(currentUserId)) : false;
+        const newIsLiked = currentUserId ? Array.isArray(post.likes) && post.likes.includes(currentUserId) : false;
 
         setLikesCount(newLikesCount);
         setIsLiked(newIsLiked);
@@ -138,50 +127,50 @@ export function PostCard({post }:PostCardProps) {
             setLikesCount(prevCount);
             console.error("Failed to like post:", error);
         }
-    }
+    };
 
     const handleCommentClick = () => {
-        setShowComments(!showComments)
+        setShowComments(!showComments);
 
         // Track interaction for personalization when opening comments
         if (!showComments && currentUserId) {
             trackInteraction(post._id, "post", "comment").catch(console.error);
         }
-    }
+    };
 
     const handleEdit = () => {
-        setIsEditing(true)
-    }
+        setIsEditing(true);
+    };
 
     const handleSaveEdit = () => {
         startTransition(async () => {
-            const result = await updatePost(post._id, editedContent)
+            const result = await updatePost(post._id, editedContent);
             if (result.success) {
-                setIsEditing(false)
-                router.refresh()
+                setIsEditing(false);
+                router.refresh();
             } else {
-                alert(result.error || "Failed to update post")
+                alert(result.error || "Failed to update post");
             }
-        })
-    }
+        });
+    };
 
     const handleCancelEdit = () => {
-        setEditedContent(post.content)
-        setIsEditing(false)
-    }
+        setEditedContent(post.content);
+        setIsEditing(false);
+    };
 
     const handleDelete = () => {
         if (confirm("Are you sure you want to delete this post?")) {
             startTransition(async () => {
-                const result = await deletePost(post._id)
+                const result = await deletePost(post._id);
                 if (result.success) {
-                    router.refresh()
+                    router.refresh();
                 } else {
-                    alert(result.error || "Failed to delete post")
+                    alert(result.error || "Failed to delete post");
                 }
-            })
+            });
         }
-    }
+    };
 
     return (
         <Card className="p-4 hover:bg-secondary/50 transition-colors">
@@ -205,15 +194,15 @@ export function PostCard({post }:PostCardProps) {
                             </Link>
                             <p className="text-xs text-muted-foreground leading-tight">{headline}</p>
                             <span className="text-xs text-muted-foreground mt-0.5">
-                    {new Intl.DateTimeFormat("en-US", {
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                    }).format(new Date(post.createdAt))}
-                </span>
+                                {new Intl.DateTimeFormat("en-US", {
+                                    hour: "numeric",
+                                    minute: "numeric",
+                                    hour12: true,
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                }).format(new Date(post.createdAt))}
+                            </span>
                         </div>
                         {isOwnPost && (
                             <DropdownMenu>
@@ -244,11 +233,41 @@ export function PostCard({post }:PostCardProps) {
                     <div className="mt-3">
                         <p className="text-sm leading-relaxed whitespace-pre-wrap text-balance">{post.content}</p>
 
-                        {/*  {post.image && (
-              <div className="mt-3 rounded-lg overflow-hidden border">
-                <img src={post.image || "/placeholder.svg"} alt="Post content" className="w-full h-auto" />
-              </div>
-            )}*/}
+                        {/* Post Images */}
+                        {post.images && post.images.length > 0 && (
+                            <div
+                                className={`mt-3 rounded-lg overflow-hidden border grid gap-1 ${
+                                    post.images.length === 1
+                                        ? "grid-cols-1"
+                                        : post.images.length === 2
+                                          ? "grid-cols-2"
+                                          : post.images.length === 3
+                                            ? "grid-cols-2"
+                                            : "grid-cols-2"
+                                }`}
+                            >
+                                {post.images.slice(0, 4).map((image, index) => (
+                                    <div
+                                        key={index}
+                                        className={`relative ${
+                                            post.images?.length === 3 && index === 0 ? "col-span-2" : ""
+                                        } bg-muted/50`}
+                                    >
+                                        <img
+                                            src={image}
+                                            alt={`Post image ${index + 1}`}
+                                            className={`w-full object-contain ${
+                                                post.images?.length === 1
+                                                    ? "max-h-[500px]"
+                                                    : post.images?.length === 2
+                                                      ? "max-h-[400px] aspect-square object-cover"
+                                                      : "max-h-[300px] aspect-square object-cover"
+                                            }`}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Engagement Stats */}
@@ -305,9 +324,7 @@ export function PostCard({post }:PostCardProps) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit post</DialogTitle>
-                        <DialogDescription>
-                            Make changes to your post below.
-                        </DialogDescription>
+                        <DialogDescription>Make changes to your post below.</DialogDescription>
                     </DialogHeader>
                     <Textarea
                         value={editedContent}
@@ -317,22 +334,15 @@ export function PostCard({post }:PostCardProps) {
                         disabled={isPending}
                     />
                     <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={handleCancelEdit}
-                            disabled={isPending}
-                        >
+                        <Button variant="outline" onClick={handleCancelEdit} disabled={isPending}>
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleSaveEdit}
-                            disabled={isPending || !editedContent.trim()}
-                        >
+                        <Button onClick={handleSaveEdit} disabled={isPending || !editedContent.trim()}>
                             {isPending ? "Saving..." : "Save changes"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </Card>
-    )
+    );
 }

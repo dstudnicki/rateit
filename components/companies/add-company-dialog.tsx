@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Building2, Plus } from "lucide-react"
-import { createCompany } from "@/app/actions/companies"
+import { createCompany, uploadCompanyLogo } from "@/app/actions/companies"
+import { compressImage } from "@/lib/image-compression"
 import { useRouter } from "next/navigation"
 
 export function AddCompanyDialog() {
@@ -17,6 +18,7 @@ export function AddCompanyDialog() {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -30,10 +32,47 @@ export function AddCompanyDialog() {
     setIsSubmitting(true)
     setError(null)
 
-    const result = await createCompany(formData)
+    try {
+      // First, create the company
+      const result = await createCompany(formData)
 
-    if (result.success) {
+      if (!result.success) {
+        setError(result.error || "Failed to create company")
+        setIsSubmitting(false)
+        return
+      }
+
+      const companyId = result.companyId
+
+      // If logo file is provided, compress and upload it
+      if (logoFile && companyId) {
+        try {
+          // Compress image before upload
+          const compressedFile = await compressImage(logoFile, {
+            maxWidthOrHeight: 800,
+            maxSizeMB: 1,
+          })
+
+          // Create FormData for upload
+          const logoFormData = new FormData()
+          logoFormData.append("file", compressedFile)
+
+          // Upload to Vercel Blob
+          const uploadResult = await uploadCompanyLogo(logoFormData, companyId)
+
+          if (!uploadResult.success) {
+            console.error("Logo upload failed:", uploadResult.error)
+            // Don't fail the whole process if logo upload fails
+          }
+        } catch (uploadError) {
+          console.error("Error uploading logo:", uploadError)
+          // Don't fail the whole process if logo upload fails
+        }
+      }
+
+      // Success - close dialog and reset
       setOpen(false)
+      setLogoFile(null)
       setFormData({
         name: "",
         location: "",
@@ -42,15 +81,16 @@ export function AddCompanyDialog() {
         description: "",
       })
       router.refresh()
+
       // Redirect to the new company page using slug
       if (result.slug) {
         router.push(`/companies/${result.slug}`)
       }
-    } else {
-      setError(result.error || "Failed to create company")
+    } catch (err) {
+      setError("An unexpected error occurred")
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setIsSubmitting(false)
   }
 
   return (
@@ -128,6 +168,30 @@ export function AddCompanyDialog() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="logo">
+              Company Logo (Optional)
+              <span className="text-xs text-muted-foreground ml-2">
+                Help others recognize the company
+              </span>
+            </Label>
+            <Input
+              id="logo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/svg+xml"
+              onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+              className="cursor-pointer"
+            />
+            {logoFile && (
+              <p className="text-xs text-muted-foreground">
+                Selected: {logoFile.name} ({(logoFile.size / 1024).toFixed(2)} KB)
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Accepted formats: JPG, PNG, WebP, SVG (max 5MB)
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

@@ -126,12 +126,12 @@ export async function getProfileBySlug(slug: string) {
         try {
             user = await db.collection("user").findOne(
                 { _id: new ObjectId(profile.userId) },
-                { projection: { name: 1, email: 1, _id: 1 } }
+                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
             );
         } catch (e) {
             user = await db.collection("user").findOne(
                 { _id: profile.userId as any },
-                { projection: { name: 1, email: 1, _id: 1 } }
+                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
             );
         }
 
@@ -142,7 +142,7 @@ export async function getProfileBySlug(slug: string) {
         return {
             success: true,
             profile: JSON.parse(JSON.stringify(profile)),
-            user: { id: user._id.toString(), name: user.name, email: user.email }
+            user: { id: user._id.toString(), name: user.name, email: user.email, image: user.userImage || user.image }
         };
     } catch (error) {
         console.error("Error fetching profile by slug:", error);
@@ -155,6 +155,8 @@ export async function updateProfile(data: {
     headline?: string;
     location?: string;
     about?: string;
+    image?: string;
+    backgroundImage?: string;
 }) {
     const session = await requireUser();
 

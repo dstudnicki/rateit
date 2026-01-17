@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -8,12 +8,41 @@ import { Textarea } from "@/components/ui/textarea"
 import { ImageIcon, Video, FileText, Smile } from "lucide-react"
 import { createPost } from "@/app/actions/posts";
 import { useRouter } from "next/navigation"
+import ImageUpload from "@/components/image-upload"
 
 export function CreatePost() {
   const [content, setContent] = useState("")
   const [isExpanded, setIsExpanded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [images, setImages] = useState<string[]>([])
+  const [showImageUpload, setShowImageUpload] = useState(false)
+  const [userImage, setUserImage] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string>("ME")
   const router = useRouter()
+
+  useEffect(() => {
+    // Fetch current user profile for avatar
+    async function fetchUserProfile() {
+      try {
+        const response = await fetch('/api/auth/get-session')
+        const session = await response.json()
+        if (session?.user) {
+          setUserName(session.user.name || "ME")
+          // Try to fetch profile image
+          const profileResponse = await fetch('/api/profile/current')
+          const profileData = await profileResponse.json()
+          if (profileData?.profile?.image) {
+            setUserImage(profileData.profile.image)
+          } else if (session.user.image) {
+            setUserImage(session.user.image)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+    fetchUserProfile()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +52,14 @@ export function CreatePost() {
 
     // Optimistic update - clear form immediately for better UX
     const postContent = content
+    const postImages = images
     setContent("")
+    setImages([])
     setIsExpanded(false)
+    setShowImageUpload(false)
 
     try {
-      const result = await createPost(postContent);
+      const result = await createPost(postContent, postImages);
 
       if (result.success) {
         // Refresh the page to show the new post (cache is invalidated server-side)
@@ -35,12 +67,14 @@ export function CreatePost() {
       } else {
         // Restore content on error
         setContent(postContent)
+        setImages(postImages)
         setIsExpanded(true)
         alert("Failed to create post. Please try again.")
       }
     } catch (error) {
       // Restore content on error
       setContent(postContent)
+      setImages(postImages)
       setIsExpanded(true)
       alert("Failed to create post. Please try again.")
     } finally {
@@ -52,8 +86,8 @@ export function CreatePost() {
     <Card className="p-4">
       <div className="flex gap-3">
         <Avatar className="h-12 w-12">
-          <AvatarImage src="/diverse-user-avatars.png" />
-          <AvatarFallback>ME</AvatarFallback>
+          <AvatarImage src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} />
+          <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
 
         <div className="flex-1">
@@ -68,12 +102,37 @@ export function CreatePost() {
 
           {isExpanded && (
             <div className="mt-4 space-y-4">
+              {/* Image Upload */}
+              {showImageUpload && (
+                <ImageUpload
+                  mode="multiple"
+                  maxFiles={4}
+                  onUpload={(urls) => setImages(urls)}
+                  existingImages={images}
+                  folder="posts"
+                />
+              )}
+
               {/* Media Options */}
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="gap-2" disabled={isSubmitting}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isSubmitting}
+                  onClick={() => setShowImageUpload(!showImageUpload)}
+                  type="button"
+                >
                   <ImageIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Photo</span>
+                  <span className="hidden sm:inline">
+                    {showImageUpload ? "Hide photos" : "Add photos"}
+                  </span>
                 </Button>
+                {images.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {images.length} {images.length === 1 ? "image" : "images"}
+                  </span>
+                )}
               </div>
 
               {/* Post Actions */}
@@ -84,6 +143,8 @@ export function CreatePost() {
                   onClick={() => {
                     setIsExpanded(false)
                     setContent("")
+                    setImages([])
+                    setShowImageUpload(false)
                   }}
                   disabled={isSubmitting}
                 >

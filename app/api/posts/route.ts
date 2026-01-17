@@ -47,12 +47,12 @@ export async function GET() {
                     try {
                         user = await db.collection("user").findOne(
                             { _id: new ObjectId(userIdString) },
-                            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
+                            { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
                         );
                     } catch (e) {
                         user = await db.collection("user").findOne(
                             { _id: userIdString as any },
-                            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
+                            { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
                         );
                     }
 
@@ -72,7 +72,7 @@ export async function GET() {
                                 fullName: (profile?.fullName && profile.fullName.trim()) || null,
                                 headline: (profile?.headline && profile.headline.trim()) || null,
                                 location: (profile?.location && profile.location.trim()) || null,
-                                image: user.image || null,
+                                image: user.userImage || user.image || null,
                             }
                         };
                     }

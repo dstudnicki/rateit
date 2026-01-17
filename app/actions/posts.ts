@@ -10,7 +10,7 @@ import { requireAuth, canModifyResource } from "@/lib/auth-helpers";
 import { validatePostContent, sanitizeString } from "@/lib/validation";
 import { requireNotBanned } from "@/lib/ban-check";
 
-export async function createPost(content: string) {
+export async function createPost(content: string, images: string[] = []) {
     const user = await requireAuth();
 
     // Check if user is banned
@@ -30,16 +30,23 @@ export async function createPost(content: string) {
         // Analyze content for companies, skills, and industries
         const analysis = analyzePostContent(sanitizedContent);
 
+        console.log("[createPost] Received images:", images);
+        console.log("[createPost] Images length:", images.length);
+
         const newPost = {
             content: sanitizedContent,
             user: user.id,
+            images: images || [], // Ensure images is always an array
             createdAt: new Date(),
             detectedCompanies: analysis.detectedCompanies,
             detectedSkills: analysis.detectedSkills,
             detectedIndustries: analysis.detectedIndustries,
         };
 
-        await Post.create(newPost);
+        console.log("[createPost] Creating post with data:", JSON.stringify(newPost, null, 2));
+
+        const createdPost = await Post.create(newPost);
+        console.log("[createPost] Post created with images:", createdPost.images);
 
 
         return { success: true };
@@ -121,6 +128,7 @@ function sanitizePost(post: any): any {
         _id: String(post._id || ''),
         content: String(post.content || ''),
         user: String(post.user || ''),
+        images: Array.isArray(post.images) ? post.images.map((img: any) => String(img)) : [],
         likes: Array.isArray(post.likes) ? post.likes.map((l: any) => String(l)) : [],
         createdAt: post.createdAt ? (post.createdAt instanceof Date ? post.createdAt.toISOString() : String(post.createdAt)) : new Date().toISOString(),
         updatedAt: post.updatedAt ? (post.updatedAt instanceof Date ? post.updatedAt.toISOString() : String(post.updatedAt)) : null,
@@ -253,7 +261,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
 
     const users = await db.collection("user").find(
         { _id: { $in: userObjectIds } },
-        { projection: { name: 1, email: 1, _id: 1, image: 1 } }
+        { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
     ).toArray();
 
     // Batch fetch all profiles
@@ -294,7 +302,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
                     fullName: (userProfile?.fullName && userProfile.fullName.trim()) || null,
                     headline: (userProfile?.headline && userProfile.headline.trim()) || null,
                     location: (userProfile?.location && userProfile.location.trim()) || null,
-                    image: user.image || null,
+                    image: user.userImage || user.image || null,
                 }
             };
         }
@@ -623,7 +631,7 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
 
         const users = await db.collection("user").find(
             { _id: { $in: userObjectIds } },
-            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
+            { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
         ).toArray();
 
         // Batch fetch all profiles
@@ -664,7 +672,7 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
                         fullName: (profile?.fullName && profile.fullName.trim()) || null,
                         headline: (profile?.headline && profile.headline.trim()) || null,
                         location: (profile?.location && profile.location.trim()) || null,
-                        image: user.image || null,
+                        image: user.userImage || user.image || null,
                     }
                 };
             }
