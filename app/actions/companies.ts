@@ -535,9 +535,9 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
     const learnedKeywords = new Set<string>();
     const learnedIndustries = new Set<string>();
     const viewedCompanyIds = new Set<string>();
-    
+
     // Get companies user has interacted with (last 30 days)
-    const recentCompanyInteractions = profile.interactionHistory.filter((int: any) => 
+    const recentCompanyInteractions = profile.interactionHistory.filter((int: any) =>
         int.targetType === "company" &&
         Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
     );
@@ -545,10 +545,10 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
     // Fetch those companies to learn preferences
     const interactedCompanyIds = recentCompanyInteractions.map((int: any) => int.targetId);
     const interactedCompanies = await Company.find({ _id: { $in: interactedCompanyIds } }).lean();
-    
+
     interactedCompanies.forEach((company: any) => {
         viewedCompanyIds.add(company._id.toString());
-        
+
         // Learn from company keywords
         if (company.detectedKeywords) {
             company.detectedKeywords.forEach((kw: string) => learnedKeywords.add(kw.toLowerCase()));
@@ -560,15 +560,15 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
     });
 
     // Also learn from posts user has interacted with
-    const recentPostInteractions = profile.interactionHistory.filter((int: any) => 
-        int.targetType === "post" && 
+    const recentPostInteractions = profile.interactionHistory.filter((int: any) =>
+        int.targetType === "post" &&
         int.type !== "view" &&
         Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
     );
 
     const interactedPostIds = recentPostInteractions.map((int: any) => int.targetId);
     const interactedPosts = await Post.find({ _id: { $in: interactedPostIds } }).lean();
-    
+
     interactedPosts.forEach((post: any) => {
         if (post.detectedSkills) {
             post.detectedSkills.forEach((skill: string) => learnedKeywords.add(skill.toLowerCase()));
@@ -643,7 +643,7 @@ async function getPersonalizedCompaniesInternal(profile: any, limit: number, ski
         const learnedKeywordMatches = companyKeywords.filter((keyword: string) =>
             learnedKeywords.has(keyword)
         );
-        
+
         if (learnedKeywordMatches.length > 0) {
             const points = learnedKeywordMatches.length * 15;
             score += points;

@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useRouter } from "next/navigation";
-import { redirect } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { signinGithub } from "@/lib/social-login";
+import { Github } from "lucide-react";
 
 function FieldInfo({ field }: { field: AnyFieldApi }) {
     return (
@@ -35,7 +36,20 @@ const formSchema = z.object({
 
 export default function LoginForm() {
     const [formError, setFormError] = useState<string | null>(null);
+    const [githubLoading, setGithubLoading] = useState(false);
     const router = useRouter();
+
+    const handleGithubLogin = async () => {
+        setGithubLoading(true);
+        setFormError(null);
+        try {
+            await signinGithub();
+        } catch (error: any) {
+            setFormError(error.message || "Failed to sign in with GitHub");
+        } finally {
+            setGithubLoading(false);
+        }
+    };
 
     const form = useForm({
         defaultValues: {
@@ -71,6 +85,29 @@ export default function LoginForm() {
 
     return (
         <div className="grid gap-6">
+            {/* GitHub Login Button */}
+            <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGithubLogin}
+                disabled={githubLoading}
+            >
+                <Github className="mr-2 h-4 w-4" />
+                {githubLoading ? "Connecting..." : "Continue with GitHub"}
+            </Button>
+
+            {/* Separator */}
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+                </div>
+            </div>
+
+            {/* Email/Password Form */}
             <form
                 onSubmit={(e) => {
                     e.preventDefault();

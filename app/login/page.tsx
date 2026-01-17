@@ -4,9 +4,32 @@ import { Button } from "@/components/ui/button";
 import LoginForm from "@/components/forms/login/client";
 import { Icons } from "@/components/ui/icons";
 import { Suspense } from "react";
+import { signinGoogle, signinGithub } from "@/lib/social-login";
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+    const handleGoogleLogin = async () => {
+        setIsLoading(true);
+        try {
+            await signinGoogle();
+        } catch (error) {
+            console.error("Google login error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGithubLogin = async () => {
+        setIsLoading(true);
+        try {
+            await signinGithub();
+        } catch (error) {
+            console.error("GitHub login error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <main className="px-4 sm:px-8 lg:px-12 xl:px-0 xl:container mx-auto">
@@ -30,7 +53,7 @@ export default function LoginPage() {
                         <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                     </div>
                 </div>
-                <Button variant="outline" type="button" disabled={isLoading}>
+                <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}>
                     {isLoading ? (
                         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -38,7 +61,7 @@ export default function LoginPage() {
                     )}{" "}
                     Google
                 </Button>
-                <Button variant="outline" type="button" disabled={isLoading}>
+                <Button variant="outline" type="button" disabled={isLoading} onClick={handleGithubLogin}>
                     {isLoading ? (
                         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     ) : (

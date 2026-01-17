@@ -5,18 +5,32 @@ import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import RegisterForm from "@/components/forms/register/client";
 import { Suspense } from "react";
+import { signinGoogle, signinGithub } from "@/lib/social-login";
 
 export default function RegisterPage() {
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-    async function onSubmit(event: React.SyntheticEvent) {
-        event.preventDefault();
+    const handleGoogleLogin = async () => {
         setIsLoading(true);
-
-        setTimeout(() => {
+        try {
+            await signinGoogle();
+        } catch (error) {
+            console.error("Google login error:", error);
+        } finally {
             setIsLoading(false);
-        }, 3000);
-    }
+        }
+    };
+
+    const handleGithubLogin = async () => {
+        setIsLoading(true);
+        try {
+            await signinGithub();
+        } catch (error) {
+            console.error("GitHub login error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <main className="px-4 xl:container sm:px-8 lg:px-12 xl:px-0 mx-auto">
@@ -40,7 +54,7 @@ export default function RegisterPage() {
                         <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                     </div>
                 </div>
-                <Button variant="outline" type="button" disabled={isLoading}>
+                <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}>
                     {isLoading ? (
                         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -48,7 +62,7 @@ export default function RegisterPage() {
                     )}{" "}
                     Google
                 </Button>
-                <Button variant="outline" type="button" disabled={isLoading}>
+                <Button variant="outline" type="button" disabled={isLoading} onClick={handleGithubLogin}>
                     {isLoading ? (
                         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     ) : (

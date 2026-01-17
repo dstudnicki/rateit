@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // Allow all Better Auth routes (including OAuth callbacks) without any checks
+    if (pathname.startsWith("/api/auth")) {
+        return NextResponse.next();
+    }
+
     // Protected API routes
     const protectedApiRoutes = [
         "/api/posts",
@@ -25,7 +30,6 @@ export async function middleware(request: NextRequest) {
     const publicRoutes = [
         "/login",
         "/register",
-        "/api/auth",
     ];
 
     // Public content routes that anyone can see (if not banned)
@@ -41,7 +45,6 @@ export async function middleware(request: NextRequest) {
         "/",  // ← Home page (will show popup)
         "/login",
         "/register",
-        "/api/auth",
         "/profile/settings",
     ];
 
