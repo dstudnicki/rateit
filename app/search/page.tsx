@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Star, Loader2, Sparkles } from "lucide-react";
+import { MapPin, Star, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 interface ProfileResult {
@@ -29,6 +29,7 @@ interface CompanyResult {
     _id: string;
     slug: string;
     name: string;
+    logo: string;
     industry: string;
     location: string;
     averageRating: number;
@@ -39,12 +40,15 @@ interface CompanyResult {
 interface PostResult {
     _id: string;
     content: string;
+    images?: string[];
     createdAt: string;
-    author: {
+    user: {
+        _id: string;
         name: string;
-        headline: string | null;
         slug: string;
-        image: string | null;
+        fullName?: string | null;
+        headline?: string | null;
+        image?: string | null;
     };
     score?: number;
 }
@@ -173,7 +177,9 @@ export default function SearchPage() {
                 {/* Search Header */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
-                        <h1 className="text-2xl font-bold">{query.trim() ? `Search results for "${query}"` : "Browse all"}</h1>
+                        <h1 className="text-2xl font-bold">
+                            {query.trim() ? `Search results for "${query}"` : "Browse all"}
+                        </h1>
                         {results && results.total > 0 && (
                             <Badge variant="outline" className="text-xs">
                                 <Sparkles className="h-3 w-3 mr-1" />
@@ -234,7 +240,7 @@ export default function SearchPage() {
                             </>
                         ) : (
                             <>
-                                <p className="text-muted-foreground">No results found for "{query}"</p>
+                                <p className="text-muted-foreground">No results found for &quot;{query}&quot;</p>
                                 <p className="text-sm text-muted-foreground mt-2">
                                     Try different keywords or check your spelling
                                 </p>
@@ -306,29 +312,27 @@ export default function SearchPage() {
                                 <div className="space-y-4">
                                     {posts.map((post) => (
                                         <Card key={post._id} className="p-6">
-                                            <div className="flex items-start gap-3">
+                                            <div className="flex items-start gap-3 mb-3">
                                                 <Link href={`/${post.user?.slug || "unknown"}`}>
                                                     <Avatar className="h-12 w-12 cursor-pointer">
                                                         <AvatarImage
                                                             src={
-                                                                post.user.image ||
-                                                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.name}`
+                                                                post.user?.image ||
+                                                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user?.name}`
                                                             }
                                                         />
                                                         <AvatarFallback>
-                                                            <AvatarFallback>
-                                                                {post.user.name.charAt(0).toUpperCase() || "User"}
-                                                            </AvatarFallback>
+                                                            {post.user?.name?.charAt(0).toUpperCase() || "U"}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                 </Link>
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <Link
-                                                            href={`/${post.author?.slug || "unknown"}`}
+                                                            href={`/${post.user?.slug || "unknown"}`}
                                                             className="font-semibold hover:text-primary"
                                                         >
-                                                            {post.user?.name || post.user?.fullName || "Unknown"}
+                                                            {post.user?.fullName || post.user?.name || "Unknown"}
                                                         </Link>
                                                         {post.score !== undefined && post.score > 80 && (
                                                             <Badge variant="secondary" className="text-xs">
@@ -345,9 +349,42 @@ export default function SearchPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="text-foreground whitespace-pre-wrap line-clamp-3">
+                                            <p className="text-foreground whitespace-pre-wrap line-clamp-3 mb-3">
                                                 {post.content || "No content"}
                                             </p>
+                                            {/* Post Images */}
+                                            {post.images && post.images.length > 0 && (
+                                                <div
+                                                    className={`grid gap-2 ${
+                                                        post.images.length === 1
+                                                            ? "grid-cols-1"
+                                                            : post.images.length === 2
+                                                              ? "grid-cols-2"
+                                                              : "grid-cols-2"
+                                                    }`}
+                                                >
+                                                    {post.images.slice(0, 4).map((image, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className={`relative ${
+                                                                post.images!.length === 3 && idx === 0
+                                                                    ? "col-span-2"
+                                                                    : ""
+                                                            } ${
+                                                                post.images!.length === 1
+                                                                    ? "h-48"
+                                                                    : "h-32"
+                                                            } overflow-hidden rounded-lg bg-secondary`}
+                                                        >
+                                                            <img
+                                                                src={image}
+                                                                alt={`Post image ${idx + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </Card>
                                     ))}
                                 </div>
@@ -359,42 +396,59 @@ export default function SearchPage() {
                             <section>
                                 <h2 className="text-xl font-semibold mb-4">Companies</h2>
                                 <div className="space-y-4">
-                                    {companies.map((company) => (
-                                        <Card key={company._id} className="p-6">
-                                            <div className="flex items-start gap-4">
-                                                <div className="h-16 w-16 bg-secondary rounded flex items-center justify-center flex-shrink-0">
-                                                    <Building2 className="h-8 w-8 text-muted-foreground" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <Link
-                                                            href={`/companies/${company.slug}`}
-                                                            className="font-semibold text-lg hover:text-primary"
-                                                        >
-                                                            {company.name}
-                                                        </Link>
-                                                        {company.score !== undefined && company.score > 80 && (
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                <Sparkles className="h-3 w-3 mr-1" />
-                                                                Best match
-                                                            </Badge>
-                                                        )}
+                                    {companies.map((company) => {
+                                        const initials = company.name
+                                            .split(" ")
+                                            .map((word: string) => word[0])
+                                            .join("")
+                                            .substring(0, 2)
+                                            .toUpperCase();
+
+                                        return (
+                                            <Card key={company._id} className="p-6">
+                                                <div className="flex items-start gap-4">
+                                                    <Avatar className="size-20 rounded-lg">
+                                                        <AvatarImage
+                                                            src={company.logo}
+                                                            className="object-cover object-center"
+                                                            alt={`${company.name} logo`}
+                                                        />
+                                                        <AvatarFallback className="rounded-lg text-xl bg-secondary">
+                                                            {initials}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <Link
+                                                                href={`/companies/${company.slug}`}
+                                                                className="font-semibold text-lg hover:text-primary"
+                                                            >
+                                                                {company.name}
+                                                            </Link>
+                                                            {company.score !== undefined && company.score > 80 && (
+                                                                <Badge variant="secondary" className="text-xs">
+                                                                    <Sparkles className="h-3 w-3 mr-1" />
+                                                                    Best match
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-muted-foreground mb-2">{company.industry}</p>
+                                                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
+                                                            <span className="flex items-center gap-1">
+                                                                <MapPin className="h-4 w-4" />
+                                                                {company.location}
+                                                            </span>
+                                                            <span className="flex items-center gap-1">
+                                                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                                                {company.averageRating.toFixed(1)}/5 ({company.reviewCount}{" "}
+                                                                reviews)
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-muted-foreground mb-2">{company.industry}</p>
-                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
-                                                        <span className="flex items-center gap-1">
-                                                            <MapPin className="h-4 w-4" />
-                                                            {company.location}
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                            {company.averageRating.toFixed(1)}/5 ({company.reviewCount} reviews)
-                                                        </span>
-                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Card>
-                                    ))}
+                                            </Card>
+                                        );
+                                    })}
                                 </div>
                             </section>
                         )}

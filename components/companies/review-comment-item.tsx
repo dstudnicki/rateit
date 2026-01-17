@@ -3,6 +3,8 @@
 import { useState, useEffect, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -14,6 +16,7 @@ import {
     updateReviewReply,
     deleteReviewReply
 } from "@/app/actions/review-comments"
+import { addReplyToComment } from "@/app/actions/companies"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import {
@@ -32,6 +35,7 @@ interface ReplyData {
     fullName?: string | null;
     image?: string | null;
   };
+  nick: string;
   content: string
   likes: string[]
   createdAt: string
@@ -46,6 +50,7 @@ interface CommentData {
     fullName?: string | null;
     image?: string | null;
   };
+  nick: string;
   content: string
   likes: string[]
   replies: ReplyData[]
@@ -75,6 +80,7 @@ export function ReviewCommentItem({
   const [likesCount, setLikesCount] = useState(comment.likes.length)
   const [isReplying, setIsReplying] = useState(false)
   const [replyContent, setReplyContent] = useState("")
+  const [replyNick, setReplyNick] = useState("")
   const [replies, setReplies] = useState<ReplyData[]>(comment.replies || [])
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(comment.content)
@@ -86,8 +92,7 @@ export function ReviewCommentItem({
 
   const targetCommentId = parentCommentId || comment._id
   const isOwnComment = currentUserId === comment.user._id
-  const displayName = comment.user.fullName || comment.user.name
-  const profileSlug = comment.user.slug || comment.user.name
+  const displayName = comment.nick || "Anonymous"
 
   const handleLike = async () => {
     const result = parentCommentId
@@ -100,18 +105,34 @@ export function ReviewCommentItem({
     }
   }
 
-  const handleReply = async (replyToUsername?: string) => {
-    if (!replyContent.trim()) return
+  const handleReplyClick = () => {
+    setIsReplying(!isReplying)
+    // Auto-fill with @nickname when starting to reply
+    if (!isReplying) {
+      setReplyContent(`@${displayName} `)
+    } else {
+      setReplyContent("")
+    }
+  }
 
-    const result = await addReviewReply(replyContent, companyId, reviewId, targetCommentId, replyToUsername)
+  const handleReply = async () => {
+    if (!replyContent.trim()) return alert("Please write a reply.")
+    if (!replyNick.trim()) return alert("Please enter a nickname.")
+
+    const result = await addReplyToComment(companyId, reviewId, targetCommentId, replyContent, replyNick)
     if (result.success) {
       setReplyContent("")
+      setReplyNick("")
       setIsReplying(false)
       onUpdate?.()
     } else {
       alert(result.error || "Failed to add reply")
     }
   }
+
+  // Disable replies on replies - only allow replies to top-level comments
+  // Also disable replying to own comments to prevent abuse
+  const canReply = !parentCommentId && !isOwnComment
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -156,23 +177,19 @@ export function ReviewCommentItem({
   return (
     <div className={cn("space-y-3", depth > 0 && "ml-10")}>
       <div className="flex gap-3">
-        <Link href={`/${profileSlug}`}>
-          <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={comment.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user.name}`}
-              alt={displayName}
-            />
-            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        </Link>
+        <Avatar className="h-8 w-8">
+          <AvatarImage
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.nick}`}
+            alt={displayName}
+          />
+          <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
 
         <div className="flex-1 min-w-0">
           <div className="bg-secondary/50 rounded-lg p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <Link href={`/${profileSlug}`}>
-                  <h4 className="font-semibold text-sm hover:underline">{displayName}</h4>
-                </Link>
+                <h4 className="font-semibold text-sm">{displayName}</h4>
               </div>
               {isOwnComment && !isEditing && (
                 <DropdownMenu>
@@ -232,22 +249,39 @@ export function ReviewCommentItem({
                 )}
               >
                 <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} />
-                {likesCount > 0 && <span>{likesCount}</span>}
+                <span>{likesCount}</span>
               </button>
 
-              <button
-                onClick={() => setIsReplying(!isReplying)}
-                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                <span>Reply</span>
-              </button>
+              {/* Only show Reply button for top-level comments, not for replies */}
+              {canReply && (
+                <button
+                  onClick={handleReplyClick}
+                  className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  <span>Reply</span>
+                </button>
+              )}
             </div>
           )}
 
           {/* Reply Form */}
           {isReplying && (
-            <div className="mt-3 ml-2">
+            <div className="mt-3 ml-2 space-y-2">
+              <div className="space-y-2">
+                <Label htmlFor="reply-nick" className="text-xs">
+                  Your nickname
+                </Label>
+                <Input
+                  id="reply-nick"
+                  value={replyNick}
+                  onChange={(e) => setReplyNick(e.target.value)}
+                  placeholder="e.g., Commenter99"
+                  maxLength={30}
+                  required
+                  className="text-sm"
+                />
+              </div>
               <div className="flex gap-2">
                 <Textarea
                   placeholder={`Reply to ${displayName}...`}
@@ -256,7 +290,7 @@ export function ReviewCommentItem({
                   className="min-h-[60px] resize-none text-sm"
                 />
                 <div className="flex flex-col gap-2">
-                  <Button onClick={() => handleReply(displayName)} size="sm" disabled={!replyContent.trim()} className="gap-2">
+                  <Button onClick={handleReply} size="sm" disabled={!replyContent.trim() || !replyNick.trim()} className="gap-2">
                     <Send className="h-4 w-4" />
                   </Button>
                   <Button onClick={() => setIsReplying(false)} size="sm" variant="outline">

@@ -36,6 +36,7 @@ export function AddReviewDialog({ companyId }: AddReviewDialogProps) {
     content: "",
     role: "",
     reviewType: "work" as "work" | "interview",
+    nick: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,6 +63,7 @@ export function AddReviewDialog({ companyId }: AddReviewDialogProps) {
         content: "",
         role: "",
         reviewType: "work",
+        nick: "",
       })
       router.refresh()
     } else {
@@ -157,6 +159,26 @@ export function AddReviewDialog({ companyId }: AddReviewDialogProps) {
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nick">
+              Anonymous Nickname *
+              <span className="text-xs text-muted-foreground ml-2">
+                (Your real name will NOT be shown)
+              </span>
+            </Label>
+            <Input
+              id="nick"
+              placeholder="e.g., TechEnthusiast123"
+              value={formData.nick}
+              onChange={(e) => setFormData({ ...formData, nick: e.target.value })}
+              required
+              maxLength={30}
+            />
+            <p className="text-xs text-muted-foreground">
+              This nickname will be visible instead of your real name to protect your privacy
+            </p>
           </div>
 
           <div className="space-y-2">

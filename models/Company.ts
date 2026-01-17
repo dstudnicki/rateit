@@ -10,29 +10,45 @@ const commentSchema = new Schema({
         ref: "user",
         required: true,
     },
-    likes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
-    }],
-    replies: [{
-        content: {
-            type: String,
-            required: [true, "Please provide content"],
-        },
-        user: {
+    nick: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    likes: [
+        {
             type: mongoose.Schema.Types.ObjectId,
             ref: "user",
-            required: true,
         },
-        likes: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "user",
-        }],
-        createdAt: {
-            type: Date,
-            default: Date.now,
+    ],
+    replies: [
+        {
+            content: {
+                type: String,
+                required: [true, "Please provide content"],
+            },
+            user: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "user",
+                required: true,
+            },
+            nick: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+            likes: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "user",
+                },
+            ],
+            createdAt: {
+                type: Date,
+                default: Date.now,
+            },
         },
-    }],
+    ],
     createdAt: {
         type: Date,
         default: Date.now,
@@ -68,10 +84,17 @@ const reviewSchema = new Schema({
         ref: "user",
         required: true,
     },
-    likes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
-    }],
+    nick: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    likes: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user",
+        },
+    ],
     comments: [commentSchema],
     createdAt: {
         type: Date,
@@ -95,6 +118,9 @@ const companySchema = new Schema({
         trim: true,
         lowercase: true,
     },
+    logo: {
+        type: String, // Company logo URL from Vercel Blob
+    },
     location: {
         type: String,
         required: [true, "Please provide location"],
@@ -114,9 +140,11 @@ const companySchema = new Schema({
         trim: true,
     },
     // Auto-detected keywords for content matching from reviews
-    detectedKeywords: [{
-        type: String, // Skills, technologies, benefits mentioned in reviews
-    }],
+    detectedKeywords: [
+        {
+            type: String, // Skills, technologies, benefits mentioned in reviews
+        },
+    ],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
@@ -146,4 +174,3 @@ companySchema.index({ averageRating: -1 });
 const Company = models.Company || mongoose.model("Company", companySchema);
 
 export default Company;
-

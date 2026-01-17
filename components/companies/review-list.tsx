@@ -20,6 +20,7 @@ interface Review {
     rating: number;
     role: string;
     reviewType: "work" | "interview";
+    nick: string;
     user: {
         _id: string;
         name: string;
@@ -126,26 +127,21 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                 const likesCount = review.likes?.length || 0;
                 const commentsCount = review.comments?.length || 0;
                 const isLiked = currentUserId ? review.likes?.includes(currentUserId) : false;
-                const displayName = review.user?.fullName || review.user?.name || "Anonymous";
-                const profileSlug = review.user?.slug || review.user?.name;
+                const displayName = review.nick || "Anonymous";
 
                 return (
                     <Card key={review._id} className="p-6">
                         <div className="flex items-start gap-4">
-                            <Link href={`/${profileSlug}`}>
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={review.user?.image || "/placeholder.svg"} />
-                                    <AvatarFallback>{displayName?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
-                                </Avatar>
-                            </Link>
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${review.nick}`} />
+                                <AvatarFallback>{displayName?.slice(0, 2).toUpperCase() || "AN"}</AvatarFallback>
+                            </Avatar>
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <Link href={`/${profileSlug}`}>
-                                                <h3 className="font-semibold hover:underline">{displayName}</h3>
-                                            </Link>
+                                            <h3 className="font-semibold">{displayName}</h3>
                                             <span className="text-sm text-muted-foreground">
                                                 {getTimeAgo(review.createdAt)}
                                             </span>

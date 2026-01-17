@@ -47,16 +47,18 @@ export default async function ProfilePage(props: ProfilePageProps) {
                 <div className="grid grid-cols-1 gap-4">
                     <ProfileHeader user={user} profile={profile} isOwnProfile={isOwnProfile} />
                     <ProfileAbout about={profile.about || ""} isOwnProfile={isOwnProfile} />
-                    <Suspense fallback={
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Activity</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">Loading posts...</p>
-                            </CardContent>
-                        </Card>
-                    }>
+                    <Suspense
+                        fallback={
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Activity</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground">Loading posts...</p>
+                                </CardContent>
+                            </Card>
+                        }
+                    >
                         <ProfileActivity userId={user.id} />
                     </Suspense>
                     <ProfileExperience experiences={profile.experience} isOwnProfile={isOwnProfile} />
@@ -67,4 +69,3 @@ export default async function ProfilePage(props: ProfilePageProps) {
         </div>
     );
 }
-

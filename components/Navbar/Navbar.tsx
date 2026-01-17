@@ -26,7 +26,8 @@ interface SearchResults {
         slug: string;
         fullName: string;
         headline: string;
-        user: { name: string; image: string | null };
+        image: string;
+        user: { name: string; email: string; image: string | null };
     }>;
     companies: Array<{
         _id: string;
@@ -63,9 +64,7 @@ export function Navbar() {
         const fetchSuggestions = async () => {
             setLoadingSuggestions(true);
             try {
-                const response = await fetch(
-                    `/api/search?q=${encodeURIComponent(debouncedSearchQuery)}&limit=5`
-                );
+                const response = await fetch(`/api/search?q=${encodeURIComponent(debouncedSearchQuery)}&limit=5`);
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch suggestions");
@@ -74,17 +73,19 @@ export function Navbar() {
                 const data: SearchResults = await response.json();
 
                 // Convert API results to suggestion format
-                const profileSuggestions: SearchSuggestion[] = data.profiles.map(p => ({
+                const profileSuggestions: SearchSuggestion[] = data.profiles.map((p) => ({
                     id: p._id,
                     text: p.fullName || p.user.name,
                     type: "user" as const,
                     category: "People",
                     slug: p.slug,
-                    avatar: p.user.image,
+                    avatar:
+                        p.user.image ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.user.email || p.user.name}`,
                     headline: p.headline,
                 }));
 
-                const companySuggestions: SearchSuggestion[] = data.companies.map(c => ({
+                const companySuggestions: SearchSuggestion[] = data.companies.map((c) => ({
                     id: c._id,
                     text: c.name,
                     type: "company" as const,
@@ -92,7 +93,7 @@ export function Navbar() {
                     slug: c.slug,
                 }));
 
-                const postSuggestions: SearchSuggestion[] = data.posts.map(p => ({
+                const postSuggestions: SearchSuggestion[] = data.posts.map((p) => ({
                     id: p._id,
                     text: p.content.substring(0, 60) + (p.content.length > 60 ? "..." : ""),
                     type: "post" as const,
@@ -146,7 +147,6 @@ export function Navbar() {
         }
     };
 
-
     return (
         <header className="sticky top-0 z-50 border-b bg-card">
             <div className="container max-w-7xl mx-auto px-4">
@@ -183,9 +183,7 @@ export function Navbar() {
                             {showSuggestions && (
                                 <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg overflow-hidden max-h-[400px] overflow-y-auto">
                                     {loadingSuggestions ? (
-                                        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                                            Searching...
-                                        </div>
+                                        <div className="px-4 py-8 text-center text-muted-foreground text-sm">Searching...</div>
                                     ) : filteredSuggestions.length > 0 ? (
                                         <>
                                             {filteredSuggestions.map((suggestion) => (

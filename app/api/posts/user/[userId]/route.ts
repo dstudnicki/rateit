@@ -22,11 +22,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
                     try {
                         user = await db
                             .collection("user")
-                            .findOne({ _id: new ObjectId(userIdString) }, { projection: { name: 1, email: 1, _id: 1, image: 1 } });
+                            .findOne({ _id: new ObjectId(userIdString) }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } });
                     } catch (e) {
                         user = await db
                             .collection("user")
-                            .findOne({ _id: userIdString as any }, { projection: { name: 1, email: 1, _id: 1, image: 1 } });
+                            .findOne({ _id: userIdString as any }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } });
                     }
 
                     if (user) {
@@ -44,7 +44,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
                                 fullName: profile?.fullName || null,
                                 headline: profile?.headline || null,
                                 location: profile?.location || null,
-                                image: user.image || null,
+                                image: user.userImage || user.image || null,
                             },
                         };
                     }

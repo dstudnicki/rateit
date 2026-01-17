@@ -12,9 +12,33 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, Settings, HelpCircle, LogOut, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function AuthButtons() {
     const { data: sessionData } = authClient.useSession();
+    const [userImage, setUserImage] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string>("ME");
+
+    useEffect(() => {
+        async function fetchUserProfile() {
+            if (sessionData?.user) {
+                setUserName(sessionData.user.name || "ME");
+                try {
+                    const profileResponse = await fetch('/api/profile/current');
+                    const profileData = await profileResponse.json();
+                    if (profileData?.profile?.image) {
+                        setUserImage(profileData.profile.image);
+                    } else if (sessionData.user.image) {
+                        setUserImage(sessionData.user.image);
+                    }
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                }
+            }
+        }
+        fetchUserProfile();
+    }, [sessionData?.user]);
+
     const handleLogout = async () => {
         await authClient.signOut();
     };
@@ -26,8 +50,8 @@ export default function AuthButtons() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="flex items-center gap-2 h-14 pl-2 border-l ml-2">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src="/diverse-user-avatars.png" />
-                                    <AvatarFallback>ME</AvatarFallback>
+                                    <AvatarImage src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sessionData?.user?.email || userName}`} />
+                                    <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <span className="text-xs font-medium hidden lg:inline">Me</span>
                                 <ChevronDown className="h-4 w-4 hidden lg:inline" />
