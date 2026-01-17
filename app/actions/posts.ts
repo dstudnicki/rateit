@@ -314,11 +314,11 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     const learnedKeywords = new Set<string>();
     const learnedCompanies = new Set<string>();
     const learnedIndustries = new Set<string>();
-    
+
     // Get posts user has liked/commented on (last 30 days)
     // Note: we skip "view" interactions as they're too weak a signal
-    const recentPostInteractions = profile.interactionHistory.filter((int: any) => 
-        int.targetType === "post" && 
+    const recentPostInteractions = profile.interactionHistory.filter((int: any) =>
+        int.targetType === "post" &&
         int.type !== "view" && // Skip views, too weak signal
         Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
     );
@@ -326,7 +326,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     // Fetch those posts to learn from their content
     const interactedPostIds = recentPostInteractions.map((int: any) => int.targetId);
     const interactedPosts = await Post.find({ _id: { $in: interactedPostIds } }).lean();
-    
+
     interactedPosts.forEach((post: any) => {
         // Extract skills from posts user engaged with
         if (post.detectedSkills) {
@@ -343,7 +343,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     });
 
     // Get companies user has viewed/interacted with (last 30 days)
-    const recentCompanyInteractions = profile.interactionHistory.filter((int: any) => 
+    const recentCompanyInteractions = profile.interactionHistory.filter((int: any) =>
         int.targetType === "company" &&
         Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
     );
@@ -351,7 +351,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     // Fetch those companies to learn from their keywords
     const interactedCompanyIds = recentCompanyInteractions.map((int: any) => int.targetId);
     const interactedCompanies = await Company.find({ _id: { $in: interactedCompanyIds } }).lean();
-    
+
     interactedCompanies.forEach((company: any) => {
         // Learn from company keywords
         if (company.detectedKeywords) {
