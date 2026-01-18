@@ -110,8 +110,9 @@ export default function RegisterForm() {
                                 },
                                 {
                                     onSuccess: () => {
-                                        // Redirect to /profile which will create the profile and redirect to slug
-                                        router.push("/profile");
+                                        // Redirect to home - it will handle onboarding redirect
+                                        // Don't redirect to /profile directly as middleware requires session
+                                        router.push("/");
                                     },
                                     onError: () => {
                                         router.push("/login");
