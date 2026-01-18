@@ -155,7 +155,7 @@ export default function SearchPage() {
     };
 
     const tabs = [
-        { id: "all", label: "All" },
+        { id: "all", label: "Wszystko" },
         { id: "user", label: "Osoby" },
         { id: "post", label: "Posty" },
         { id: "company", label: "Firmy" },

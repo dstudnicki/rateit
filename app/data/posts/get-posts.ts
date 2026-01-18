@@ -6,7 +6,6 @@ import { ObjectId } from "mongodb";
 export async function getPosts() {
     "use cache";
     // Use time-based bucket for cache - auto-expires every 5 minutes
-    const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000)); // 5-minute buckets
 
     try {
         const db = await getClient();
