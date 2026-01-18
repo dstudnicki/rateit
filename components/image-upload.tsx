@@ -156,10 +156,10 @@ export default function ImageUpload({
                         <Upload className="h-10 w-10 text-muted-foreground" />
                         <div>
                             <p className="text-sm font-medium">
-                                {isDragActive ? "Drop images here" : "Drag & drop images here"}
+                                {isDragActive ? "Umieść tutaj zdjęcia" : "Przeciągnij i upuść zdjęcia tutaj"}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                                or click to browse (max {maxFiles} images, {maxSizeMB}MB each)
+                                lub kliknij, aby przeglądać (maksymalna liczba obrazów {maxFiles}, {maxSizeMB}MB każdy)
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP, GIF</p>
                         </div>
