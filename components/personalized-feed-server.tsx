@@ -23,7 +23,7 @@ export async function PersonalizedFeedServer() {
                         posts.map((post) => <PostCard key={post._id} post={post} />)
                     ) : (
                         <div className="text-center py-12">
-                            <p className="text-muted-foreground">No posts yet. Be the first to share something!</p>
+                            <p className="text-muted-foreground">Brak postów. Bądź pierwszy i podziel się czymś!</p>
                         </div>
                     )}
                 </div>
@@ -81,8 +81,6 @@ export async function PersonalizedFeedServer() {
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });
-
-            console.log(`[Feed] Created profile for OAuth user: ${session.user.id} with avatar: ${avatarUrl ? "Yes" : "No"}`);
 
             // Return redirect component for new users
             return <OnboardingRedirect />;

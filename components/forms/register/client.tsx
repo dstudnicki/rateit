@@ -150,7 +150,7 @@ export default function RegisterForm() {
                 >
                     {(field) => (
                         <div className="space-y-2">
-                            <Label htmlFor="name">Imię i nazwisko</Label>
+                            <Label htmlFor="name">Imię i nazwisko *</Label>
                             <Input
                                 id="name"
                                 type="text"
@@ -168,7 +168,7 @@ export default function RegisterForm() {
                 <form.Field name="email">
                     {(field) => (
                         <div className="space-y-2">
-                            <Label htmlFor="register-email">Email</Label>
+                            <Label htmlFor="register-email">Email *</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -186,7 +186,7 @@ export default function RegisterForm() {
                 <form.Field name="password">
                     {(field) => (
                         <div className="space-y-2">
-                            <Label htmlFor="register-password">Hasło</Label>
+                            <Label htmlFor="register-password">Hasło *</Label>
                             <div className="relative">
                                 <Input
                                     id="password"
@@ -216,7 +216,7 @@ export default function RegisterForm() {
                 <form.Field name="confirmPassword">
                     {(field) => (
                         <div className="space-y-2">
-                            <Label htmlFor="confirm-password">Potwierdź hasło</Label>
+                            <Label htmlFor="confirm-password">Potwierdź hasło *</Label>
                             <div className="relative">
                                 <Input
                                     id="confirmPassword"

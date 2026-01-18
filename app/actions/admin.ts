@@ -2,6 +2,7 @@
 
 import { getClient } from "@/lib/mongoose";
 import { requireAdmin, isAdmin, isModerator, UserRole } from "@/lib/auth-helpers";
+import { ObjectId } from "mongodb";
 
 /**
  * Set user role (admins only)
@@ -15,7 +16,6 @@ export async function setUserRole(userId: string, role: UserRole) {
 
     try {
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         let result;
         try {

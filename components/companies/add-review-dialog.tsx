@@ -63,12 +63,12 @@ export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDi
 
         // Check if user has already reviewed
         if (hasReviewed) {
-            setError("You have already reviewed this company. Only one review per user is allowed to prevent spam.");
+            setError("Już oceniłeś tę firmę. Dozwolona jest tylko jedna recenzja na użytkownika, aby zapobiec spamowi.");
             return;
         }
 
         if (rating === 0) {
-            setError("Please select a rating");
+            setError("Dodaj swoją ocenę");
             return;
         }
 
@@ -115,7 +115,7 @@ export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDi
                     </DialogDescription>
                     {hasReviewed && (
                         <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground mt-2">
-                            ℹ️ Już oceniłeś tę firmę. Dozwolona jest tylko jedna recenzja na użytkownika, aby zapobiec spamowi.
+                            Już oceniłeś tę firmę. Dozwolona jest tylko jedna recenzja na użytkownika, aby zapobiec spamowi.
                         </div>
                     )}
                 </DialogHeader>

@@ -79,7 +79,7 @@ export function Navbar() {
                     type: "user" as const,
                     category: "People",
                     slug: p.slug,
-                    avatar: p.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.user.email || p.user.name}`,
+                    avatar: p.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.user.name}`,
                     headline: p.headline,
                 }));
 

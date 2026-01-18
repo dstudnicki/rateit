@@ -88,7 +88,7 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
             if (result.success) {
                 router.refresh();
             } else {
-                console.error("Failed to delete education:", result.error);
+                console.error("Wystąpił błąd:", result.error);
             }
         });
     };
@@ -98,9 +98,11 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle>Wykształcenie</CardTitle>
-                    <Button variant="ghost" size="icon" onClick={handleAdd}>
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                    {isOwnProfile && (
+                        <Button variant="ghost" size="icon" onClick={handleAdd}>
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {initialEducations.length === 0 ? (

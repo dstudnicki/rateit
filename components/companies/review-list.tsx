@@ -269,6 +269,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                             reviewId={review._id}
                                             comments={review.comments || []}
                                             onUpdate={() => router.refresh()}
+                                            reviewAuthorId={review.user._id}
                                         />
                                     </div>
                                 )}

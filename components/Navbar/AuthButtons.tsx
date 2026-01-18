@@ -47,6 +47,24 @@ export default function AuthButtons({ setMobileMenuOpen }: AuthButtonsProps) {
         await authClient.signOut();
         setMobileMenuOpen?.();
     };
+
+    // If we're rendered inside MobileMenu (setMobileMenuOpen passed) show simplified mobile UI
+    if (sessionData && setMobileMenuOpen) {
+        return (
+            <ul className="list-none w-full">
+                <li className="w-full">
+                    <Button
+                        variant="link"
+                        className="w-full p-0 text-destructive focus:text-destructive"
+                        onClick={handleLogout}
+                    >
+                        <LogOut className="mr-2 h-4 w-4" /> Wyloguj się
+                    </Button>
+                </li>
+            </ul>
+        );
+    }
+
     return (
         <ul className="list-none flex justify-between gap-2">
             {sessionData ? (
@@ -63,7 +81,6 @@ export default function AuthButtons({ setMobileMenuOpen }: AuthButtonsProps) {
                                 />
                                 <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
-                            <span className="text-xs font-medium hidden lg:inline">Ja</span>
                             <ChevronDown className="h-4 w-4 hidden lg:inline" />
                         </Button>
                     </DropdownMenuTrigger>

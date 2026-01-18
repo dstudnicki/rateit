@@ -176,7 +176,7 @@ export default function SearchPage() {
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                         <h1 className="text-2xl font-bold">
-                            {query.trim() ? `Search results for "${query}"` : "Przeglądaj wszystko"}
+                            {query.trim() ? `Wyniki wyszukiwania dla "${query}"` : "Przeglądaj wszystko"}
                         </h1>
                     </div>
                     <p className="text-muted-foreground">

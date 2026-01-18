@@ -41,15 +41,18 @@ interface ReviewCommentSectionProps {
     reviewId: string;
     comments: CommentData[];
     onUpdate: () => void;
+    reviewAuthorId?: string; // ID autora opinii (opcjonalne)
 }
 
-export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }: ReviewCommentSectionProps) {
+export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, reviewAuthorId }: ReviewCommentSectionProps) {
     const [content, setContent] = useState("");
     const [nick, setNick] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasCommented, setHasCommented] = useState(false);
     const session = authClient.useSession();
     const currentUserId = session.data?.user?.id;
+
+    const isReviewAuthor = !!(currentUserId && reviewAuthorId && currentUserId === reviewAuthorId);
 
     // Check if user has already commented on this review
     useEffect(() => {
@@ -63,31 +66,23 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
         }
     }, [currentUserId, comments]);
 
-    useEffect(() => {
-        async function fetchUserProfile() {
-            if (session.data?.user) {
-                try {
-                    const profileResponse = await fetch("/api/profile/current");
-                    const profileData = await profileResponse.json();
-                } catch (error) {
-                    // Error fetching profile
-                }
-            }
-        }
-        fetchUserProfile();
-    }, [session.data?.user]);
-
     const handleAddComment = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
-        // Check if user has already commented
-        if (hasCommented) {
-            alert("You have already commented on this review. You can only add one comment per review to prevent spam.");
+        // Prevent review author from commenting on their own review (client-side UX) - server also enforces this
+        if (isReviewAuthor) {
+            alert("Nie możesz komentować własnej opinii.");
             return;
         }
 
-        if (!content.trim()) return alert("Please write a comment.");
-        if (!nick.trim()) return alert("Please enter a nickname.");
+        // Check if user has already commented
+        if (hasCommented) {
+            alert("Już skomentowałeś tę opinię. Dozwolony jest tylko jeden komentarz na użytkownika.");
+            return;
+        }
+
+        if (!content.trim()) return alert("Proszę napisać komentarz.");
+        if (!nick.trim()) return alert("Proszę wpisać pseudonim.");
 
         setIsSubmitting(true);
         const result = await addCommentToReview(companyId, reviewId, content, nick);
@@ -98,7 +93,7 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
             setHasCommented(true); // Mark as commented
             onUpdate();
         } else {
-            alert(result.error || "Failed to add comment");
+            alert(result.error || "Nie udało się dodać komentarza");
         }
         setIsSubmitting(false);
     };
@@ -114,38 +109,45 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
                     <AvatarFallback>Ty</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
-                    {hasCommented && (
+                    {isReviewAuthor ? (
                         <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-                            ℹ️ Już skomentowałeś tę opinię. Dozwolony jest tylko jeden komentarz na użytkownika, aby zapobiec
+                            Nie możesz komentować własnej opinii.
+                        </div>
+                    ) : hasCommented ? (
+                        <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                            Już skomentowałeś tę opinię. Dozwolony jest tylko jeden komentarz na użytkownika, aby zapobiec
                             spamowi.
                         </div>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <Label htmlFor="comment-nick" className="text-sm">
+                                    Twój pseudonim (anonimowy)
+                                </Label>
+                                <Input
+                                    id="comment-nick"
+                                    value={nick}
+                                    onChange={(e) => setNick(e.target.value)}
+                                    placeholder="np. Recenzent42"
+                                    maxLength={30}
+                                    required
+                                    disabled={isSubmitting || hasCommented || isReviewAuthor}
+                                />
+                            </div>
+                            <Textarea
+                                placeholder="Dodaj komentarz..."
+                                value={content}
+                                onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
+                                className="min-h-[80px] resize-none"
+                                disabled={isSubmitting || hasCommented || isReviewAuthor}
+                            />
+                        </>
                     )}
-                    <div className="space-y-2">
-                        <Label htmlFor="comment-nick" className="text-sm">
-                            Twój pseudonim (anonimowy)
-                        </Label>
-                        <Input
-                            id="comment-nick"
-                            value={nick}
-                            onChange={(e) => setNick(e.target.value)}
-                            placeholder="np. Recenzent42"
-                            maxLength={30}
-                            required
-                            disabled={isSubmitting || hasCommented}
-                        />
-                    </div>
-                    <Textarea
-                        placeholder="Dodaj komentarz..."
-                        value={content}
-                        onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
-                        className="min-h-[80px] resize-none"
-                        disabled={isSubmitting || hasCommented}
-                    />
                     <div className="flex justify-end">
                         <Button
                             onClick={handleAddComment}
                             size="sm"
-                            disabled={!content.trim() || !nick.trim() || isSubmitting || hasCommented}
+                            disabled={!content.trim() || !nick.trim() || isSubmitting || hasCommented || isReviewAuthor}
                             className="gap-2"
                         >
                             <Send className="h-4 w-4" />

@@ -89,7 +89,7 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
             if (result.success) {
                 router.refresh();
             } else {
-                console.error("Failed to delete experience:", result.error);
+                console.error("Wystąpił błąd:", result.error);
             }
         });
     };

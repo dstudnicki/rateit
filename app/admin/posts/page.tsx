@@ -101,11 +101,7 @@ export default function AdminPostsPage() {
 
             <div className="flex gap-4 mb-6">
                 <Button variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
-                    All Posts ({posts.length})
-                </Button>
-                <Button variant={filter === "flagged" ? "default" : "outline"} onClick={() => setFilter("flagged")}>
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    Flagged
+                    Wszystkie posty ({posts.length})
                 </Button>
             </div>
 

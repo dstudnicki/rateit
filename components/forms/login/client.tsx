@@ -110,11 +110,11 @@ export default function LoginForm() {
                 <form.Field name="email">
                     {(field) => (
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">Email *</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="nazwa@przyklad.pl"
+                                placeholder="jan.kowalski@email.pl"
                                 value={field.state.value}
                                 onChange={(e) => field.handleChange(e.target.value)}
                                 onBlur={field.handleBlur}
@@ -129,7 +129,7 @@ export default function LoginForm() {
                     {(field) => (
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Hasło</Label>
+                                <Label htmlFor="password">Hasło *</Label>
                             </div>
                             <div className="relative">
                                 <Input

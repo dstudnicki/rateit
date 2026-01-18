@@ -61,9 +61,11 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle>Umiejętności</CardTitle>
-                    <Button variant="ghost" size="icon" onClick={() => setIsAdding(true)}>
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                    {isOwnProfile && (
+                        <Button variant="ghost" size="icon" onClick={handleAdd}>
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
                     {initialSkills.length === 0 ? (
@@ -100,8 +102,8 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
             <Dialog open={isAdding} onOpenChange={setIsAdding}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Add Skill</DialogTitle>
-                        <DialogDescription>Add a new skill to your profile</DialogDescription>
+                        <DialogTitle>Dodaj umiejętność</DialogTitle>
+                        <DialogDescription>Dodaj nową umiejętność do swojego profilu</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
@@ -110,7 +112,7 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                                 id="skill"
                                 value={newSkill}
                                 onChange={(e) => setNewSkill(e.target.value)}
-                                placeholder="Ex: React, Python, Project Management"
+                                placeholder="Np: React, Python, Project Management"
                                 disabled={isPending}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {

@@ -3,9 +3,11 @@
 import { getClient } from "@/lib/mongoose";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import Profile from "@/models/Profile";
-import { getPersonalizedCompanies } from "@/app/actions/companies";
 import { getPersonalizedFeed } from "@/app/actions/posts";
+import Profile from "@/models/Profile";
+import Post from "@/models/Post";
+import { getPersonalizedCompanies, searchCompaniesByName } from "@/app/actions/companies";
+import { ObjectId } from "mongodb";
 
 interface SearchResult {
     profiles: any[];
@@ -17,7 +19,7 @@ interface SearchResult {
 export async function getPersonalizedSearchResults(
     query: string,
     type: "all" | "user" | "company" | "post" = "all",
-    limit: number = 20
+    limit: number = 20,
 ): Promise<SearchResult> {
     try {
         const session = await auth.api.getSession({
@@ -25,7 +27,6 @@ export async function getPersonalizedSearchResults(
         });
 
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
 
         // Get user profile for personalization
         let userProfile = null;
@@ -41,78 +42,91 @@ export async function getPersonalizedSearchResults(
         let posts: any[] = [];
 
         // Search Companies - USE SAME ALGORITHM AS /companies PAGE!
+        // Search Companies - USE DEDICATED SEARCH (same as /companies!)
         if (type === "all" || type === "company") {
-            const companiesResult = await getPersonalizedCompanies(100, 0);
-            const allCompanies = companiesResult.companies || [];
-
-            console.log('[Search] Companies from feed:', {
-                total: allCompanies.length,
-                query,
-                isSearchQuery,
-                sample: allCompanies[0]?.name
-            });
-
-            // Filter by search query
             if (isSearchQuery) {
-                const searchRegex = new RegExp(query, "i");
-                companies = allCompanies
-                    .filter((company: any) =>
-                        searchRegex.test(company.name) ||
-                        searchRegex.test(company.industry) ||
-                        searchRegex.test(company.location) ||
-                        searchRegex.test(company.slug)
-                    )
-                    .slice(0, limit);
-
-                console.log('[Search] Companies after filter:', companies.length);
+                // Use optimized search - queries DB directly with regex
+                const searchResult = await searchCompaniesByName(query, undefined);
+                companies = (searchResult.companies || []).slice(0, limit);
             } else {
-                companies = allCompanies.slice(0, limit);
+                // No query - show personalized list
+                const companiesResult = await getPersonalizedCompanies(limit, 0);
+                companies = companiesResult.companies || [];
             }
         }
 
-        // Search Posts - USE SAME ALGORITHM AS HOME FEED!
         if (type === "all" || type === "post") {
-            const postsResult = await getPersonalizedFeed(100, 0);
-            let allPosts = postsResult.posts || [];
+            // Helper to safely build regex from user input
+            const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-            console.log('[Search] Posts from feed:', {
-                total: allPosts.length,
-                query,
-                isSearchQuery,
-                sample: allPosts[0]?.content?.substring(0, 50)
-            });
-
-            // If no posts from personalized feed, try generic
-            if (allPosts.length === 0) {
-                console.log('[Search] No posts from personalized feed, trying generic...');
-                const { getGenericFeed } = await import("@/app/actions/posts");
-                const genericResult = await getGenericFeed(100, 0);
-                allPosts = genericResult.posts || [];
-                console.log('[Search] Posts from generic feed:', allPosts.length);
-            }
-
-            // Filter by search query
             if (isSearchQuery) {
-                const searchRegex = new RegExp(query, "i");
-                posts = allPosts
-                    .filter((post: any) => {
-                        const matches = post.content && searchRegex.test(post.content);
-                        if (!matches && allPosts.length < 5) {
-                            console.log('[Search] Post filtered out:', {
-                                content: post.content?.substring(0, 50),
-                                query,
-                                hasContent: !!post.content
-                            });
-                        }
-                        return matches;
-                    })
-                    .slice(0, limit);
+                // Fast DB query: search posts content directly in DB with regex and limit fields
+                const searchRegex = new RegExp(escapeRegExp(query), "i");
 
-                console.log('[Search] Posts after filter:', posts.length);
+                const postDocs = await Post.find({ content: searchRegex })
+                    .sort({ createdAt: -1 })
+                    .limit(limit)
+                    .select("content images likes comments createdAt user")
+                    .lean();
+
+                // If none found, return empty posts (do not fall back to full feed to avoid heavy work)
+                if (!postDocs || postDocs.length === 0) {
+                    posts = [];
+                } else {
+                    // Collect distinct user ids and fetch users in one go (avoid leaking email)
+                    const userIdStrings = Array.from(
+                        new Set(postDocs.map((p: any) => (p.user ? p.user.toString() : null)).filter(Boolean)),
+                    );
+                    const userObjectIds = userIdStrings.map((id) => {
+                        try {
+                            return new ObjectId(id);
+                        } catch (e) {
+                            return id as any; // fallback, though ObjectId should be valid
+                        }
+                    });
+
+                    const usersArray = userObjectIds.length
+                        ? await db
+                              .collection("user")
+                              .find({ _id: { $in: userObjectIds as any } })
+                              .project({ name: 1, image: 1, slug: 1 })
+                              .toArray()
+                        : [];
+
+                    const usersMap: Record<string, any> = {};
+                    usersArray.forEach((u: any) => {
+                        usersMap[u._id.toString()] = u;
+                    });
+
+                    // Map posts to API-friendly shape (minimal fields)
+                    posts = postDocs.map((p: any) => {
+                        const uid = p.user ? p.user.toString() : null;
+                        const u = uid ? usersMap[uid] : null;
+
+                        return {
+                            _id: p._id.toString(),
+                            content: p.content || "",
+                            images: Array.isArray(p.images) ? p.images : [],
+                            likesCount: Array.isArray(p.likes) ? p.likes.length : 0,
+                            commentsCount: Array.isArray(p.comments) ? p.comments.length : 0,
+                            createdAt: p.createdAt,
+                            user: {
+                                _id: uid,
+                                name: u?.name || null,
+                                image: u?.image || null,
+                                slug: u?.slug || null,
+                            },
+                        };
+                    });
+                }
             } else {
-                posts = allPosts.slice(0, limit);
+                // No query - use personalized feed (existing heavy path)
+                const postsResult = await getPersonalizedFeed(limit, 0);
+                posts = postsResult.posts || [];
             }
         }
+
+        // Search Posts - DIRECT DB QUERY (faster!)
 
         // Search Profiles
         if (type === "all" || type === "user") {
@@ -126,28 +140,30 @@ export async function getPersonalizedSearchResults(
                         { headline: searchRegex },
                         { location: searchRegex },
                         { slug: searchRegex },
-                    ]
+                    ],
                 };
             }
 
             const profileDocs = await Profile.find(profileQuery)
-                .limit(100)
+                .limit(limit) // ← Limit bezpośrednio w query!
                 .lean();
+
+            // ...
+
+            // ...
 
             // Populate user data and score profiles
             const profileResults = await Promise.all(
                 profileDocs.map(async (profile: any) => {
                     let user;
                     try {
-                        user = await db.collection("user").findOne(
-                            { _id: new ObjectId(profile.userId) },
-                            { projection: { name: 1, email: 1, image: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: new ObjectId(profile.userId) }, { projection: { name: 1, email: 1, image: 1 } });
                     } catch (e) {
-                        user = await db.collection("user").findOne(
-                            { _id: profile.userId },
-                            { projection: { name: 1, email: 1, image: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: profile.userId }, { projection: { name: 1, email: 1, image: 1 } });
                     }
 
                     if (!user) return null;
@@ -169,13 +185,10 @@ export async function getPersonalizedSearchResults(
                     // Calculate personalized score for profiles
                     const score = calculateProfileScore(result, query, userProfile);
                     return { ...result, score };
-                })
+                }),
             );
 
-            profiles = profileResults
-                .filter((p): p is NonNullable<typeof p> => p !== null)
-                .sort((a, b) => b.score - a.score)
-                .slice(0, limit);
+            profiles = profileResults.filter((p): p is NonNullable<typeof p> => p !== null).sort((a, b) => b.score - a.score);
         }
 
         const total = profiles.length + companies.length + posts.length;
@@ -202,9 +215,9 @@ function calculateProfileScore(profile: any, query: string, userProfile: any): n
     let score = 0;
 
     const searchQuery = query.toLowerCase().trim();
-    const profileName = (profile.fullName || profile.slug || '').toLowerCase();
-    const headline = (profile.headline || '').toLowerCase();
-    const location = (profile.location || '').toLowerCase();
+    const profileName = (profile.fullName || profile.slug || "").toLowerCase();
+    const headline = (profile.headline || "").toLowerCase();
+    const location = (profile.location || "").toLowerCase();
 
     // Text matching score (0-100)
     if (profileName === searchQuery || profile.slug === searchQuery) {
@@ -240,4 +253,3 @@ function calculateProfileScore(profile: any, query: string, userProfile: any): n
 
     return score;
 }
-

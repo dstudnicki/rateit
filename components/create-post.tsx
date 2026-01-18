@@ -86,7 +86,10 @@ export function CreatePost() {
         <Card className="p-4">
             <div className="flex gap-3">
                 <Avatar className="h-12 w-12">
-                    <AvatarImage src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} />
+                    <AvatarImage
+                        src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
+                        className=" object-center object-cover"
+                    />
                     <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
 

@@ -172,7 +172,7 @@ export async function addCompanyReview(
         const existingReview = company.reviews.find((review: any) => review.user.toString() === user.id);
 
         if (existingReview) {
-            return { success: false, error: "You have already reviewed this company" };
+            return { success: false, error: "Już oceniłeś tę firmę" };
         }
 
         const newReview = {
@@ -527,6 +527,12 @@ export async function addCommentToReview(companyId: string, reviewId: string, co
             return { success: false, error: "Review not found" };
         }
 
+        // SECURITY: Prevent the author of the review from adding a comment to their own review
+        // This blocks attempts to comment under a different nick using the same account
+        if (review.user && review.user.toString() === user.id) {
+            return { success: false, error: "Nie możesz komentować własnej opinii" };
+        }
+
         const newComment = {
             content: sanitizedContent,
             user: user.id,
@@ -593,6 +599,11 @@ export async function addReplyToComment(companyId: string, reviewId: string, com
         const comment = review.comments.id(commentId);
         if (!comment) {
             return { success: false, error: "Comment not found" };
+        }
+
+        // SECURITY: Prevent the author of the review from replying to comments under their own review
+        if (review.user && review.user.toString() === user.id) {
+            return { success: false, error: "Nie możesz odpowiadać na komentarze pod własną opinią" };
         }
 
         const newReply = {
