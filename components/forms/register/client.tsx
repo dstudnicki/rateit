@@ -110,8 +110,6 @@ export default function RegisterForm() {
                                 },
                                 {
                                     onSuccess: () => {
-                                        // Redirect to home - it will handle onboarding redirect
-                                        // Don't redirect to /profile directly as middleware requires session
                                         router.push("/");
                                     },
                                     onError: () => {
