@@ -1,10 +1,14 @@
-import "server-only"
+import "server-only";
+
+// Get base URL - localhost in dev, Vercel URL in production
+const BASE_URL =
+    process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export async function getCompany(id: string) {
-    const data = await fetch(`http://localhost:3000/api/companies/${id}`, {
+    const data = await fetch(`${BASE_URL}/api/companies/${id}`, {
         next: {
-            tags: [`company-${id}`]
-        }
+            tags: [`company-${id}`],
+        },
     });
 
     if (!data.ok) {
@@ -15,10 +19,10 @@ export async function getCompany(id: string) {
 }
 
 export async function getCompanyBySlug(slug: string) {
-    const data = await fetch(`http://localhost:3000/api/companies/slug/${slug}`, {
+    const data = await fetch(`${BASE_URL}/api/companies/slug/${slug}`, {
         next: {
-            tags: [`company-slug-${slug}`]
-        }
+            tags: [`company-slug-${slug}`],
+        },
     });
 
     if (!data.ok) {
@@ -27,4 +31,3 @@ export async function getCompanyBySlug(slug: string) {
 
     return data.json();
 }
-

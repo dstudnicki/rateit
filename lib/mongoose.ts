@@ -11,11 +11,8 @@ declare global {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Check if we're in build/prerender phase
-const isBuildPhase =
-    process.env.NEXT_PHASE === "phase-production-build" ||
-    process.env.NEXT_PHASE === "phase-export" ||
-    (typeof window === "undefined" && process.env.VERCEL_ENV === "production" && !MONGODB_URI);
+// Check if we're in build phase (during npm build, not runtime)
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NEXT_PHASE === "phase-export";
 
 if (!MONGODB_URI && !isBuildPhase) {
     // eslint-disable-next-line quotes
@@ -29,8 +26,8 @@ if (!cached) {
 }
 
 async function dbConnect() {
-    // During build/prerender, return mock connection
-    if (isBuildPhase || process.env.NEXT_PHASE === "phase-production-build") {
+    // During build phase ONLY (not runtime), return mock connection
+    if (isBuildPhase) {
         console.warn("⚠️ MongoDB connection skipped during build phase - returning mock connection");
         // Return a mock mongoose instance that won't actually connect
         return {
