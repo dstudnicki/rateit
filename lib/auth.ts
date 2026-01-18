@@ -8,7 +8,12 @@ const client = await getClient();
 export const auth = betterAuth({
     database: mongodbAdapter(client),
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-    trustedOrigins: ["http://localhost:3000", "http://localhost:3001", process.env.BETTER_AUTH_URL || "http://localhost:3000"],
+    trustedOrigins: [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://rateit-nine.vercel.app",
+        process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    ],
     appName: "RateIt",
     emailAndPassword: {
         enabled: true,
