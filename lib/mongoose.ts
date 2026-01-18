@@ -11,7 +11,13 @@ declare global {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
+// Check if we're in build/prerender phase
+const isBuildPhase =
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.NEXT_PHASE === "phase-export" ||
+    (typeof window === "undefined" && process.env.VERCEL_ENV === "production" && !MONGODB_URI);
+
+if (!MONGODB_URI && !isBuildPhase) {
     // eslint-disable-next-line quotes
     throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
@@ -23,6 +29,26 @@ if (!cached) {
 }
 
 async function dbConnect() {
+    // During build/prerender, return mock connection
+    if (isBuildPhase || process.env.NEXT_PHASE === "phase-production-build") {
+        console.warn("⚠️ MongoDB connection skipped during build phase - returning mock connection");
+        // Return a mock mongoose instance that won't actually connect
+        return {
+            connection: {
+                getClient: () => ({
+                    db: () => ({
+                        collection: () => ({
+                            findOne: async () => null,
+                            find: () => ({
+                                toArray: async () => [],
+                            }),
+                        }),
+                    }),
+                }),
+            },
+        } as any;
+    }
+
     if (cached?.conn) return cached.conn;
 
     if (!cached?.promise) {

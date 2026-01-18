@@ -1,2 +1,6 @@
-# Ignore debug pages during Vercel deployment
+# Ignore debug and admin in production build
+# These work in development mode but are excluded from Vercel deployment
 app/debug/**
+app/admin/**
+app/api/debug/**
+app/api/admin/**

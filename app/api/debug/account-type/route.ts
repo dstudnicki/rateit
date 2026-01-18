@@ -77,7 +77,7 @@ export async function GET() {
             },
             debug: {
                 allAccountsCount: allAccounts.length,
-                allAccounts: allAccounts.map((acc) => ({
+                allAccounts: allAccounts.map((acc: any) => ({
                     userId: acc.userId,
                     userIdType: typeof acc.userId,
                     providerId: acc.providerId,

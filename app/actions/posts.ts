@@ -48,7 +48,6 @@ export async function createPost(content: string, images: string[] = []) {
         const createdPost = await Post.create(newPost);
         console.log("[createPost] Post created with images:", createdPost.images);
 
-
         return { success: true };
     } catch (error) {
         console.error("Failed to create post:", error);
@@ -113,7 +112,6 @@ export async function deletePost(postId: string) {
 
         await Post.findByIdAndDelete(postId);
 
-
         return { success: true };
     } catch (error) {
         console.error("Failed to delete post:", error);
@@ -125,13 +123,21 @@ export async function deletePost(postId: string) {
 function sanitizePost(post: any): any {
     // COMPLETE plain object - no references, no getters, no Mongoose
     const plain: any = {
-        _id: String(post._id || ''),
-        content: String(post.content || ''),
-        user: String(post.user || ''),
+        _id: String(post._id || ""),
+        content: String(post.content || ""),
+        user: String(post.user || ""),
         images: Array.isArray(post.images) ? post.images.map((img: any) => String(img)) : [],
         likes: Array.isArray(post.likes) ? post.likes.map((l: any) => String(l)) : [],
-        createdAt: post.createdAt ? (post.createdAt instanceof Date ? post.createdAt.toISOString() : String(post.createdAt)) : new Date().toISOString(),
-        updatedAt: post.updatedAt ? (post.updatedAt instanceof Date ? post.updatedAt.toISOString() : String(post.updatedAt)) : null,
+        createdAt: post.createdAt
+            ? post.createdAt instanceof Date
+                ? post.createdAt.toISOString()
+                : String(post.createdAt)
+            : new Date().toISOString(),
+        updatedAt: post.updatedAt
+            ? post.updatedAt instanceof Date
+                ? post.updatedAt.toISOString()
+                : String(post.updatedAt)
+            : null,
         comments: [],
         // Add detected fields if present
         detectedCompanies: Array.isArray(post.detectedCompanies) ? post.detectedCompanies.map((c: any) => String(c)) : [],
@@ -143,22 +149,30 @@ function sanitizePost(post: any): any {
     if (post.comments && Array.isArray(post.comments)) {
         plain.comments = post.comments.map((c: any) => {
             const comment: any = {
-                _id: String(c._id || ''),
-                content: String(c.content || ''),
-                user: String(c.user || ''),
+                _id: String(c._id || ""),
+                content: String(c.content || ""),
+                user: String(c.user || ""),
                 likes: Array.isArray(c.likes) ? c.likes.map((l: any) => String(l)) : [],
-                createdAt: c.createdAt ? (c.createdAt instanceof Date ? c.createdAt.toISOString() : String(c.createdAt)) : new Date().toISOString(),
+                createdAt: c.createdAt
+                    ? c.createdAt instanceof Date
+                        ? c.createdAt.toISOString()
+                        : String(c.createdAt)
+                    : new Date().toISOString(),
                 replies: [],
             };
 
             // Sanitize replies
             if (c.replies && Array.isArray(c.replies)) {
                 comment.replies = c.replies.map((r: any) => ({
-                    _id: String(r._id || ''),
-                    content: String(r.content || ''),
-                    user: String(r.user || ''),
+                    _id: String(r._id || ""),
+                    content: String(r.content || ""),
+                    user: String(r.user || ""),
                     likes: Array.isArray(r.likes) ? r.likes.map((l: any) => String(l)) : [],
-                    createdAt: r.createdAt ? (r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt)) : new Date().toISOString(),
+                    createdAt: r.createdAt
+                        ? r.createdAt instanceof Date
+                            ? r.createdAt.toISOString()
+                            : String(r.createdAt)
+                        : new Date().toISOString(),
                 }));
             }
 
@@ -171,7 +185,7 @@ function sanitizePost(post: any): any {
 
 export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) {
     const session = await auth.api.getSession({
-        headers: await import("next/headers").then(m => m.headers()),
+        headers: await import("next/headers").then((m) => m.headers()),
     });
 
     if (!session) {
@@ -200,9 +214,7 @@ export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) 
 
             // Deduplicate by _id
             const allPosts = [...personalizedPosts, ...genericPosts];
-            const uniquePosts = Array.from(
-                new Map(allPosts.map(post => [post._id, post])).values()
-            ).slice(0, limit);
+            const uniquePosts = Array.from(new Map(allPosts.map((post) => [post._id, post])).values()).slice(0, limit);
 
             return {
                 success: true,
@@ -220,9 +232,7 @@ export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) 
 
         // Deduplicate by _id
         const allPosts = [...personalizedPosts, ...explorationPosts];
-        const uniquePosts = Array.from(
-            new Map(allPosts.map(post => [post._id, post])).values()
-        );
+        const uniquePosts = Array.from(new Map(allPosts.map((post) => [post._id, post])).values());
 
         return {
             success: true,
@@ -237,7 +247,7 @@ export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) 
 
 async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     const db = await getClient();
-    const { ObjectId } = require('mongodb');
+    const { ObjectId } = require("mongodb");
 
     const posts = await Post.find()
         .sort({ createdAt: -1 })
@@ -248,10 +258,10 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     const postsPlain = posts.map((post: any) => sanitizePost(post));
 
     // Collect all unique user IDs
-    const userIds = [...new Set(postsPlain.map(p => p.user))];
+    const userIds = [...new Set(postsPlain.map((p) => p.user))];
 
     // Batch fetch all users
-    const userObjectIds = userIds.map(id => {
+    const userObjectIds = userIds.map((id) => {
         try {
             return new ObjectId(id);
         } catch {
@@ -259,22 +269,25 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         }
     });
 
-    const users = await db.collection("user").find(
-        { _id: { $in: userObjectIds } },
-        { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
-    ).toArray();
+    const users = await db
+        .collection("user")
+        .find({ _id: { $in: userObjectIds } }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } })
+        .toArray();
 
     // Batch fetch all profiles
-    const profiles = await db.collection("profiles").find(
-        { userId: { $in: userIds } },
-        { projection: { userId: 1, slug: 1, fullName: 1, headline: 1, location: 1, skills: 1 } }
-    ).toArray();
+    const profiles = await db
+        .collection("profiles")
+        .find(
+            { userId: { $in: userIds } },
+            { projection: { userId: 1, slug: 1, fullName: 1, headline: 1, location: 1, skills: 1 } },
+        )
+        .toArray();
 
     // Create lookup maps
-    const userMap = new Map(users.map(u => [u._id.toString(), u]));
-    const profileMapLookup = new Map(profiles.map(p => [p.userId, p]));
+    const userMap = new Map(users.map((u: any) => [u._id.toString(), u]));
+    const profileMapLookup = new Map(profiles.map((p: any) => [p.userId, p]));
 
-    console.log('[getPersonalizedPosts] Debug:', {
+    console.log("[getPersonalizedPosts] Debug:", {
         totalPosts: postsPlain.length,
         totalUsers: users.length,
         totalProfiles: profiles.length,
@@ -283,12 +296,12 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     });
 
     // Populate user data for each post
-    const postsWithUsers = postsPlain.map(post => {
-        const user = userMap.get(post.user);
-        const userProfile = profileMapLookup.get(post.user);
+    const postsWithUsers = postsPlain.map((post) => {
+        const user: any = userMap.get(post.user);
+        const userProfile: any = profileMapLookup.get(post.user);
 
         if (!user) {
-            console.warn('[getPersonalizedPosts] User not found for post:', post._id, 'userId:', post.user);
+            console.warn("[getPersonalizedPosts] User not found for post:", post._id, "userId:", post.user);
         }
 
         if (user) {
@@ -303,7 +316,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
                     headline: (userProfile?.headline && userProfile.headline.trim()) || null,
                     location: (userProfile?.location && userProfile.location.trim()) || null,
                     image: user.userImage || user.image || null,
-                }
+                },
             };
         }
         return post;
@@ -314,8 +327,8 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     const companies = await Company.find().lean();
 
     // Create maps for quick lookup
-    const profileMap = new Map(userProfiles.map(p => [p.userId, p]));
-    const companyMap = new Map(companies.map(c => [(c._id as any).toString(), c]));
+    const profileMap = new Map(userProfiles.map((p) => [p.userId, p]));
+    const companyMap = new Map(companies.map((c) => [(c._id as any).toString(), c]));
 
     // === LEARN FROM INTERACTION HISTORY ===
     // Extract keywords from posts user has interacted with
@@ -325,10 +338,11 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
 
     // Get posts user has liked/commented on (last 30 days)
     // Note: we skip "view" interactions as they're too weak a signal
-    const recentPostInteractions = profile.interactionHistory.filter((int: any) =>
-        int.targetType === "post" &&
-        int.type !== "view" && // Skip views, too weak signal
-        Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
+    const recentPostInteractions = profile.interactionHistory.filter(
+        (int: any) =>
+            int.targetType === "post" &&
+            int.type !== "view" && // Skip views, too weak signal
+            Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000,
     );
 
     // Fetch those posts to learn from their content
@@ -351,9 +365,8 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     });
 
     // Get companies user has viewed/interacted with (last 30 days)
-    const recentCompanyInteractions = profile.interactionHistory.filter((int: any) =>
-        int.targetType === "company" &&
-        Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
+    const recentCompanyInteractions = profile.interactionHistory.filter(
+        (int: any) => int.targetType === "company" && Date.now() - new Date(int.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000,
     );
 
     // Fetch those companies to learn from their keywords
@@ -374,10 +387,10 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     });
 
     // Score each post
-    const scoredPosts = postsWithUsers.map(post => {
+    const scoredPosts = postsWithUsers.map((post) => {
         let score = 0;
         const matchReasons: { reason: string; points: number }[] = [];
-        const userIdString = typeof post.user === 'string' ? post.user : (post.user?._id || post.user?.toString());
+        const userIdString = typeof post.user === "string" ? post.user : post.user?._id || post.user?.toString();
         const authorProfile = profileMap.get(userIdString);
 
         // === MATCH DETECTED CONTENT IN POST WITH USER'S PROFILE ===
@@ -385,48 +398,48 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         // 1. Match detected skills with user's profile skills (HIGHEST PRIORITY)
         if (post.detectedSkills && post.detectedSkills.length > 0) {
             // NEW: Match with learned keywords from interaction history (HIGHEST!)
-            const learnedSkillMatches = post.detectedSkills.filter((skill: string) =>
-                learnedKeywords.has(skill.toLowerCase())
-            );
+            const learnedSkillMatches = post.detectedSkills.filter((skill: string) => learnedKeywords.has(skill.toLowerCase()));
             if (learnedSkillMatches.length > 0) {
                 const points = learnedSkillMatches.length * 15;
                 score += points;
                 matchReasons.push({
                     reason: `Learned from your activity: ${learnedSkillMatches.join(", ")}`,
-                    points
+                    points,
                 });
             }
 
             // Match with preferences skills
             const prefSkillMatches = post.detectedSkills.filter((skill: string) =>
-                profile.preferences.skills.some((userSkill: string) =>
-                    skill.toLowerCase().includes(userSkill.toLowerCase()) ||
-                    userSkill.toLowerCase().includes(skill.toLowerCase())
-                )
+                profile.preferences.skills.some(
+                    (userSkill: string) =>
+                        skill.toLowerCase().includes(userSkill.toLowerCase()) ||
+                        userSkill.toLowerCase().includes(skill.toLowerCase()),
+                ),
             );
             if (prefSkillMatches.length > 0) {
                 const points = prefSkillMatches.length * 8;
                 score += points;
                 matchReasons.push({
                     reason: `Matches onboarding preferences: ${prefSkillMatches.join(", ")}`,
-                    points
+                    points,
                 });
             }
 
             // Match with actual profile skills (even higher priority!)
             if (profile.skills && Array.isArray(profile.skills)) {
                 const profileSkillMatches = post.detectedSkills.filter((skill: string) =>
-                    profile.skills.some((profileSkill: any) =>
-                        skill.toLowerCase().includes(profileSkill.name?.toLowerCase() || '') ||
-                        (profileSkill.name?.toLowerCase() || '').includes(skill.toLowerCase())
-                    )
+                    profile.skills.some(
+                        (profileSkill: any) =>
+                            skill.toLowerCase().includes(profileSkill.name?.toLowerCase() || "") ||
+                            (profileSkill.name?.toLowerCase() || "").includes(skill.toLowerCase()),
+                    ),
                 );
                 if (profileSkillMatches.length > 0) {
                     const points = profileSkillMatches.length * 12;
                     score += points;
                     matchReasons.push({
                         reason: `Matches your profile skills: ${profileSkillMatches.join(", ")}`,
-                        points
+                        points,
                     });
                 }
             }
@@ -459,8 +472,10 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
                 // Match company from experience with detected companies
                 if (exp.company && post.detectedCompanies) {
                     post.detectedCompanies.forEach((detectedComp: string) => {
-                        if (exp.company.toLowerCase().includes(detectedComp.toLowerCase()) ||
-                            detectedComp.toLowerCase().includes(exp.company.toLowerCase())) {
+                        if (
+                            exp.company.toLowerCase().includes(detectedComp.toLowerCase()) ||
+                            detectedComp.toLowerCase().includes(exp.company.toLowerCase())
+                        ) {
                             score += 15; // VERY HIGH: worked at mentioned company!
                         }
                     });
@@ -497,15 +512,16 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         if (post.detectedIndustries && post.detectedIndustries.length > 0) {
             // NEW: Match with learned industries from interaction history
             const learnedIndustryMatches = post.detectedIndustries.filter((industry: string) =>
-                learnedIndustries.has(industry.toLowerCase())
+                learnedIndustries.has(industry.toLowerCase()),
             );
             score += learnedIndustryMatches.length * 6; // +6 per learned industry match
 
             const matchingIndustries = post.detectedIndustries.filter((industry: string) =>
-                profile.preferences.industries.some((userInd: string) =>
-                    industry.toLowerCase().includes(userInd.toLowerCase()) ||
-                    userInd.toLowerCase().includes(industry.toLowerCase())
-                )
+                profile.preferences.industries.some(
+                    (userInd: string) =>
+                        industry.toLowerCase().includes(userInd.toLowerCase()) ||
+                        userInd.toLowerCase().includes(industry.toLowerCase()),
+                ),
             );
             score += matchingIndustries.length * 4; // +4 per matching industry (increased from 3)
         }
@@ -514,7 +530,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         if (post.detectedCompanies && post.detectedCompanies.length > 0) {
             // NEW: Match with learned companies from interaction history (HIGHEST!)
             const learnedCompanyMatches = post.detectedCompanies.filter((company: string) =>
-                learnedCompanies.has(company.toLowerCase())
+                learnedCompanies.has(company.toLowerCase()),
             );
             score += learnedCompanyMatches.length * 20; // +20 per learned company!
 
@@ -528,9 +544,11 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
                     const detectedLower = detected.toLowerCase();
 
                     // Exact match or contains
-                    return companyNameLower === detectedLower ||
-                           companyNameLower.includes(detectedLower) ||
-                           detectedLower.includes(companyNameLower);
+                    return (
+                        companyNameLower === detectedLower ||
+                        companyNameLower.includes(detectedLower) ||
+                        detectedLower.includes(companyNameLower)
+                    );
                 });
             });
             score += matchingCompanies.length * 15; // +15 per followed company mentioned!
@@ -538,11 +556,11 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
             // Also check if any detected company matches user's experience companies
             if (profile.experience && Array.isArray(profile.experience)) {
                 post.detectedCompanies.forEach((detectedComp: string) => {
-                    const hasWorkedThere = profile.experience.some((exp: any) =>
-                        exp.company && (
-                            exp.company.toLowerCase().includes(detectedComp.toLowerCase()) ||
-                            detectedComp.toLowerCase().includes(exp.company.toLowerCase())
-                        )
+                    const hasWorkedThere = profile.experience.some(
+                        (exp: any) =>
+                            exp.company &&
+                            (exp.company.toLowerCase().includes(detectedComp.toLowerCase()) ||
+                                detectedComp.toLowerCase().includes(exp.company.toLowerCase())),
                     );
                     if (hasWorkedThere) {
                         score += 15; // User has experience with this company!
@@ -556,7 +574,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         // Match author's industries
         if (authorProfile?.headline) {
             const authorIndustries = profile.preferences.industries.filter((ind: string) =>
-                authorProfile.headline?.toLowerCase().includes(ind.toLowerCase())
+                authorProfile.headline?.toLowerCase().includes(ind.toLowerCase()),
             );
             score += authorIndustries.length * 2; // Reduced from 3 to 2
         }
@@ -565,8 +583,8 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         if (authorProfile?.skills) {
             const matchingSkills = authorProfile.skills.filter((skill: any) =>
                 profile.preferences.skills.some((userSkill: string) =>
-                    skill.name.toLowerCase().includes(userSkill.toLowerCase())
-                )
+                    skill.name.toLowerCase().includes(userSkill.toLowerCase()),
+                ),
             );
             score += matchingSkills.length * 1; // Reduced from 2 to 1
         }
@@ -576,7 +594,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
             (interaction: any) =>
                 interaction.targetType === "profile" &&
                 interaction.targetId === userIdString &&
-                Date.now() - new Date(interaction.timestamp).getTime() < 7 * 24 * 60 * 60 * 1000 // Last 7 days
+                Date.now() - new Date(interaction.timestamp).getTime() < 7 * 24 * 60 * 60 * 1000, // Last 7 days
         );
         score += recentInteractions.length;
 
@@ -587,7 +605,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         if (recencyPoints > 0.5) {
             matchReasons.push({
                 reason: `Recent post (${Math.round(daysSincePost)} days ago)`,
-                points: Math.round(recencyPoints * 10) / 10
+                points: Math.round(recencyPoints * 10) / 10,
             });
         }
 
@@ -598,7 +616,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     return scoredPosts
         .sort((a, b) => b.score - a.score)
         .slice(skip, skip + limit)
-        .map(post => ({
+        .map((post) => ({
             ...post,
             matchScore: Math.round(post.score * 10) / 10,
         }));
@@ -607,7 +625,7 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
 export async function getGenericFeed(limit: number = 10, skip: number = 0) {
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         const posts = await Post.find()
             .sort({ createdAt: -1 })
@@ -618,10 +636,10 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
         const postsPlain = posts.map((post: any) => sanitizePost(post));
 
         // Collect all unique user IDs
-        const userIds = [...new Set(postsPlain.map(p => p.user))];
+        const userIds = [...new Set(postsPlain.map((p) => p.user))];
 
         // Batch fetch all users
-        const userObjectIds = userIds.map(id => {
+        const userObjectIds = userIds.map((id) => {
             try {
                 return new ObjectId(id);
             } catch {
@@ -629,22 +647,22 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
             }
         });
 
-        const users = await db.collection("user").find(
-            { _id: { $in: userObjectIds } },
-            { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
-        ).toArray();
+        const users = await db
+            .collection("user")
+            .find({ _id: { $in: userObjectIds } }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } })
+            .toArray();
 
         // Batch fetch all profiles
-        const profiles = await db.collection("profiles").find(
-            { userId: { $in: userIds } },
-            { projection: { userId: 1, slug: 1, fullName: 1, headline: 1, location: 1 } }
-        ).toArray();
+        const profiles = await db
+            .collection("profiles")
+            .find({ userId: { $in: userIds } }, { projection: { userId: 1, slug: 1, fullName: 1, headline: 1, location: 1 } })
+            .toArray();
 
         // Create lookup maps
-        const userMap = new Map(users.map(u => [u._id.toString(), u]));
-        const profileMapLookup = new Map(profiles.map(p => [p.userId, p]));
+        const userMap = new Map(users.map((u: any) => [u._id.toString(), u]));
+        const profileMapLookup = new Map(profiles.map((p: any) => [p.userId, p]));
 
-        console.log('[getGenericFeed] Debug:', {
+        console.log("[getGenericFeed] Debug:", {
             totalPosts: postsPlain.length,
             totalUsers: users.length,
             totalProfiles: profiles.length,
@@ -653,12 +671,12 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
         });
 
         // Populate user data for each post
-        const postsWithUsers = postsPlain.map(post => {
-            const user = userMap.get(post.user);
-            const profile = profileMapLookup.get(post.user);
+        const postsWithUsers = postsPlain.map((post) => {
+            const user: any = userMap.get(post.user);
+            const profile: any = profileMapLookup.get(post.user);
 
             if (!user) {
-                console.warn('[getGenericFeed] User not found for post:', post._id, 'userId:', post.user);
+                console.warn("[getGenericFeed] User not found for post:", post._id, "userId:", post.user);
             }
 
             if (user) {
@@ -673,14 +691,14 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
                         headline: (profile?.headline && profile.headline.trim()) || null,
                         location: (profile?.location && profile.location.trim()) || null,
                         image: user.userImage || user.image || null,
-                    }
+                    },
                 };
             }
             return post;
         });
 
         // Score posts based on engagement and recency
-        const scoredPosts = postsWithUsers.map(post => {
+        const scoredPosts = postsWithUsers.map((post) => {
             const likesCount = post.likes?.length || 0;
             const commentsCount = post.comments?.length || 0;
 
@@ -700,12 +718,10 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
         const sortedPosts = scoredPosts
             .sort((a, b) => b.score - a.score)
             .slice(skip, skip + limit)
-            .map(post => ({
+            .map((post) => ({
                 ...post,
                 matchScore: Math.round(post.score * 10) / 10,
-                matchReasons: [
-                    { reason: `Generic feed (engagement-based)`, points: Math.round(post.score * 10) / 10 }
-                ]
+                matchReasons: [{ reason: `Generic feed (engagement-based)`, points: Math.round(post.score * 10) / 10 }],
             }));
 
         return {

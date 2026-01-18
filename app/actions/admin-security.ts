@@ -30,7 +30,7 @@ async function logAuditAction(log: AuditLog) {
         // Also log to console for immediate visibility
         console.log(`[AUDIT] ${log.action} by ${log.performedByEmail}`, {
             target: log.targetEmail,
-            timestamp: log.timestamp
+            timestamp: log.timestamp,
         });
     } catch (error) {
         console.error("Failed to log audit action:", error);
@@ -45,20 +45,18 @@ export async function addAdminRole(targetUserId: string, reason: string) {
 
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         // Get target user info
         let targetUser;
         try {
-            targetUser = await db.collection("user").findOne(
-                { _id: new ObjectId(targetUserId) },
-                { projection: { email: 1, role: 1 } }
-            );
+            targetUser = await db
+                .collection("user")
+                .findOne({ _id: new ObjectId(targetUserId) }, { projection: { email: 1, role: 1 } });
         } catch (e) {
-            targetUser = await db.collection("user").findOne(
-                { _id: targetUserId as any },
-                { projection: { email: 1, role: 1 } }
-            );
+            targetUser = await db
+                .collection("user")
+                .findOne({ _id: targetUserId as any }, { projection: { email: 1, role: 1 } });
         }
 
         if (!targetUser) {
@@ -80,9 +78,9 @@ export async function addAdminRole(targetUserId: string, reason: string) {
                         role: "admin",
                         roleSetAt: new Date(),
                         roleSetBy: admin.id,
-                        roleReason: reason
-                    }
-                }
+                        roleReason: reason,
+                    },
+                },
             );
         } catch (e) {
             result = await db.collection("user").updateOne(
@@ -92,9 +90,9 @@ export async function addAdminRole(targetUserId: string, reason: string) {
                         role: "admin",
                         roleSetAt: new Date(),
                         roleSetBy: admin.id,
-                        roleReason: reason
-                    }
-                }
+                        roleReason: reason,
+                    },
+                },
             );
         }
 
@@ -109,12 +107,12 @@ export async function addAdminRole(targetUserId: string, reason: string) {
                 oldValue: targetUser.role || "user",
                 newValue: "admin",
                 reason,
-                timestamp: new Date()
+                timestamp: new Date(),
             });
 
             return {
                 success: true,
-                message: `Admin role granted to ${targetUser.email}`
+                message: `Admin role granted to ${targetUser.email}`,
             };
         }
 
@@ -133,7 +131,7 @@ export async function removeAdminRole(targetUserId: string, reason: string) {
 
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         // Prevent self-demotion
         if (admin.id === targetUserId) {
@@ -143,15 +141,13 @@ export async function removeAdminRole(targetUserId: string, reason: string) {
         // Get target user info
         let targetUser;
         try {
-            targetUser = await db.collection("user").findOne(
-                { _id: new ObjectId(targetUserId) },
-                { projection: { email: 1, role: 1 } }
-            );
+            targetUser = await db
+                .collection("user")
+                .findOne({ _id: new ObjectId(targetUserId) }, { projection: { email: 1, role: 1 } });
         } catch (e) {
-            targetUser = await db.collection("user").findOne(
-                { _id: targetUserId as any },
-                { projection: { email: 1, role: 1 } }
-            );
+            targetUser = await db
+                .collection("user")
+                .findOne({ _id: targetUserId as any }, { projection: { email: 1, role: 1 } });
         }
 
         if (!targetUser) {
@@ -159,11 +155,11 @@ export async function removeAdminRole(targetUserId: string, reason: string) {
         }
 
         // Check if email is in ADMIN_EMAILS (cannot remove these)
-        const adminEmails = process.env.ADMIN_EMAILS?.split(",").map(e => e.trim()) || [];
+        const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim()) || [];
         if (adminEmails.includes(targetUser.email)) {
             return {
                 success: false,
-                error: "Cannot remove admin role from users in ADMIN_EMAILS. Remove from .env first."
+                error: "Cannot remove admin role from users in ADMIN_EMAILS. Remove from .env first.",
             };
         }
 
@@ -177,9 +173,9 @@ export async function removeAdminRole(targetUserId: string, reason: string) {
                         role: "user",
                         roleRemovedAt: new Date(),
                         roleRemovedBy: admin.id,
-                        roleRemovalReason: reason
-                    }
-                }
+                        roleRemovalReason: reason,
+                    },
+                },
             );
         } catch (e) {
             result = await db.collection("user").updateOne(
@@ -189,9 +185,9 @@ export async function removeAdminRole(targetUserId: string, reason: string) {
                         role: "user",
                         roleRemovedAt: new Date(),
                         roleRemovedBy: admin.id,
-                        roleRemovalReason: reason
-                    }
-                }
+                        roleRemovalReason: reason,
+                    },
+                },
             );
         }
 
@@ -206,12 +202,12 @@ export async function removeAdminRole(targetUserId: string, reason: string) {
                 oldValue: "admin",
                 newValue: "user",
                 reason,
-                timestamp: new Date()
+                timestamp: new Date(),
             });
 
             return {
                 success: true,
-                message: `Admin role removed from ${targetUser.email}`
+                message: `Admin role removed from ${targetUser.email}`,
             };
         }
 
@@ -231,18 +227,14 @@ export async function getAuditLogs(limit: number = 50) {
     try {
         const db = await getClient();
 
-        const logs = await db.collection("audit_logs")
-            .find({})
-            .sort({ timestamp: -1 })
-            .limit(limit)
-            .toArray();
+        const logs = await db.collection("audit_logs").find({}).sort({ timestamp: -1 }).limit(limit).toArray();
 
         return {
             success: true,
-            logs: logs.map(log => ({
+            logs: logs.map((log: any) => ({
                 ...log,
-                _id: log._id.toString()
-            }))
+                _id: log._id.toString(),
+            })),
         };
     } catch (error) {
         console.error("Error fetching audit logs:", error);
@@ -256,11 +248,10 @@ export async function getAuditLogs(limit: number = 50) {
 export async function checkEmailForAutoAdmin(email: string) {
     await requireAdmin();
 
-    const adminEmails = process.env.ADMIN_EMAILS?.split(",").map(e => e.trim()) || [];
+    const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim()) || [];
     return {
         success: true,
         isAutoAdmin: adminEmails.includes(email),
-        configuredEmails: adminEmails.length
+        configuredEmails: adminEmails.length,
     };
 }
-

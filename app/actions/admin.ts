@@ -15,19 +15,20 @@ export async function setUserRole(userId: string, role: UserRole) {
 
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         let result;
         try {
-            result = await db.collection("user").updateOne(
-                { _id: new ObjectId(userId) },
-                { $set: { role, roleUpdatedBy: admin.id, roleUpdatedAt: new Date() } }
-            );
+            result = await db
+                .collection("user")
+                .updateOne(
+                    { _id: new ObjectId(userId) },
+                    { $set: { role, roleUpdatedBy: admin.id, roleUpdatedAt: new Date() } },
+                );
         } catch (e) {
-            result = await db.collection("user").updateOne(
-                { _id: userId as any },
-                { $set: { role, roleUpdatedBy: admin.id, roleUpdatedAt: new Date() } }
-            );
+            result = await db
+                .collection("user")
+                .updateOne({ _id: userId as any }, { $set: { role, roleUpdatedBy: admin.id, roleUpdatedAt: new Date() } });
         }
 
         if (result.modifiedCount > 0) {
@@ -51,7 +52,8 @@ export async function getAllUsers(limit: number = 50, skip: number = 0) {
     try {
         const db = await getClient();
 
-        const users = await db.collection("user")
+        const users = await db
+            .collection("user")
             .find({})
             .project({
                 _id: 1,
@@ -71,7 +73,7 @@ export async function getAllUsers(limit: number = 50, skip: number = 0) {
 
         return {
             success: true,
-            users: users.map(user => ({
+            users: users.map((user: any) => ({
                 ...user,
                 _id: user._id.toString(),
                 role: user.role || "user",
@@ -98,12 +100,10 @@ export async function searchUsers(query: string) {
         const db = await getClient();
         const searchRegex = new RegExp(query, "i");
 
-        const users = await db.collection("user")
+        const users = await db
+            .collection("user")
             .find({
-                $or: [
-                    { email: searchRegex },
-                    { name: searchRegex }
-                ]
+                $or: [{ email: searchRegex }, { name: searchRegex }],
             })
             .project({
                 _id: 1,
@@ -117,7 +117,7 @@ export async function searchUsers(query: string) {
 
         return {
             success: true,
-            users: users.map(user => ({
+            users: users.map((user: any) => ({
                 ...user,
                 _id: user._id.toString(),
                 role: user.role || "user",
@@ -198,4 +198,3 @@ export async function checkMyRole() {
         };
     }
 }
-
