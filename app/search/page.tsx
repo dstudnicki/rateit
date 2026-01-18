@@ -215,7 +215,7 @@ export default function SearchPage() {
                     <Card className="p-8 text-center">
                         <p className="text-destructive mb-2">{error}</p>
                         <Button onClick={() => window.location.reload()} variant="outline" size="sm">
-                            Try Again
+                            Spróbuj ponownie
                         </Button>
                     </Card>
                 )}
@@ -227,14 +227,14 @@ export default function SearchPage() {
                             <>
                                 <p className="text-muted-foreground">{results.message}</p>
                                 <p className="text-sm text-muted-foreground mt-2">
-                                    Enter at least 2 characters to start searching
+                                    Wpisz co najmniej 2 znaki, aby rozpocząć poszukiwania
                                 </p>
                             </>
                         ) : (
                             <>
-                                <p className="text-muted-foreground">No results found for &quot;{query}&quot;</p>
+                                <p className="text-muted-foreground">Brak wyników dla &quot;{query}&quot;</p>
                                 <p className="text-sm text-muted-foreground mt-2">
-                                    Try different keywords or check your spelling
+                                    Spróbuj różnych słów kluczowych lub sprawdź pisownię
                                 </p>
                             </>
                         )}
