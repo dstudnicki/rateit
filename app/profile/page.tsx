@@ -29,11 +29,8 @@ export default async function ProfilePage() {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug || "");
 
     if (!slug || isObjectId || isUUID) {
-        return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <p>Błąd: Nieprawidłowy slug profilu. Skontaktuj się z pomocą techniczną.</p>
-            </div>
-        );
+        // Invalid or missing slug - redirect to onboarding to create proper slug
+        redirect("/onboarding");
     }
 
     redirect(`/${slug}`);

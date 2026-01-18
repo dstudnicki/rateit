@@ -246,14 +246,14 @@ export function Navbar() {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="sm:hidden"
+                            className="md:hidden"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         >
                             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                         </Button>
 
                         {/* Navigation */}
-                        <nav className="hidden sm:flex items-center gap-1 lg:gap-6">
+                        <nav className="hidden md:flex items-center gap-1 lg:gap-6">
                             <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex" asChild>
                                 <Link href="/" className="text-xs font-medium">
                                     <Home className="h-5 w-5" /> Strona główna

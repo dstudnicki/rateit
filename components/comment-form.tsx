@@ -45,15 +45,15 @@ export function CommentForm({ user, postId, onCommentAdded }: CommentFormProps) 
     };
 
     return (
-        <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+            <Avatar className="h-8 w-8 shrink-0">
                 <AvatarImage
                     src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
                     alt={displayName || "User"}
                 />
                 <AvatarFallback>{displayName?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 flex items-center gap-2 rounded-full  py-2">
+            <div className="flex-1 flex items-center gap-1 sm:gap-2  px-2 sm:px-4 py-1.5 sm:py-2 focus-within:border-primary/50 transition-colors min-w-0">
                 <input
                     type="text"
                     placeholder="Dodaj komentarz..."
@@ -64,7 +64,7 @@ export function CommentForm({ user, postId, onCommentAdded }: CommentFormProps) 
                             handleAddComment(e);
                         }
                     }}
-                    className="flex-1 flex items-center gap-2 rounded-full border border-muted-foreground/30 bg-background px-4 py-2 focus-within:border-primary/50 transition-colors"
+                    className="flex-1 flex items-center gap-1 sm:gap-2 rounded-full border border-muted-foreground/30 bg-background px-2 sm:px-4 py-1.5 sm:py-2 focus-within:border-primary/50 transition-colors min-w-0"
                 />
                 <div className="flex justify-end">
                     <Button onClick={handleAddComment} size="sm" disabled={!content.trim()} className="gap-2">

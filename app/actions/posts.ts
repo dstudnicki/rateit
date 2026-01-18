@@ -185,7 +185,14 @@ function sanitizePost(post: any): any {
     return plain;
 }
 
-export const getPersonalizedFeed = cache(async (limit: number = 10, skip: number = 0) => {
+// Cacheable helper - wraps the slow DB operations (no headers)
+const getPersonalizedPostsForProfile = cache(async (profile: any, limit: number, skip: number) => {
+    return getPersonalizedPosts(profile, limit, skip);
+});
+
+// Main function - NOT cacheable (uses headers for auth)
+// Auth check is fast, heavy DB queries are delegated to cacheable helpers
+export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) {
     const session = await auth.api.getSession({
         headers: await import("next/headers").then((m) => m.headers()),
     });
@@ -210,7 +217,7 @@ export const getPersonalizedFeed = cache(async (limit: number = 10, skip: number
         // Cold start: if user has less than 10 interactions, prioritize generic popular content
         if (interactionCount < 10) {
             const genericResult = await getGenericFeed(Math.ceil(limit * 0.6), skip);
-            const personalizedPosts = await getPersonalizedPosts(profile, Math.floor(limit * 0.4), 0);
+            const personalizedPosts = await getPersonalizedPostsForProfile(profile, Math.floor(limit * 0.4), 0);
 
             const genericPosts = genericResult.success ? genericResult.posts : [];
 
@@ -228,7 +235,7 @@ export const getPersonalizedFeed = cache(async (limit: number = 10, skip: number
         const personalizedCount = Math.floor(limit * 0.8);
         const explorationCount = limit - personalizedCount;
 
-        const personalizedPosts = await getPersonalizedPosts(profile, personalizedCount, skip);
+        const personalizedPosts = await getPersonalizedPostsForProfile(profile, personalizedCount, skip);
         const explorationResult = await getGenericFeed(explorationCount, Math.floor(Math.random() * 20));
         const explorationPosts = explorationResult.success ? explorationResult.posts : [];
 
@@ -245,7 +252,7 @@ export const getPersonalizedFeed = cache(async (limit: number = 10, skip: number
         // Fall back to generic feed on error
         return getGenericFeed(limit, skip);
     }
-});
+}
 
 async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     const db = await getClient();

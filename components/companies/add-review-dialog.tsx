@@ -147,7 +147,7 @@ export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDi
 
                     <div className="space-y-2">
                         <Label>Typ opinii *</Label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col lg:flex-row gap-2">
                             <Button
                                 type="button"
                                 variant={formData.reviewType === "work" ? "default" : "outline"}

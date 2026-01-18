@@ -99,7 +99,15 @@ export function CompanyList({ companies, searchQuery }: CompanyListProps) {
                     <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-primary hover:underline">{company.name}</h3>
+                                <div className="flex justify-between">
+                                    <h3 className="text-lg font-semibold text-primary hover:underline">{company.name}</h3>
+                                    {company.lastReviewDate && (
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                                            <Clock className="h-3 w-3" />
+                                            <span>Opinia: {getTimeAgo(company.lastReviewDate)}</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                                     <MapPin className="h-4 w-4" />
                                     <span>{company.location}</span>
@@ -120,13 +128,6 @@ export function CompanyList({ companies, searchQuery }: CompanyListProps) {
                                     </span>
                                 </div>
                             </div>
-
-                            {company.lastReviewDate && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
-                                    <Clock className="h-3 w-3" />
-                                    <span>Opinia: {getTimeAgo(company.lastReviewDate)}</span>
-                                </div>
-                            )}
                         </div>
                     </Card>
                 </Link>

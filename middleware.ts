@@ -112,17 +112,6 @@ export async function middleware(request: NextRequest) {
             }
         }
     }
-
-    // Protected pages - only /profile requires middleware protection
-    // /onboarding checks session internally (allows access, redirects if no session inside page)
-    const protectedPages = ["/profile"];
-
-    if (protectedPages.some((route) => pathname.startsWith(route))) {
-        if (!hasSession) {
-            return NextResponse.redirect(new URL("/login", request.url));
-        }
-    }
-
     return NextResponse.next();
 }
 
