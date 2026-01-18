@@ -26,15 +26,17 @@ export async function GET() {
         const result = await migrateCompanySlugs();
 
         return NextResponse.json(result, {
-            status: result.success ? 200 : 500
+            status: result.success ? 200 : 500,
         });
     } catch (error) {
         console.error("Migration endpoint error:", error);
-        return NextResponse.json({
-            success: false,
-            message: "Internal server error",
-            error: error instanceof Error ? error.message : String(error)
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Internal server error",
+                error: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+        );
     }
 }
-

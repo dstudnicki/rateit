@@ -225,10 +225,9 @@ export async function getAccountType(): Promise<{
     try {
         const user = await requireAuth();
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         // Get user document first to find the correct userId
-        let userObjectId;
+        let userObjectId: any;
         try {
             userObjectId = new ObjectId(user.id);
         } catch {

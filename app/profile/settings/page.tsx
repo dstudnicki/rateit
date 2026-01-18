@@ -3,15 +3,15 @@ import { getClient } from "@/lib/mongoose";
 import { getProfile } from "@/app/actions/profile";
 import { getAccountType } from "@/app/actions/settings";
 import SettingsPageClient from "./settings-client";
+import { ObjectId } from "mongodb";
 
 export default async function SettingsPage() {
     // Get current user session
     const session = await requireUser();
     const db = await getClient();
-    const { ObjectId } = require("mongodb");
 
     // Get user data
-    let userObjectId;
+    let userObjectId: any;
     try {
         userObjectId = new ObjectId(session.user.id);
     } catch {

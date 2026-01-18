@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar/Navbar";
 import BanCheckWrapper from "@/components/BanCheckWrapper";
 import { Toaster } from "sonner";
+import { Suspense } from "react";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -23,10 +24,12 @@ export default function RootLayout({
         <html lang="pl">
             <body className={`font-sans antialiased`}>
                 <Toaster position="top-center" richColors />
-                <BanCheckWrapper>
-                    <Navbar />
-                    {children}
-                </BanCheckWrapper>
+                <Suspense fallback={null}>
+                    <BanCheckWrapper>
+                        <Navbar />
+                        {children}
+                    </BanCheckWrapper>
+                </Suspense>
             </body>
         </html>
     );

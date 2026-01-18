@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getClient } from "@/lib/mongoose";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { ObjectId } from "mongodb";
 
 export async function GET() {
     try {
@@ -14,10 +15,9 @@ export async function GET() {
         }
 
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         // Get user
-        let userObjectId;
+        let userObjectId: any;
         try {
             userObjectId = new ObjectId(session.user.id);
         } catch {

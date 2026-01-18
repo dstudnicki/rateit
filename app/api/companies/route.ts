@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
         const location = searchParams.get("location") || "";
         const sortBy = searchParams.get("sortBy") || "recent"; // recent, rating, reviews
 
-        let filter: any = {};
+        const filter: any = {};
 
         if (query) {
             filter.name = { $regex: query, $options: "i" };
@@ -40,17 +40,13 @@ export async function GET(request: NextRequest) {
                 sortOptions = { createdAt: -1 };
         }
 
-        const companies = await Company.find(filter)
-            .sort(sortOptions)
-            .lean();
+        const companies = await Company.find(filter).sort(sortOptions).lean();
 
         // Add review count and last review time to each company
-        const companiesWithMeta = companies.map(company => ({
+        const companiesWithMeta = companies.map((company) => ({
             ...company,
             reviewCount: company.reviews?.length || 0,
-            lastReviewDate: company.reviews?.length > 0
-                ? company.reviews[company.reviews.length - 1].createdAt
-                : null
+            lastReviewDate: company.reviews?.length > 0 ? company.reviews[company.reviews.length - 1].createdAt : null,
         }));
 
         return NextResponse.json(companiesWithMeta, { status: 200 });
@@ -80,7 +76,7 @@ export async function POST(request: NextRequest) {
 
         // Check if company already exists
         const existingCompany = await Company.findOne({
-            name: { $regex: new RegExp(`^${name}$`, 'i') }
+            name: { $regex: new RegExp(`^${name}$`, "i") },
         });
 
         if (existingCompany) {
@@ -102,10 +98,13 @@ export async function POST(request: NextRequest) {
         const result = await Company.create(newCompany);
 
         if (result) {
-            return NextResponse.json({
-                message: "Company created successfully!",
-                companyId: result._id
-            }, { status: 201 });
+            return NextResponse.json(
+                {
+                    message: "Company created successfully!",
+                    companyId: result._id,
+                },
+                { status: 201 },
+            );
         } else {
             return NextResponse.json({ message: "Failed to create company." }, { status: 500 });
         }
@@ -114,4 +113,3 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "Internal server error." }, { status: 500 });
     }
 }
-

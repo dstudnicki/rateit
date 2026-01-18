@@ -3,11 +3,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
+import { ObjectId } from "mongodb";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         const { id: postId } = await params;
         const post: any = await Post.findById(postId).lean();

@@ -3,6 +3,7 @@ import { getClient } from "@/lib/mongoose";
 import Company from "@/models/Company";
 import Profile from "@/models/Profile";
 import Post from "@/models/Post";
+import { ObjectId } from "mongodb";
 
 // Types for search results
 export interface ProfileSearchResult {
@@ -152,7 +153,6 @@ export async function GET(request: NextRequest) {
         }
 
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         let profiles: ProfileSearchResult[] = [];
         let companies: CompanySearchResult[] = [];

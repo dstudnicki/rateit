@@ -5,8 +5,6 @@ import Profile from "@/models/Profile";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-// Force dynamic rendering - NO CACHE
-
 export default async function InteractionHistoryPage() {
     const session = await auth.api.getSession({
         headers: await headers(),

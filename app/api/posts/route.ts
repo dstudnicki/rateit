@@ -4,6 +4,7 @@ import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { ObjectId } from "mongodb";
 
 export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({
@@ -34,33 +35,38 @@ export async function POST(request: NextRequest) {
 export async function GET() {
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
 
         const posts = await Post.find().sort({ createdAt: -1 }).lean();
 
         const postsWithUsersAndProfiles = await Promise.all(
             posts.map(async (post) => {
                 if (post.user) {
-                    const userIdString = typeof post.user === 'string' ? post.user : post.user.toString();
+                    const userIdString = typeof post.user === "string" ? post.user : post.user.toString();
 
                     let user;
                     try {
-                        user = await db.collection("user").findOne(
-                            { _id: new ObjectId(userIdString) },
-                            { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne(
+                                { _id: new ObjectId(userIdString) },
+                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                            );
                     } catch (e) {
-                        user = await db.collection("user").findOne(
-                            { _id: userIdString as any },
-                            { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne(
+                                { _id: userIdString as any },
+                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                            );
                     }
 
                     if (user) {
-                        const profile = await db.collection("profiles").findOne(
-                            { userId: userIdString },
-                            { projection: { slug: 1, fullName: 1, headline: 1, location: 1 } }
-                        );
+                        const profile = await db
+                            .collection("profiles")
+                            .findOne(
+                                { userId: userIdString },
+                                { projection: { slug: 1, fullName: 1, headline: 1, location: 1 } },
+                            );
 
                         return {
                             ...post,
@@ -73,7 +79,7 @@ export async function GET() {
                                 headline: (profile?.headline && profile.headline.trim()) || null,
                                 location: (profile?.location && profile.location.trim()) || null,
                                 image: user.userImage || user.image || null,
-                            }
+                            },
                         };
                     }
                 }

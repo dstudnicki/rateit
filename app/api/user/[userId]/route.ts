@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
         const db = await getClient();
 
         // Try to convert to ObjectId
-        let userObjectId;
+        let userObjectId: any;
         try {
             userObjectId = new ObjectId(userId);
         } catch {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getClient } from "@/lib/mongoose";
+import { ObjectId } from "mongodb";
 
 /**
  * GET /api/profile/current
@@ -18,7 +19,6 @@ export async function GET() {
         }
 
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         // Get profile from database
         const profile = await db.collection("profiles").findOne(

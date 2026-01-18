@@ -3,6 +3,7 @@ import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
 import Company from "@/models/Company";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { ObjectId } from "mongodb";
 
 export async function GET() {
     try {
@@ -10,7 +11,6 @@ export async function GET() {
         await getClient();
 
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         // Get all post comments
         const posts = await Post.find({ comments: { $exists: true, $ne: [] } })

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
+import { ObjectId } from "mongodb";
 
 export async function GET(request: Request, { params }: { params: Promise<{ userId: string }> }) {
     try {
@@ -9,7 +10,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
 
         await getClient();
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         const posts = await Post.find({ user: userId }).sort({ createdAt: -1 }).lean();
 
@@ -22,17 +22,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
                     try {
                         user = await db
                             .collection("user")
-                            .findOne({ _id: new ObjectId(userIdString) }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } });
+                            .findOne(
+                                { _id: new ObjectId(userIdString) },
+                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                            );
                     } catch (e) {
                         user = await db
                             .collection("user")
-                            .findOne({ _id: userIdString as any }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } });
+                            .findOne(
+                                { _id: userIdString as any },
+                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                            );
                     }
 
                     if (user) {
                         const profile = await db
                             .collection("profiles")
-                            .findOne({ userId: userIdString }, { projection: { slug: 1, fullName: 1, headline: 1, location: 1 } });
+                            .findOne(
+                                { userId: userIdString },
+                                { projection: { slug: 1, fullName: 1, headline: 1, location: 1 } },
+                            );
 
                         return {
                             ...post,

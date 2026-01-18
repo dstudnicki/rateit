@@ -6,12 +6,12 @@ import { getClient } from "@/lib/mongoose";
 import Profile, { IExperience, IEducation } from "@/models/Profile";
 import { requireUser } from "@/app/data/user/require-user";
 import { generateSlug } from "@/lib/slug";
+import { ObjectId } from "mongodb";
 
 export async function getProfile(userId: string) {
     try {
         await getClient();
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         let profile = await Profile.findOne({ userId }).lean();
 
@@ -108,9 +108,8 @@ export async function getProfileBySlug(slug: string) {
     try {
         await getClient();
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
-        let profile = await Profile.findOne({ slug }).lean();
+        const profile = await Profile.findOne({ slug }).lean();
 
         if (!profile) {
             return { success: false, error: "Profile not found" };
