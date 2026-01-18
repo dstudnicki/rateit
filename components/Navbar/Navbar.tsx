@@ -79,9 +79,7 @@ export function Navbar() {
                     type: "user" as const,
                     category: "People",
                     slug: p.slug,
-                    avatar:
-                        p.user.image ||
-                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.user.email || p.user.name}`,
+                    avatar: p.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.user.email || p.user.name}`,
                     headline: p.headline,
                 }));
 
@@ -155,7 +153,7 @@ export function Navbar() {
                     <div className="flex items-center gap-4 flex-1">
                         <Link href="/" className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-                                <span className="text-primary-foreground font-bold text-lg">F</span>
+                                <span className="text-primary-foreground font-bold text-lg">R</span>
                             </div>
                         </Link>
 
@@ -163,7 +161,7 @@ export function Navbar() {
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search"
+                                    placeholder="Wyszukaj"
                                     className="pl-9 bg-secondary border-none h-9"
                                     value={searchQuery}
                                     onChange={(e) => {
@@ -183,7 +181,9 @@ export function Navbar() {
                             {showSuggestions && (
                                 <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg overflow-hidden max-h-[400px] overflow-y-auto">
                                     {loadingSuggestions ? (
-                                        <div className="px-4 py-8 text-center text-muted-foreground text-sm">Searching...</div>
+                                        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                                            Wyszukiwanie...
+                                        </div>
                                     ) : filteredSuggestions.length > 0 ? (
                                         <>
                                             {filteredSuggestions.map((suggestion) => (
@@ -227,14 +227,14 @@ export function Navbar() {
                                                     setSearchQuery("");
                                                 }}
                                             >
-                                                See all results
+                                                Zobacz wszystkie wyniki
                                             </Link>
                                         </>
                                     ) : searchQuery ? (
-                                        <div className="px-4 py-8 text-center text-muted-foreground">No results found</div>
+                                        <div className="px-4 py-8 text-center text-muted-foreground">Brak wyników</div>
                                     ) : (
                                         <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                                            Try searching for people, companies, or posts
+                                            Spróbuj wyszukać osoby, firmy lub posty
                                         </div>
                                     )}
                                 </div>
@@ -256,17 +256,17 @@ export function Navbar() {
                         <nav className="hidden sm:flex items-center gap-1 lg:gap-6">
                             <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex" asChild>
                                 <Link href="/" className="text-xs font-medium">
-                                    <Home className="h-5 w-5" /> Home
+                                    <Home className="h-5 w-5" /> Strona główna
                                 </Link>
                             </Button>
                             <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex" asChild>
                                 <Link href="/search" className="text-xs font-medium">
-                                    <Search className="h-5 w-5" /> Search
+                                    <Search className="h-5 w-5" /> Szukaj
                                 </Link>
                             </Button>
                             <Button variant="ghost" size="sm" className="flex-col h-14 gap-0.5 hidden md:flex" asChild>
                                 <Link href="/companies" className="text-xs font-medium">
-                                    <Briefcase className="h-5 w-5" /> Companies
+                                    <Briefcase className="h-5 w-5" /> Firmy
                                 </Link>
                             </Button>
                             <AuthButtons />

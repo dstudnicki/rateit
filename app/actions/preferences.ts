@@ -25,9 +25,9 @@ export async function saveUserPreferences(preferences: UserPreferences) {
                     preferences: {
                         ...preferences,
                         onboardingCompleted: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         );
 
         if (result.matchedCount === 0) {
@@ -36,7 +36,7 @@ export async function saveUserPreferences(preferences: UserPreferences) {
 
         // Invalidate cache to refresh feed
         const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
-        revalidateTag(`posts-feed-${cacheBucket}`, 'max');
+        revalidateTag(`posts-feed-${cacheBucket}`, "max");
 
         return { success: true };
     } catch (error) {
@@ -48,19 +48,18 @@ export async function saveUserPreferences(preferences: UserPreferences) {
 export async function trackInteraction(
     targetId: string,
     targetType: "post" | "company" | "profile",
-    interactionType: "like" | "comment" | "view"
+    interactionType: "like" | "comment" | "view",
 ) {
     console.log(`[trackInteraction] Called: ${interactionType} on ${targetType} ${targetId}`);
 
     // Use auth instead of requireUser to avoid redirect for non-authenticated users
     const { auth } = await import("@/lib/auth");
     const session = await auth.api.getSession({
-        headers: await import("next/headers").then(m => m.headers()),
+        headers: await import("next/headers").then((m) => m.headers()),
     });
 
     // Silently return if no session - tracking is optional
     if (!session) {
-        console.log(`[trackInteraction] No session - skipping`);
         return { success: false, error: "Not authenticated" };
     }
 
@@ -73,16 +72,18 @@ export async function trackInteraction(
             {
                 $push: {
                     interactionHistory: {
-                        $each: [{
-                            type: interactionType,
-                            targetId,
-                            targetType,
-                            timestamp: new Date(),
-                        }],
-                        $slice: -100 // Keep only last 100
-                    }
-                }
-            }
+                        $each: [
+                            {
+                                type: interactionType,
+                                targetId,
+                                targetType,
+                                timestamp: new Date(),
+                            },
+                        ],
+                        $slice: -100, // Keep only last 100
+                    },
+                },
+            },
         );
 
         if (result.matchedCount === 0) {
@@ -103,7 +104,7 @@ export async function getUserPreferences() {
     // Use auth instead of requireUser to avoid redirect for non-authenticated users
     const { auth } = await import("@/lib/auth");
     const session = await auth.api.getSession({
-        headers: await import("next/headers").then(m => m.headers()),
+        headers: await import("next/headers").then((m) => m.headers()),
     });
 
     // Return early if no session - user is not logged in
@@ -114,19 +115,28 @@ export async function getUserPreferences() {
     try {
         await getClient();
 
-        const profile = await Profile.findOne({ userId: session.user.id });
+        const profile = await Profile.findOne({ userId: session.user.id }).lean();
 
         if (!profile) {
             return { success: false, error: "Profile not found", preferences: null };
         }
 
+        // Serialize preferences to plain object to avoid circular references
+        const preferences = profile.preferences
+            ? {
+                  industries: profile.preferences.industries || [],
+                  skills: profile.preferences.skills || [],
+                  companies: profile.preferences.companies || [],
+                  onboardingCompleted: profile.preferences.onboardingCompleted || false,
+              }
+            : null;
+
         return {
             success: true,
-            preferences: profile.preferences,
+            preferences,
         };
     } catch (error) {
         console.error("Failed to get user preferences:", error);
         return { success: false, error: "Failed to get preferences", preferences: null };
     }
 }
-

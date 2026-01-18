@@ -8,9 +8,7 @@ export async function GET() {
         await requireAdmin();
         await getClient();
 
-        const companies = await Company.find()
-            .sort({ createdAt: -1 })
-            .lean();
+        const companies = await Company.find().sort({ createdAt: -1 }).lean();
 
         const companiesPlain = companies.map((company: any) => ({
             ...company,
@@ -23,8 +21,7 @@ export async function GET() {
         console.error("Admin companies fetch error:", error);
         return NextResponse.json(
             { error: error.message || "Failed to fetch companies" },
-            { status: error.message === "Admin access required" ? 403 : 500 }
+            { status: error.message === "Admin access required" ? 403 : 500 },
         );
     }
 }
-

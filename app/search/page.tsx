@@ -111,9 +111,7 @@ export default function SearchPage() {
 
         try {
             const nextPage = page + 1;
-            const response = await fetch(
-                `/api/search?q=${encodeURIComponent(query)}&type=${activeTab}&page=${nextPage}`
-            );
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${activeTab}&page=${nextPage}`);
 
             if (!response.ok) {
                 throw new Error("Failed to load more results");
@@ -158,9 +156,9 @@ export default function SearchPage() {
 
     const tabs = [
         { id: "all", label: "All" },
-        { id: "user", label: "People" },
-        { id: "post", label: "Posts" },
-        { id: "company", label: "Companies" },
+        { id: "user", label: "Osoby" },
+        { id: "post", label: "Posty" },
+        { id: "company", label: "Firmy" },
     ];
 
     const showUsers = activeTab === "all" || activeTab === "user";
@@ -178,17 +176,11 @@ export default function SearchPage() {
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                         <h1 className="text-2xl font-bold">
-                            {query.trim() ? `Search results for "${query}"` : "Browse all"}
+                            {query.trim() ? `Search results for "${query}"` : "Przeglądaj wszystko"}
                         </h1>
-                        {results && results.total > 0 && (
-                            <Badge variant="outline" className="text-xs">
-                                <Sparkles className="h-3 w-3 mr-1" />
-                                Personalized for you
-                            </Badge>
-                        )}
                     </div>
                     <p className="text-muted-foreground">
-                        {loading ? "Loading..." : results ? `${results.total} results found` : "No results"}
+                        {loading ? "Ładowanie" : results ? `Znaleziono ${results.total} wyników` : "Nie znaleziono wyników"}
                     </p>
                 </div>
 
@@ -255,7 +247,7 @@ export default function SearchPage() {
                         {/* People Results */}
                         {showUsers && users.length > 0 && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">People</h2>
+                                <h2 className="text-xl font-semibold mb-4">Osoby</h2>
                                 <div className="space-y-4">
                                     {users.map((user) => (
                                         <Card key={user._id} className="p-6">
@@ -279,16 +271,8 @@ export default function SearchPage() {
                                                         >
                                                             {user.fullName || user.user.name}
                                                         </Link>
-                                                        {user.score !== undefined && user.score > 80 && (
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                <Sparkles className="h-3 w-3 mr-1" />
-                                                                Best match
-                                                            </Badge>
-                                                        )}
                                                     </div>
-                                                    <p className="text-muted-foreground mb-2">
-                                                        {user.headline || "No headline"}
-                                                    </p>
+                                                    <p className="text-muted-foreground mb-2">{user.headline || null}</p>
                                                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                                         {user.location && (
                                                             <span className="flex items-center gap-1">
@@ -308,7 +292,7 @@ export default function SearchPage() {
                         {/* Posts Results */}
                         {showPosts && posts.length > 0 && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">Posts</h2>
+                                <h2 className="text-xl font-semibold mb-4">Posty</h2>
                                 <div className="space-y-4">
                                     {posts.map((post) => (
                                         <Card key={post._id} className="p-6">
@@ -342,7 +326,7 @@ export default function SearchPage() {
                                                         )}
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {post.user?.headline || "No headline"}
+                                                        {post.user?.headline || null}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
                                                         {post.createdAt ? timeAgo(post.createdAt) : "Unknown date"}
@@ -367,13 +351,9 @@ export default function SearchPage() {
                                                         <div
                                                             key={idx}
                                                             className={`relative ${
-                                                                post.images!.length === 3 && idx === 0
-                                                                    ? "col-span-2"
-                                                                    : ""
+                                                                post.images!.length === 3 && idx === 0 ? "col-span-2" : ""
                                                             } ${
-                                                                post.images!.length === 1
-                                                                    ? "h-48"
-                                                                    : "h-32"
+                                                                post.images!.length === 1 ? "h-48" : "h-32"
                                                             } overflow-hidden rounded-lg bg-secondary`}
                                                         >
                                                             <img
@@ -394,7 +374,7 @@ export default function SearchPage() {
                         {/* Companies Results */}
                         {showCompanies && companies.length > 0 && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">Companies</h2>
+                                <h2 className="text-xl font-semibold mb-4">Firmy</h2>
                                 <div className="space-y-4">
                                     {companies.map((company) => {
                                         const initials = company.name
@@ -428,7 +408,7 @@ export default function SearchPage() {
                                                             {company.score !== undefined && company.score > 80 && (
                                                                 <Badge variant="secondary" className="text-xs">
                                                                     <Sparkles className="h-3 w-3 mr-1" />
-                                                                    Best match
+                                                                    Najlepsze dopasowanie
                                                                 </Badge>
                                                             )}
                                                         </div>
@@ -441,7 +421,12 @@ export default function SearchPage() {
                                                             <span className="flex items-center gap-1">
                                                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                                                                 {company.averageRating.toFixed(1)}/5 ({company.reviewCount}{" "}
-                                                                reviews)
+                                                                {company.reviewCount === 1
+                                                                    ? "opinia"
+                                                                    : company.reviewCount >= 2 && company.reviewCount <= 4
+                                                                      ? "opinie"
+                                                                      : "opinii"}
+                                                                )
                                                             </span>
                                                         </div>
                                                     </div>
@@ -462,10 +447,10 @@ export default function SearchPage() {
                             {loadingMore ? (
                                 <>
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Loading more...
+                                    Ładowanie...
                                 </>
                             ) : (
-                                "Load More Results"
+                                "Załaduj więcej"
                             )}
                         </Button>
                     </div>

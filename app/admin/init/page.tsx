@@ -20,7 +20,7 @@ export default function AdminInitPage() {
             setResult({
                 success: false,
                 error: "Failed to initialize admin users",
-                details: error instanceof Error ? error.message : "Unknown error"
+                details: error instanceof Error ? error.message : "Unknown error",
             });
         } finally {
             setLoading(false);
@@ -30,31 +30,48 @@ export default function AdminInitPage() {
     return (
         <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="bg-white rounded-lg shadow-lg p-8">
-                <h1 className="text-3xl font-bold mb-4">Admin Role Initialization</h1>
+                <h1 className="text-3xl font-bold mb-4">Inicjalizacja Ról Administratora</h1>
 
                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
                     <div className="flex">
                         <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            <svg
+                                className="h-5 w-5 text-blue-400"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clipRule="evenodd"
+                                />
                             </svg>
                         </div>
                         <div className="ml-3">
-                            <h3 className="text-sm font-medium text-blue-800">What does this do?</h3>
+                            <h3 className="text-sm font-medium text-blue-800">Co to robi?</h3>
                             <div className="mt-2 text-sm text-blue-700">
-                                <p>This will update the database to add <code className="bg-blue-100 px-1 rounded">role: "admin"</code> field for users specified in your <code className="bg-blue-100 px-1 rounded">ADMIN_EMAILS</code> environment variable.</p>
-                                <p className="mt-2">Currently, you can access admin pages because your email is in <code className="bg-blue-100 px-1 rounded">ADMIN_EMAILS</code>, but the role field in database shows "user". This will fix that.</p>
+                                <p>
+                                    To zaktualizuje bazę danych, dodając pole{" "}
+                                    <code className="bg-blue-100 px-1 rounded">role: "admin"</code> dla użytkowników określonych
+                                    w zmiennej środowiskowej <code className="bg-blue-100 px-1 rounded">ADMIN_EMAILS</code>.
+                                </p>
+                                <p className="mt-2">
+                                    Obecnie masz dostęp do stron admina, ponieważ Twój email jest w{" "}
+                                    <code className="bg-blue-100 px-1 rounded">ADMIN_EMAILS</code>, ale pole roli w bazie danych
+                                    pokazuje "user". To to naprawi.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="mb-6">
-                    <h2 className="text-lg font-semibold mb-2">Current Status:</h2>
+                    <h2 className="text-lg font-semibold mb-2">Aktualny Status:</h2>
                     <ul className="list-disc list-inside space-y-1 text-gray-700">
-                        <li>✅ You have access to admin panel (via ADMIN_EMAILS check)</li>
-                        <li>⚠️ Database role field shows "user" (not yet updated)</li>
-                        <li>🎯 After initialization: Database will show "admin"</li>
+                        <li>✅ Masz dostęp do panelu admina (przez sprawdzenie ADMIN_EMAILS)</li>
+                        <li>⚠️ Pole roli w bazie danych pokazuje "user" (jeszcze nie zaktualizowane)</li>
+                        <li>🎯 Po inicjalizacji: Baza danych pokaże "admin"</li>
                     </ul>
                 </div>
 
@@ -66,14 +83,30 @@ export default function AdminInitPage() {
                     >
                         {loading ? (
                             <span className="flex items-center justify-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <svg
+                                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
                                 </svg>
-                                Initializing...
+                                Inicjalizowanie...
                             </span>
                         ) : (
-                            "🚀 Initialize Admin Roles"
+                            "🚀 Inicjalizuj Role Administratora"
                         )}
                     </button>
                 )}
@@ -84,19 +117,30 @@ export default function AdminInitPage() {
                             <div className="bg-green-50 border-l-4 border-green-400 p-4">
                                 <div className="flex">
                                     <div className="flex-shrink-0">
-                                        <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        <svg
+                                            className="h-5 w-5 text-green-400"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clipRule="evenodd"
+                                            />
                                         </svg>
                                     </div>
                                     <div className="ml-3">
                                         <h3 className="text-sm font-medium text-green-800">{result.message}</h3>
                                         <div className="mt-2 text-sm text-green-700">
-                                            <p><strong>Summary:</strong></p>
+                                            <p>
+                                                <strong>Podsumowanie:</strong>
+                                            </p>
                                             <ul className="mt-1 space-y-1">
-                                                <li>✅ Updated: {result.summary.updated}</li>
-                                                <li>ℹ️ Already Admin: {result.summary.alreadyAdmin}</li>
-                                                <li>⚠️ Not Found: {result.summary.notFound}</li>
-                                                {result.summary.errors > 0 && <li>❌ Errors: {result.summary.errors}</li>}
+                                                <li>✅ Zaktualizowano: {result.summary.updated}</li>
+                                                <li>ℹ️ Już Admin: {result.summary.alreadyAdmin}</li>
+                                                <li>⚠️ Nie Znaleziono: {result.summary.notFound}</li>
+                                                {result.summary.errors > 0 && <li>❌ Błędy: {result.summary.errors}</li>}
                                             </ul>
                                         </div>
 
@@ -116,7 +160,9 @@ export default function AdminInitPage() {
                                         {result.instructions && (
                                             <div className="mt-4 space-y-2">
                                                 {result.instructions.success && (
-                                                    <p className="text-green-700 font-semibold">{result.instructions.success}</p>
+                                                    <p className="text-green-700 font-semibold">
+                                                        {result.instructions.success}
+                                                    </p>
                                                 )}
                                                 {result.instructions.notFound && (
                                                     <p className="text-yellow-700">{result.instructions.notFound}</p>
@@ -148,8 +194,17 @@ export default function AdminInitPage() {
                             <div className="bg-red-50 border-l-4 border-red-400 p-4">
                                 <div className="flex">
                                     <div className="flex-shrink-0">
-                                        <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        <svg
+                                            className="h-5 w-5 text-red-400"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                clipRule="evenodd"
+                                            />
                                         </svg>
                                     </div>
                                     <div className="ml-3">
@@ -160,7 +215,8 @@ export default function AdminInitPage() {
                                             {result.message && <p className="mt-2">{result.message}</p>}
                                             {result.example && (
                                                 <p className="mt-2">
-                                                    <strong>Example:</strong> <code className="bg-red-100 px-1 rounded">{result.example}</code>
+                                                    <strong>Example:</strong>{" "}
+                                                    <code className="bg-red-100 px-1 rounded">{result.example}</code>
                                                 </p>
                                             )}
                                         </div>
@@ -180,17 +236,21 @@ export default function AdminInitPage() {
                 <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                     <h3 className="font-semibold text-gray-800 mb-2">ℹ️ How it works:</h3>
                     <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
-                        <li>Reads <code className="bg-gray-200 px-1 rounded">ADMIN_EMAILS</code> from your .env file</li>
+                        <li>
+                            Reads <code className="bg-gray-200 px-1 rounded">ADMIN_EMAILS</code> from your .env file
+                        </li>
                         <li>Finds users in database matching those emails</li>
-                        <li>Updates their <code className="bg-gray-200 px-1 rounded">role</code> field to "admin"</li>
+                        <li>
+                            Updates their <code className="bg-gray-200 px-1 rounded">role</code> field to "admin"
+                        </li>
                         <li>Now the database shows correct role in user management</li>
                     </ol>
                     <p className="mt-3 text-sm text-gray-600">
-                        <strong>Note:</strong> You only need to run this once. After initialization, the role will be stored in the database permanently.
+                        <strong>Note:</strong> You only need to run this once. After initialization, the role will be stored in
+                        the database permanently.
                     </p>
                 </div>
             </div>
         </div>
     );
 }
-

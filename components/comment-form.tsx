@@ -3,21 +3,38 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
 import { addComment } from "@/app/actions/comments";
 
+interface UserData {
+    user:
+        | {
+              id: string;
+              createdAt: Date;
+              updatedAt: Date;
+              email: string;
+              emailVerified: boolean;
+              name: string;
+              image?: string | null | undefined;
+              userImage?: string | null | undefined;
+          }
+        | undefined;
+}
+
 interface CommentFormProps {
+    user: UserData | undefined;
     postId: string;
     onCommentAdded?: () => void;
 }
 
-export function CommentForm({ postId, onCommentAdded }: CommentFormProps) {
-    const [content, setContent] = useState("")
+export function CommentForm({ user, postId, onCommentAdded }: CommentFormProps) {
+    const [content, setContent] = useState("");
+    const displayName = user?.user?.name;
+    const userAvatar = user?.user?.userImage || user?.user?.image;
 
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!content) return alert("Please write a content.");
+        if (!content) return alert("Napisz treść komentarza.");
 
         const result = await addComment(content, postId);
 
@@ -28,22 +45,30 @@ export function CommentForm({ postId, onCommentAdded }: CommentFormProps) {
     };
 
     return (
-        <div className="flex gap-3">
-            <Avatar className="h-9 w-9">
-                <AvatarImage src="/current-user.jpg" />
-                <AvatarFallback>You</AvatarFallback>
+        <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage
+                    src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
+                    alt={displayName || "User"}
+                />
+                <AvatarFallback>{displayName?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-2">
-                <Textarea
-                    placeholder="Add a comment..."
+            <div className="flex-1 flex items-center gap-2 rounded-full  py-2">
+                <input
+                    type="text"
+                    placeholder="Dodaj komentarz..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[80px] resize-none"
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && content.trim()) {
+                            handleAddComment(e);
+                        }
+                    }}
+                    className="flex-1 flex items-center gap-2 rounded-full border border-muted-foreground/30 bg-background px-4 py-2 focus-within:border-primary/50 transition-colors"
                 />
                 <div className="flex justify-end">
                     <Button onClick={handleAddComment} size="sm" disabled={!content.trim()} className="gap-2">
                         <Send className="h-4 w-4" />
-                        Post
                     </Button>
                 </div>
             </div>

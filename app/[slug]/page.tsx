@@ -51,10 +51,10 @@ export default async function ProfilePage(props: ProfilePageProps) {
                         fallback={
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Activity</CardTitle>
+                                    <CardTitle>Aktywność</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-sm text-muted-foreground">Loading posts...</p>
+                                    <p className="text-sm text-muted-foreground">Ładowanie postów...</p>
                                 </CardContent>
                             </Card>
                         }

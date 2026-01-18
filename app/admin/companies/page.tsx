@@ -58,7 +58,7 @@ export default function AdminCompaniesPage() {
     };
 
     const handleDeleteCompany = async (companyId: string) => {
-        if (!confirm("Are you sure you want to delete this company? This will also delete all its reviews.")) return;
+        if (!confirm("Czy na pewno chcesz usunąć tę firmę? To również usunie wszystkie jej opinie.")) return;
 
         try {
             const response = await fetch(`/api/admin/companies/${companyId}`, {
@@ -66,14 +66,14 @@ export default function AdminCompaniesPage() {
             });
 
             if (response.ok) {
-                setCompanies(companies.filter(c => c._id !== companyId));
-                alert("Company deleted successfully");
+                setCompanies(companies.filter((c) => c._id !== companyId));
+                alert("Firma usunięta pomyślnie");
             } else {
-                alert("Failed to delete company");
+                alert("Nie udało się usunąć firmy");
             }
         } catch (error) {
             console.error("Failed to delete company:", error);
-            alert("Failed to delete company");
+            alert("Nie udało się usunąć firmy");
         }
     };
 
@@ -89,11 +89,11 @@ export default function AdminCompaniesPage() {
         <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold">Company Moderation</h1>
-                    <p className="text-gray-600 mt-1">Manage and moderate all companies</p>
+                    <h1 className="text-3xl font-bold">Moderacja Firm</h1>
+                    <p className="text-gray-600 mt-1">Zarządzaj i moderuj wszystkie firmy</p>
                 </div>
                 <Button variant="outline" onClick={() => router.push("/admin")}>
-                    Back to Admin
+                    Powrót do Panelu
                 </Button>
             </div>
 
@@ -128,11 +128,7 @@ export default function AdminCompaniesPage() {
                                         </div>
                                     </div>
 
-                                    {company.description && (
-                                        <p className="text-gray-700 mb-3 text-sm">
-                                            {company.description}
-                                        </p>
-                                    )}
+                                    {company.description && <p className="text-gray-700 mb-3 text-sm">{company.description}</p>}
 
                                     {company.website && (
                                         <a
@@ -147,9 +143,7 @@ export default function AdminCompaniesPage() {
 
                                     <div className="flex items-center gap-4 text-sm text-gray-600 mt-3">
                                         <span>{company.reviews?.length || 0} reviews</span>
-                                        <span>
-                                            Added {new Date(company.createdAt).toLocaleDateString()}
-                                        </span>
+                                        <span>Added {new Date(company.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>
 
@@ -157,15 +151,16 @@ export default function AdminCompaniesPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => window.open(`/companies/${company.name.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+                                        onClick={() =>
+                                            window.open(
+                                                `/companies/${company.name.toLowerCase().replace(/\s+/g, "-")}`,
+                                                "_blank",
+                                            )
+                                        }
                                     >
                                         <Eye className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDeleteCompany(company._id)}
-                                    >
+                                    <Button variant="destructive" size="sm" onClick={() => handleDeleteCompany(company._id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -177,4 +172,3 @@ export default function AdminCompaniesPage() {
         </div>
     );
 }
-

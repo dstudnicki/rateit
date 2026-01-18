@@ -62,24 +62,22 @@ export function PostCard({ post }: PostCardProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(post.content);
     const [isPending, startTransition] = useTransition();
+    const [isOwnPost, setIsOwnPost] = useState(false); // Initialize as false to prevent hydration mismatch
     const router = useRouter();
-
-    // Debug: Check what data we're receiving
-    useEffect(() => {
-        console.log("[PostCard] Post data:", {
-            userId: post.user._id,
-            userName: post.user.name,
-            userFullName: post.user.fullName,
-            userSlug: post.user.slug,
-            userHeadline: post.user.headline,
-        });
-    }, [post]);
 
     // Use fallbacks that handle empty strings (not just null/undefined)
     const displayName = (post.user.fullName && post.user.fullName.trim()) || post.user.name || "Anonymous User";
     const profileSlug = (post.user.slug && post.user.slug.trim()) || post.user.name || "user";
     const headline = (post.user.headline && post.user.headline.trim()) || "";
-    const isOwnPost = currentUserId === post.user._id;
+
+    // Set isOwnPost only on client side to avoid hydration mismatch
+    useEffect(() => {
+        if (currentUserId && post.user._id) {
+            setIsOwnPost(currentUserId === post.user._id);
+        } else {
+            setIsOwnPost(false);
+        }
+    }, [currentUserId, post.user._id]);
 
     // Update likes state when post data changes (after server refresh)
     useEffect(() => {
@@ -173,7 +171,7 @@ export function PostCard({ post }: PostCardProps) {
     };
 
     return (
-        <Card className="p-4 hover:bg-secondary/50 transition-colors">
+        <Card className="p-4  transition-colors">
             {/* Post Header */}
             <div className="flex items-start gap-3">
                 <Link href={`/${profileSlug}`}>
@@ -214,7 +212,7 @@ export function PostCard({ post }: PostCardProps) {
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={handleEdit} disabled={isPending}>
                                         <Pencil className="h-4 w-4 mr-2" />
-                                        Edit post
+                                        Edytuj post
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         onClick={handleDelete}
@@ -222,7 +220,7 @@ export function PostCard({ post }: PostCardProps) {
                                         className="text-destructive focus:text-destructive"
                                     >
                                         <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete post
+                                        Usuń post
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -293,7 +291,7 @@ export function PostCard({ post }: PostCardProps) {
                             onClick={handleLike}
                         >
                             <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-                            <span className="text-sm font-medium">Like</span>
+                            <span className="text-sm font-medium">Lubię to</span>
                         </Button>
 
                         <Button
@@ -303,11 +301,7 @@ export function PostCard({ post }: PostCardProps) {
                             onClick={handleCommentClick}
                         >
                             <MessageCircle className="h-4 w-4" />
-                            <span className="text-sm font-medium">Comment</span>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="flex-1 gap-2 h-9">
-                            <Send className="h-4 w-4" />
-                            <span className="text-sm font-medium">Share</span>
+                            <span className="text-sm font-medium">Komentarz</span>
                         </Button>
                     </div>
                     {/* Comment Section */}
@@ -323,22 +317,22 @@ export function PostCard({ post }: PostCardProps) {
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit post</DialogTitle>
-                        <DialogDescription>Make changes to your post below.</DialogDescription>
+                        <DialogTitle>Edytuj post</DialogTitle>
+                        <DialogDescription>Wprowadź zmiany w swoim poście poniżej.</DialogDescription>
                     </DialogHeader>
                     <Textarea
                         value={editedContent}
                         onChange={(e) => setEditedContent(e.target.value)}
-                        placeholder="What do you want to talk about?"
+                        placeholder="O czym chcesz porozmawiać?"
                         className="min-h-[120px]"
                         disabled={isPending}
                     />
                     <DialogFooter>
                         <Button variant="outline" onClick={handleCancelEdit} disabled={isPending}>
-                            Cancel
+                            Anuluj
                         </Button>
                         <Button onClick={handleSaveEdit} disabled={isPending || !editedContent.trim()}>
-                            {isPending ? "Saving..." : "Save changes"}
+                            {isPending ? "Zapisywanie..." : "Zapisz zmiany"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

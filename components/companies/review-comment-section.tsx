@@ -47,23 +47,30 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
     const [content, setContent] = useState("");
     const [nick, setNick] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [userImage, setUserImage] = useState<string | null>(null);
+    const [hasCommented, setHasCommented] = useState(false);
     const session = authClient.useSession();
     const currentUserId = session.data?.user?.id;
+
+    // Check if user has already commented on this review
+    useEffect(() => {
+        if (currentUserId && comments) {
+            const userComment = comments.find((comment) => comment.user._id === currentUserId);
+            if (userComment) {
+                setHasCommented(true);
+            } else {
+                setHasCommented(false);
+            }
+        }
+    }, [currentUserId, comments]);
 
     useEffect(() => {
         async function fetchUserProfile() {
             if (session.data?.user) {
                 try {
-                    const profileResponse = await fetch('/api/profile/current');
+                    const profileResponse = await fetch("/api/profile/current");
                     const profileData = await profileResponse.json();
-                    if (profileData?.profile?.image) {
-                        setUserImage(profileData.profile.image);
-                    } else if (session.data?.user?.image) {
-                        setUserImage(session.data.user.image);
-                    }
                 } catch (error) {
-                    console.error('Error fetching profile:', error);
+                    // Error fetching profile
                 }
             }
         }
@@ -72,6 +79,13 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
 
     const handleAddComment = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
+
+        // Check if user has already commented
+        if (hasCommented) {
+            alert("You have already commented on this review. You can only add one comment per review to prevent spam.");
+            return;
+        }
+
         if (!content.trim()) return alert("Please write a comment.");
         if (!nick.trim()) return alert("Please enter a nickname.");
 
@@ -81,6 +95,7 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
         if (result.success) {
             setContent("");
             setNick("");
+            setHasCommented(true); // Mark as commented
             onUpdate();
         } else {
             alert(result.error || "Failed to add comment");
@@ -93,40 +108,48 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
             {/* Inline Comment Form */}
             <div className="flex gap-3">
                 <Avatar className="h-9 w-9">
-                    <AvatarImage src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.data?.user?.email || session.data?.user?.name}`} />
-                    <AvatarFallback>You</AvatarFallback>
+                    <AvatarImage
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.data?.user?.email || session.data?.user?.name}`}
+                    />
+                    <AvatarFallback>Ty</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
+                    {hasCommented && (
+                        <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                            ℹ️ Już skomentowałeś tę opinię. Dozwolony jest tylko jeden komentarz na użytkownika, aby zapobiec
+                            spamowi.
+                        </div>
+                    )}
                     <div className="space-y-2">
                         <Label htmlFor="comment-nick" className="text-sm">
-                            Your nickname (anonymous)
+                            Twój pseudonim (anonimowy)
                         </Label>
                         <Input
                             id="comment-nick"
                             value={nick}
                             onChange={(e) => setNick(e.target.value)}
-                            placeholder="e.g., Reviewer42"
+                            placeholder="np. Recenzent42"
                             maxLength={30}
                             required
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || hasCommented}
                         />
                     </div>
                     <Textarea
-                        placeholder="Add a comment..."
+                        placeholder="Dodaj komentarz..."
                         value={content}
                         onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
                         className="min-h-[80px] resize-none"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || hasCommented}
                     />
                     <div className="flex justify-end">
                         <Button
                             onClick={handleAddComment}
                             size="sm"
-                            disabled={!content.trim() || !nick.trim() || isSubmitting}
+                            disabled={!content.trim() || !nick.trim() || isSubmitting || hasCommented}
                             className="gap-2"
                         >
                             <Send className="h-4 w-4" />
-                            {isSubmitting ? "Posting..." : "Post"}
+                            {isSubmitting ? "Wysyłanie..." : hasCommented ? "Już skomentowano" : "Opublikuj"}
                         </Button>
                     </div>
                 </div>
@@ -148,4 +171,3 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate }
         </div>
     );
 }
-

@@ -60,7 +60,7 @@ export default function AdminPostsPage() {
     };
 
     const handleDeletePost = async (postId: string) => {
-        if (!confirm("Are you sure you want to delete this post?")) return;
+        if (!confirm("Czy na pewno chcesz usunąć ten post?")) return;
 
         try {
             const response = await fetch(`/api/admin/posts/${postId}`, {
@@ -68,14 +68,14 @@ export default function AdminPostsPage() {
             });
 
             if (response.ok) {
-                setPosts(posts.filter(p => p._id !== postId));
-                alert("Post deleted successfully");
+                setPosts(posts.filter((p) => p._id !== postId));
+                alert("Post usunięty pomyślnie");
             } else {
-                alert("Failed to delete post");
+                alert("Nie udało się usunąć posta");
             }
         } catch (error) {
             console.error("Failed to delete post:", error);
-            alert("Failed to delete post");
+            alert("Nie udało się usunąć posta");
         }
     };
 
@@ -91,25 +91,19 @@ export default function AdminPostsPage() {
         <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold">Post Moderation</h1>
-                    <p className="text-gray-600 mt-1">Manage and moderate all posts</p>
+                    <h1 className="text-3xl font-bold">Moderacja Postów</h1>
+                    <p className="text-gray-600 mt-1">Zarządzaj i moderuj wszystkie posty</p>
                 </div>
                 <Button variant="outline" onClick={() => router.push("/admin")}>
-                    Back to Admin
+                    Powrót do Panelu
                 </Button>
             </div>
 
             <div className="flex gap-4 mb-6">
-                <Button
-                    variant={filter === "all" ? "default" : "outline"}
-                    onClick={() => setFilter("all")}
-                >
+                <Button variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
                     All Posts ({posts.length})
                 </Button>
-                <Button
-                    variant={filter === "flagged" ? "default" : "outline"}
-                    onClick={() => setFilter("flagged")}
-                >
+                <Button variant={filter === "flagged" ? "default" : "outline"} onClick={() => setFilter("flagged")}>
                     <AlertTriangle className="h-4 w-4 mr-2" />
                     Flagged
                 </Button>
@@ -136,32 +130,20 @@ export default function AdminPostsPage() {
                                         </span>
                                     </div>
 
-                                    <p className="text-gray-900 mb-4 whitespace-pre-wrap">
-                                        {post.content}
-                                    </p>
+                                    <p className="text-gray-900 mb-4 whitespace-pre-wrap">{post.content}</p>
 
                                     <div className="flex items-center gap-4 text-sm text-gray-600">
                                         <span>{post.likes?.length || 0} likes</span>
                                         <span>{post.comments?.length || 0} comments</span>
-                                        <span>
-                                            {new Date(post.createdAt).toLocaleDateString()}
-                                        </span>
+                                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex gap-2 ml-4">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => window.open(`/`, '_blank')}
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => window.open(`/`, "_blank")}>
                                         <Eye className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDeletePost(post._id)}
-                                    >
+                                    <Button variant="destructive" size="sm" onClick={() => handleDeletePost(post._id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -173,4 +155,3 @@ export default function AdminPostsPage() {
         </div>
     );
 }
-

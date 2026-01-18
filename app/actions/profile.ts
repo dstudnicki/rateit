@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { updateTag} from "next/cache";
+import { updateTag } from "next/cache";
 import { getClient } from "@/lib/mongoose";
 import Profile, { IExperience, IEducation } from "@/models/Profile";
 import { requireUser } from "@/app/data/user/require-user";
@@ -11,29 +11,27 @@ export async function getProfile(userId: string) {
     try {
         await getClient();
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         let profile = await Profile.findOne({ userId }).lean();
 
         if (!profile) {
             let user;
             try {
-                user = await db.collection("user").findOne(
-                    { _id: new ObjectId(userId) },
-                    { projection: { name: 1, email: 1, _id: 1 } }
-                );
+                user = await db
+                    .collection("user")
+                    .findOne({ _id: new ObjectId(userId) }, { projection: { name: 1, email: 1, _id: 1 } });
             } catch (e) {
-                user = await db.collection("user").findOne(
-                    { _id: userId as any },
-                    { projection: { name: 1, email: 1, _id: 1 } }
-                );
+                user = await db
+                    .collection("user")
+                    .findOne({ _id: userId as any }, { projection: { name: 1, email: 1, _id: 1 } });
             }
 
             if (!user) {
                 return { success: false, error: "User not found" };
             }
 
-            const slugBase = user?.name || user?.email?.split('@')[0] || userId;
+            const slugBase = user?.name || user?.email?.split("@")[0] || userId;
             let slug = generateSlug(slugBase);
 
             let counter = 1;
@@ -60,6 +58,8 @@ export async function getProfile(userId: string) {
                     onboardingCompleted: false,
                 },
                 interactionHistory: [],
+                rodoConsent: true, // Set to true after user accepts in registration
+                rodoConsentSource: "manual", // Email/password users consent manually
             });
             profile = newProfile.toObject() as any;
         } else {
@@ -70,15 +70,13 @@ export async function getProfile(userId: string) {
             if (hasNoSlug || isObjectId || isUUID) {
                 let user;
                 try {
-                    user = await db.collection("user").findOne(
-                        { _id: new ObjectId(userId) },
-                        { projection: { name: 1, email: 1, _id: 1 } }
-                    );
+                    user = await db
+                        .collection("user")
+                        .findOne({ _id: new ObjectId(userId) }, { projection: { name: 1, email: 1, _id: 1 } });
                 } catch (e) {
-                    user = await db.collection("user").findOne(
-                        { _id: userId as any },
-                        { projection: { name: 1, email: 1, _id: 1 } }
-                    );
+                    user = await db
+                        .collection("user")
+                        .findOne({ _id: userId as any }, { projection: { name: 1, email: 1, _id: 1 } });
                 }
 
                 if (!user) {
@@ -86,7 +84,7 @@ export async function getProfile(userId: string) {
                     return { success: false, error: "Profile was orphaned and has been removed" };
                 }
 
-                const slugBase = user.name || user.email?.split('@')[0] || 'user';
+                const slugBase = user.name || user.email?.split("@")[0] || "user";
                 let slug = generateSlug(slugBase);
 
                 let counter = 1;
@@ -95,11 +93,7 @@ export async function getProfile(userId: string) {
                     counter++;
                 }
 
-                profile = await Profile.findOneAndUpdate(
-                    { userId },
-                    { $set: { slug } },
-                    { new: true }
-                ).lean() as any;
+                profile = (await Profile.findOneAndUpdate({ userId }, { $set: { slug } }, { new: true }).lean()) as any;
             }
         }
 
@@ -114,7 +108,7 @@ export async function getProfileBySlug(slug: string) {
     try {
         await getClient();
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         let profile = await Profile.findOne({ slug }).lean();
 
@@ -124,15 +118,16 @@ export async function getProfileBySlug(slug: string) {
 
         let user;
         try {
-            user = await db.collection("user").findOne(
-                { _id: new ObjectId(profile.userId) },
-                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
-            );
+            user = await db
+                .collection("user")
+                .findOne(
+                    { _id: new ObjectId(profile.userId) },
+                    { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                );
         } catch (e) {
-            user = await db.collection("user").findOne(
-                { _id: profile.userId as any },
-                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } }
-            );
+            user = await db
+                .collection("user")
+                .findOne({ _id: profile.userId as any }, { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } });
         }
 
         if (!user) {
@@ -142,7 +137,7 @@ export async function getProfileBySlug(slug: string) {
         return {
             success: true,
             profile: JSON.parse(JSON.stringify(profile)),
-            user: { id: user._id.toString(), name: user.name, email: user.email, image: user.userImage || user.image }
+            user: { id: user._id.toString(), name: user.name, email: user.email, image: user.userImage || user.image },
         };
     } catch (error) {
         console.error("Error fetching profile by slug:", error);
@@ -180,7 +175,7 @@ export async function updateProfile(data: {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $set: updateData },
-            { new: true, upsert: true, runValidators: true }
+            { new: true, upsert: true, runValidators: true },
         );
 
         updateTag(`profile-${session.user.id}`);
@@ -201,7 +196,7 @@ export async function addExperience(experienceData: Omit<IExperience, "_id">) {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $push: { experience: experienceData } },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
         );
 
         updateTag(`profile-${session.user.id}`);
@@ -222,7 +217,7 @@ export async function updateExperience(experienceId: string, experienceData: Par
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id, "experience._id": experienceId },
             { $set: { "experience.$": { _id: experienceId, ...experienceData } } },
-            { new: true }
+            { new: true },
         );
 
         if (!profile) {
@@ -247,7 +242,7 @@ export async function deleteExperience(experienceId: string) {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $pull: { experience: { _id: experienceId } } },
-            { new: true }
+            { new: true },
         );
 
         if (!profile) {
@@ -272,7 +267,7 @@ export async function addEducation(educationData: Omit<IEducation, "_id">) {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $push: { education: educationData } },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
         );
 
         updateTag(`profile-${session.user.id}`);
@@ -293,7 +288,7 @@ export async function updateEducation(educationId: string, educationData: Partia
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id, "education._id": educationId },
             { $set: { "education.$": { _id: educationId, ...educationData } } },
-            { new: true }
+            { new: true },
         );
 
         if (!profile) {
@@ -318,7 +313,7 @@ export async function deleteEducation(educationId: string) {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $pull: { education: { _id: educationId } } },
-            { new: true }
+            { new: true },
         );
 
         if (!profile) {
@@ -348,7 +343,7 @@ export async function addSkill(name: string) {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $push: { skills: { name, endorsements: 0 } } },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
         );
 
         updateTag(`profile-${session.user.id}`);
@@ -369,7 +364,7 @@ export async function deleteSkill(skillName: string) {
         const profile = await Profile.findOneAndUpdate(
             { userId: session.user.id },
             { $pull: { skills: { name: skillName } } },
-            { new: true }
+            { new: true },
         );
 
         if (!profile) {
@@ -398,7 +393,7 @@ export async function endorseSkill(userId: string, skillName: string) {
         const profile = await Profile.findOneAndUpdate(
             { userId, "skills.name": skillName },
             { $inc: { "skills.$.endorsements": 1 } },
-            { new: true }
+            { new: true },
         );
 
         if (!profile) {
@@ -413,4 +408,3 @@ export async function endorseSkill(userId: string, skillName: string) {
         return { success: false, error: "Failed to endorse skill" };
     }
 }
-

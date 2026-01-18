@@ -57,67 +57,69 @@ export default function OnboardingPage() {
 
     // Check if user already completed onboarding
     useEffect(() => {
+        let isMounted = true;
+
         const checkOnboarding = async () => {
             try {
                 const result = await getUserPreferences();
 
+                if (!isMounted) return;
+
                 if (!result.success) {
                     // Not authenticated - redirect to login
-                    router.push("/login");
+                    window.location.href = "/login";
                     return;
                 }
 
                 if (result.preferences?.onboardingCompleted) {
                     // Already completed - redirect to home
-                    router.push("/");
+                    window.location.href = "/";
                     return;
                 }
             } catch (error) {
                 console.error("Error checking onboarding status:", error);
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         checkOnboarding();
-    }, [router]);
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const toggleIndustry = (industry: string) => {
-        setIndustries(prev =>
-            prev.includes(industry)
-                ? prev.filter(i => i !== industry)
-                : [...prev, industry]
-        );
+        setIndustries((prev) => (prev.includes(industry) ? prev.filter((i) => i !== industry) : [...prev, industry]));
     };
 
     const addCustomIndustry = () => {
         if (customIndustry.trim() && !industries.includes(customIndustry.trim())) {
-            setIndustries(prev => [...prev, customIndustry.trim()]);
+            setIndustries((prev) => [...prev, customIndustry.trim()]);
             setCustomIndustry("");
         }
     };
 
     const removeIndustry = (industry: string) => {
-        setIndustries(prev => prev.filter(i => i !== industry));
+        setIndustries((prev) => prev.filter((i) => i !== industry));
     };
 
     const toggleSkill = (skill: string) => {
-        setSkills(prev =>
-            prev.includes(skill)
-                ? prev.filter(s => s !== skill)
-                : [...prev, skill]
-        );
+        setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]));
     };
 
     const addCustomSkill = () => {
         if (customSkill.trim() && !skills.includes(customSkill.trim())) {
-            setSkills(prev => [...prev, customSkill.trim()]);
+            setSkills((prev) => [...prev, customSkill.trim()]);
             setCustomSkill("");
         }
     };
 
     const removeSkill = (skill: string) => {
-        setSkills(prev => prev.filter(s => s !== skill));
+        setSkills((prev) => prev.filter((s) => s !== skill));
     };
 
     const handleNext = () => {
@@ -146,14 +148,14 @@ export default function OnboardingPage() {
             const result = await saveUserPreferences(preferences);
 
             if (result.success) {
-                router.push("/");
+                window.location.href = "/";
             } else {
-                setError(result.error || "Failed to save preferences");
+                setError(result.error || "Nie udało się zapisać preferencji");
+                setIsSubmitting(false);
             }
         } catch (err) {
             console.error("Error skipping onboarding:", err);
-            setError("An unexpected error occurred");
-        } finally {
+            setError("Wystąpił nieoczekiwany błąd");
             setIsSubmitting(false);
         }
     };
@@ -172,14 +174,14 @@ export default function OnboardingPage() {
             const result = await saveUserPreferences(preferences);
 
             if (result.success) {
-                router.push("/");
+                window.location.href = "/";
             } else {
-                setError(result.error || "Failed to save preferences");
+                setError(result.error || "Nie udało się zapisać preferencji");
+                setIsSubmitting(false);
             }
         } catch (err) {
             console.error("Error saving preferences:", err);
-            setError("An unexpected error occurred");
-        } finally {
+            setError("Wystąpił nieoczekiwany błąd");
             setIsSubmitting(false);
         }
     };
@@ -197,9 +199,9 @@ export default function OnboardingPage() {
             <div className="container max-w-2xl mx-auto">
                 <Card>
                     <CardHeader className="text-center">
-                        <CardTitle className="text-3xl">Welcome to RateIT! 👋</CardTitle>
+                        <CardTitle className="text-3xl">Witaj w RateIT!</CardTitle>
                         <CardDescription className="text-base mt-2">
-                            Let's personalize your experience by learning about your interests
+                            Spersonalizujmy Twoje doświadczenie poznając Twoje zainteresowania
                         </CardDescription>
                         <div className="flex justify-center gap-2 mt-6">
                             {[1, 2].map((s) => (
@@ -224,20 +226,17 @@ export default function OnboardingPage() {
                         {step === 1 && (
                             <div className="space-y-6">
                                 <div>
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        What industries interest you?
-                                    </h3>
+                                    <h3 className="text-xl font-semibold mb-2">Jakie branże Cię interesują?</h3>
                                     <p className="text-sm text-muted-foreground mb-4">
-                                        Select all that apply. We'll show you relevant content and connections.
+                                        Wybierz branże, którymi jesteś zainteresowany. To pomoże nam pokazać Ci odpowiednie
+                                        firmy, posty i możliwości.
                                     </p>
                                 </div>
 
                                 <div>
-                                    <Label className="text-base font-medium mb-3 block">
-                                        Choose from popular industries
-                                    </Label>
+                                    <Label className="text-base font-medium mb-3 block">Wybierz z popularnych branż</Label>
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                        {SUGGESTED_INDUSTRIES.map(industry => (
+                                        {SUGGESTED_INDUSTRIES.map((industry) => (
                                             <Badge
                                                 key={industry}
                                                 variant={industries.includes(industry) ? "default" : "outline"}
@@ -252,12 +251,15 @@ export default function OnboardingPage() {
 
                                 <div>
                                     <Label htmlFor="custom-industry" className="text-sm font-medium mb-2 block">
-                                        Or add your own
+                                        Dodaj konkretne obszary lub specjalizacje
                                     </Label>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                        np. &quot;AI&quot;, &quot;Cloud Computing&quot;
+                                    </p>
                                     <div className="flex gap-2">
                                         <Input
                                             id="custom-industry"
-                                            placeholder="e.g., Artificial Intelligence"
+                                            placeholder="np. Sztuczna Inteligencja"
                                             value={customIndustry}
                                             onChange={(e) => setCustomIndustry(e.target.value)}
                                             onKeyDown={(e) => {
@@ -273,6 +275,7 @@ export default function OnboardingPage() {
                                             variant="outline"
                                             onClick={addCustomIndustry}
                                             disabled={!customIndustry.trim()}
+                                            title="Dodaj branżę"
                                         >
                                             <Plus className="h-4 w-4" />
                                         </Button>
@@ -282,10 +285,10 @@ export default function OnboardingPage() {
                                 {industries.length > 0 && (
                                     <div>
                                         <Label className="text-sm font-medium mb-2 block">
-                                            Your selected industries ({industries.length})
+                                            Twoje wybrane branże ({industries.length})
                                         </Label>
                                         <div className="flex flex-wrap gap-2">
-                                            {industries.map(industry => (
+                                            {industries.map((industry) => (
                                                 <Badge key={industry} variant="secondary" className="gap-1 py-2 px-3">
                                                     {industry}
                                                     <X
@@ -304,20 +307,18 @@ export default function OnboardingPage() {
                         {step === 2 && (
                             <div className="space-y-6">
                                 <div>
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        What are your key skills?
-                                    </h3>
+                                    <h3 className="text-xl font-semibold mb-2">Jakie są Twoje kluczowe umiejętności?</h3>
                                     <p className="text-sm text-muted-foreground mb-4">
-                                        Help us match you with relevant opportunities and content.
+                                        Pomóż nam dopasować Cię do odpowiednich możliwości i treści.
                                     </p>
                                 </div>
 
                                 <div>
                                     <Label className="text-base font-medium mb-3 block">
-                                        Choose from popular skills
+                                        Wybierz z popularnych umiejętności
                                     </Label>
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                        {SUGGESTED_SKILLS.map(skill => (
+                                        {SUGGESTED_SKILLS.map((skill) => (
                                             <Badge
                                                 key={skill}
                                                 variant={skills.includes(skill) ? "default" : "outline"}
@@ -332,12 +333,12 @@ export default function OnboardingPage() {
 
                                 <div>
                                     <Label htmlFor="custom-skill" className="text-sm font-medium mb-2 block">
-                                        Or add your own
+                                        Lub dodaj własne
                                     </Label>
                                     <div className="flex gap-2">
                                         <Input
                                             id="custom-skill"
-                                            placeholder="e.g., Machine Learning"
+                                            placeholder="np. Machine Learning"
                                             value={customSkill}
                                             onChange={(e) => setCustomSkill(e.target.value)}
                                             onKeyDown={(e) => {
@@ -362,16 +363,13 @@ export default function OnboardingPage() {
                                 {skills.length > 0 && (
                                     <div>
                                         <Label className="text-sm font-medium mb-2 block">
-                                            Your selected skills ({skills.length})
+                                            Twoje wybrane umiejętności ({skills.length})
                                         </Label>
                                         <div className="flex flex-wrap gap-2">
-                                            {skills.map(skill => (
+                                            {skills.map((skill) => (
                                                 <Badge key={skill} variant="secondary" className="gap-1 py-2 px-3">
                                                     {skill}
-                                                    <X
-                                                        className="h-3 w-3 cursor-pointer"
-                                                        onClick={() => removeSkill(skill)}
-                                                    />
+                                                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeSkill(skill)} />
                                                 </Badge>
                                             ))}
                                         </div>
@@ -384,33 +382,19 @@ export default function OnboardingPage() {
                         <div className="flex justify-between items-center mt-8 pt-6 border-t">
                             <div className="flex gap-2">
                                 {step > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleBack}
-                                        disabled={isSubmitting}
-                                    >
+                                    <Button type="button" variant="outline" onClick={handleBack} disabled={isSubmitting}>
                                         <ArrowLeft className="h-4 w-4 mr-2" />
-                                        Back
+                                        Wstecz
                                     </Button>
                                 )}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={handleSkip}
-                                    disabled={isSubmitting}
-                                >
-                                    Skip for now
+                                <Button type="button" variant="ghost" onClick={handleSkip} disabled={isSubmitting}>
+                                    Pomiń na razie
                                 </Button>
                             </div>
 
                             {step < totalSteps ? (
-                                <Button
-                                    type="button"
-                                    onClick={handleNext}
-                                    disabled={industries.length === 0}
-                                >
-                                    Next
+                                <Button type="button" onClick={handleNext} disabled={industries.length === 0}>
+                                    Dalej
                                     <ArrowRight className="h-4 w-4 ml-2" />
                                 </Button>
                             ) : (
@@ -422,11 +406,11 @@ export default function OnboardingPage() {
                                     {isSubmitting ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Saving...
+                                            Zapisywanie...
                                         </>
                                     ) : (
                                         <>
-                                            Complete Setup
+                                            Zakończ konfigurację
                                             <ArrowRight className="h-4 w-4 ml-2" />
                                         </>
                                     )}
@@ -435,7 +419,7 @@ export default function OnboardingPage() {
                         </div>
 
                         <p className="text-xs text-center text-muted-foreground mt-6">
-                            Step {step} of {totalSteps} • You can always change these later in your settings
+                            Krok {step} z {totalSteps} • Możesz zawsze zmienić to później w ustawieniach
                         </p>
                     </CardContent>
                 </Card>
@@ -443,4 +427,3 @@ export default function OnboardingPage() {
         </div>
     );
 }
-

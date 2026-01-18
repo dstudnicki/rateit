@@ -41,7 +41,7 @@ export default function UsersManagementPage() {
         setLoading(true);
         const result = await getAllUsers(50, 0);
         if (result.success && result.users) {
-            setUsers(result.users);
+            setUsers(result.users as User[]);
         }
         setLoading(false);
     };
@@ -55,49 +55,53 @@ export default function UsersManagementPage() {
         setLoading(true);
         const result = await searchUsers(searchQuery);
         if (result.success && result.users) {
-            setUsers(result.users);
+            setUsers(result.users as User[]);
         }
         setLoading(false);
     };
 
     const handleRoleChange = async (userId: string, newRole: "user" | "moderator" | "admin") => {
-        if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+        if (
+            !confirm(
+                `Czy na pewno chcesz zmienić rolę tego użytkownika na ${newRole === "user" ? "użytkownika" : newRole === "moderator" ? "moderatora" : "administratora"}?`,
+            )
+        ) {
             return;
         }
 
         const result = await setUserRole(userId, newRole);
         if (result.success) {
-            alert("Role updated successfully");
+            alert("Rola zaktualizowana pomyślnie");
             loadUsers();
         } else {
-            alert(`Failed to update role: ${result.error}`);
+            alert(`Nie udało się zaktualizować roli: ${result.error}`);
         }
     };
 
     const handleBanUser = async (userId: string, userName: string) => {
-        const reason = prompt(`Enter reason for banning ${userName}:`);
+        const reason = prompt(`Podaj powód zbanowania ${userName}:`);
         if (!reason) return;
 
-        const durationStr = prompt("Enter ban duration in days (leave empty for permanent):");
+        const durationStr = prompt("Podaj czas trwania bana w dniach (zostaw puste dla permanentnego):");
         const duration = durationStr ? parseInt(durationStr) : undefined;
 
         const result = await banUser(userId, reason, duration);
         if (result.success) {
-            alert("User banned successfully");
+            alert("Użytkownik zbanowany pomyślnie");
             loadUsers();
         } else {
-            alert(`Failed to ban user: ${result.error}`);
+            alert(`Nie udało się zbanować użytkownika: ${result.error}`);
         }
     };
 
     const handleUnbanUser = async (userId: string, userName: string) => {
-        if (!confirm(`Are you sure you want to unban ${userName}?`)) {
+        if (!confirm(`Czy na pewno chcesz odbanować ${userName}?`)) {
             return;
         }
 
         const result = await unbanUser(userId);
         if (result.success) {
-            alert("User unbanned successfully");
+            alert("Użytkownik odbanowany pomyślnie");
             loadUsers();
         } else {
             alert(`Failed to unban user: ${result.error}`);
@@ -128,16 +132,10 @@ export default function UsersManagementPage() {
                         placeholder="Search by email or name..."
                         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <button
-                        onClick={handleSearch}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
+                    <button onClick={handleSearch} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         Search
                     </button>
-                    <button
-                        onClick={loadUsers}
-                        className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                    >
+                    <button onClick={loadUsers} className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
                         Clear
                     </button>
                 </div>
@@ -183,10 +181,7 @@ export default function UsersManagementPage() {
                                         <select
                                             value={user.role}
                                             onChange={(e) =>
-                                                handleRoleChange(
-                                                    user._id,
-                                                    e.target.value as "user" | "moderator" | "admin"
-                                                )
+                                                handleRoleChange(user._id, e.target.value as "user" | "moderator" | "admin")
                                             }
                                             className="text-sm border border-gray-300 rounded px-2 py-1"
                                         >
@@ -238,4 +233,3 @@ export default function UsersManagementPage() {
         </div>
     );
 }
-

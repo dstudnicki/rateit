@@ -68,14 +68,14 @@ export default function TestContentMatchingPage() {
 
     return (
         <div className="container max-w-4xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">Content Matching System - Test Page</h1>
+            <h1 className="text-3xl font-bold mb-6">System Dopasowywania Treści - Strona Testowa</h1>
 
             {error && (
                 <Card className="mb-6 border-destructive">
                     <CardHeader>
                         <CardTitle className="text-destructive flex items-center gap-2">
                             <XCircle className="h-5 w-5" />
-                            Error
+                            Błąd
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -94,54 +94,57 @@ export default function TestContentMatchingPage() {
                             ) : (
                                 <XCircle className="h-5 w-5 text-red-500" />
                             )}
-                            User Preferences
+                            Preferencje Użytkownika
                         </CardTitle>
-                        <CardDescription>
-                            Status: {preferences?.success ? "Loaded" : "Failed"}
-                        </CardDescription>
+                        <CardDescription>Status: {preferences?.success ? "Załadowano" : "Niepowodzenie"}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {preferences?.success && preferences.preferences ? (
                             <>
                                 <div>
-                                    <h3 className="font-semibold mb-2">Onboarding Status:</h3>
                                     <Badge variant={preferences.preferences.onboardingCompleted ? "default" : "secondary"}>
                                         {preferences.preferences.onboardingCompleted ? "Completed" : "Not Completed"}
                                     </Badge>
                                 </div>
 
                                 <div>
-                                    <h3 className="font-semibold mb-2">Industries ({preferences.preferences.industries?.length || 0}):</h3>
+                                    <h3 className="font-semibold mb-2">
+                                        Industries ({preferences.preferences.industries?.length || 0}):
+                                    </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {preferences.preferences.industries?.map((ind: string) => (
-                                            <Badge key={ind} variant="outline">{ind}</Badge>
+                                            <Badge key={ind} variant="outline">
+                                                {ind}
+                                            </Badge>
                                         )) || <span className="text-muted-foreground">None</span>}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="font-semibold mb-2">Skills ({preferences.preferences.skills?.length || 0}):</h3>
+                                    <h3 className="font-semibold mb-2">
+                                        Skills ({preferences.preferences.skills?.length || 0}):
+                                    </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {preferences.preferences.skills?.map((skill: string) => (
-                                            <Badge key={skill} variant="outline">{skill}</Badge>
+                                            <Badge key={skill} variant="outline">
+                                                {skill}
+                                            </Badge>
                                         )) || <span className="text-muted-foreground">None</span>}
                                     </div>
                                 </div>
 
                                 <div>
                                     <h3 className="font-semibold mb-2">Followed Companies:</h3>
-                                    <p className="text-muted-foreground">{preferences.preferences.companies?.length || 0} companies</p>
+                                    <p className="text-muted-foreground">
+                                        {preferences.preferences.companies?.length || 0} companies
+                                    </p>
                                 </div>
                             </>
                         ) : (
                             <div>
-                                <p className="text-muted-foreground mb-4">
-                                    {preferences?.error || "No preferences found"}
-                                </p>
+                                <p className="text-muted-foreground mb-4">{preferences?.error || "No preferences found"}</p>
                                 {preferences?.error === "Not authenticated" ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        Please log in to see your preferences.
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">Please log in to see your preferences.</p>
                                 ) : (
                                     <Button onClick={fixPreferences} disabled={loading}>
                                         Fix Missing Preferences
@@ -163,9 +166,7 @@ export default function TestContentMatchingPage() {
                             )}
                             Personalized Feed
                         </CardTitle>
-                        <CardDescription>
-                            Status: {feedResult?.success ? "Loaded" : "Failed"}
-                        </CardDescription>
+                        <CardDescription>Status: {feedResult?.success ? "Loaded" : "Failed"}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {feedResult?.success ? (
@@ -174,7 +175,10 @@ export default function TestContentMatchingPage() {
                                     <h3 className="font-semibold mb-2">Feed Stats:</h3>
                                     <ul className="list-disc list-inside space-y-1 text-sm">
                                         <li>Posts loaded: {feedResult.posts?.length || 0}</li>
-                                        <li>Feed type: {preferences?.preferences?.onboardingCompleted ? "Personalized" : "Generic"}</li>
+                                        <li>
+                                            Feed type:{" "}
+                                            {preferences?.preferences?.onboardingCompleted ? "Personalized" : "Generic"}
+                                        </li>
                                     </ul>
                                 </div>
 
@@ -184,7 +188,9 @@ export default function TestContentMatchingPage() {
                                         <div className="space-y-2">
                                             {feedResult.posts.slice(0, 3).map((post: any) => (
                                                 <div key={post._id} className="p-3 bg-secondary/50 rounded-lg">
-                                                    <p className="text-sm font-medium">{post.user?.fullName || post.user?.name || "Unknown"}</p>
+                                                    <p className="text-sm font-medium">
+                                                        {post.user?.fullName || post.user?.name || "Unknown"}
+                                                    </p>
                                                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                                                         {post.content}
                                                     </p>
@@ -203,25 +209,30 @@ export default function TestContentMatchingPage() {
                 {/* Actions */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Test Actions</CardTitle>
+                        <CardTitle>Akcje Testowe</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
                             <Button onClick={loadData} disabled={loading} className="mr-2">
-                                Reload Data
+                                Przeładuj Dane
                             </Button>
                             <Button onClick={fixPreferences} disabled={loading} variant="outline">
-                                Fix All Profiles
+                                Napraw Wszystkie Profile
                             </Button>
                         </div>
                         <div className="text-sm text-muted-foreground space-y-2">
-                            <p><strong>How to test:</strong></p>
+                            <p>
+                                <strong>Jak testować:</strong>
+                            </p>
                             <ol className="list-decimal list-inside space-y-1 ml-2">
-                                <li>If you're not logged in, log in first</li>
-                                <li>If "Onboarding Status" shows "Not Completed", you should see the onboarding dialog on the home page</li>
-                                <li>Complete the onboarding by selecting industries and skills</li>
-                                <li>Return here and reload - you should see your preferences</li>
-                                <li>The feed should now be personalized based on your preferences</li>
+                                <li>Jeśli nie jesteś zalogowany, najpierw się zaloguj</li>
+                                <li>
+                                    Jeśli "Status Onboardingu" pokazuje "Nie ukończony", powinieneś zobaczyć dialog onboardingu
+                                    na stronie głównej
+                                </li>
+                                <li>Ukończ onboarding wybierając branże i umiejętności</li>
+                                <li>Wróć tutaj i przeładuj - powinieneś zobaczyć swoje preferencje</li>
+                                <li>Kanał powinien być teraz spersonalizowany na podstawie Twoich preferencji</li>
                             </ol>
                         </div>
                     </CardContent>
@@ -230,4 +241,3 @@ export default function TestContentMatchingPage() {
         </div>
     );
 }
-

@@ -10,11 +10,11 @@ export async function GET() {
         await getClient();
 
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         // Get all post comments
         const posts = await Post.find({ comments: { $exists: true, $ne: [] } })
-            .select('comments')
+            .select("comments")
             .lean();
 
         const postComments = [];
@@ -24,15 +24,13 @@ export async function GET() {
                     const userId = (comment as any).user;
                     let user;
                     try {
-                        user = await db.collection("user").findOne(
-                            { _id: new ObjectId(userId) },
-                            { projection: { name: 1, email: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: new ObjectId(userId) }, { projection: { name: 1, email: 1 } });
                     } catch (e) {
-                        user = await db.collection("user").findOne(
-                            { _id: userId as any },
-                            { projection: { name: 1, email: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: userId as any }, { projection: { name: 1, email: 1 } });
                     }
 
                     if (user) {
@@ -55,7 +53,7 @@ export async function GET() {
 
         // Get all company reviews
         const companies = await Company.find({ reviews: { $exists: true, $ne: [] } })
-            .select('reviews name')
+            .select("reviews name")
             .lean();
 
         const companyReviews = [];
@@ -65,15 +63,13 @@ export async function GET() {
                     const userId = review.user;
                     let user;
                     try {
-                        user = await db.collection("user").findOne(
-                            { _id: new ObjectId(userId) },
-                            { projection: { name: 1, email: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: new ObjectId(userId) }, { projection: { name: 1, email: 1 } });
                     } catch (e) {
-                        user = await db.collection("user").findOne(
-                            { _id: userId as any },
-                            { projection: { name: 1, email: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: userId as any }, { projection: { name: 1, email: 1 } });
                     }
 
                     if (user) {
@@ -95,7 +91,7 @@ export async function GET() {
         }
 
         const allComments = [...postComments, ...companyReviews].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
 
         return NextResponse.json({ comments: allComments });
@@ -103,8 +99,7 @@ export async function GET() {
         console.error("Admin comments fetch error:", error);
         return NextResponse.json(
             { error: error.message || "Failed to fetch comments" },
-            { status: error.message === "Admin access required" ? 403 : 500 }
+            { status: error.message === "Admin access required" ? 403 : 500 },
         );
     }
 }
-
