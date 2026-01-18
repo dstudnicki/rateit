@@ -109,13 +109,13 @@ export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDi
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Add Your Review</DialogTitle>
+                    <DialogTitle>Dodaj swoją opinię</DialogTitle>
                     <DialogDescription>
-                        Share your experience working at this company or your interview process.
+                        Podziel się swoimi doświadczeniami z pracy w tej firmie lub procesem rozmowy kwalifikacyjnej.
                     </DialogDescription>
                     {hasReviewed && (
                         <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground mt-2">
-                            ℹ️ You have already reviewed this company. Only one review per user is allowed to prevent spam.
+                            ℹ️ Już oceniłeś tę firmę. Dozwolona jest tylko jedna recenzja na użytkownika, aby zapobiec spamowi.
                         </div>
                     )}
                 </DialogHeader>

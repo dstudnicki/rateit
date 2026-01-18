@@ -9,6 +9,8 @@ import { analyzePostContent } from "@/lib/content-analyzer";
 import { requireAuth, canModifyResource } from "@/lib/auth-helpers";
 import { validatePostContent, sanitizeString } from "@/lib/validation";
 import { requireNotBanned } from "@/lib/ban-check";
+import { cache } from "react";
+import { ObjectId } from "mongodb";
 
 export async function createPost(content: string, images: string[] = []) {
     const user = await requireAuth();
@@ -183,7 +185,7 @@ function sanitizePost(post: any): any {
     return plain;
 }
 
-export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) {
+export const getPersonalizedFeed = cache(async (limit: number = 10, skip: number = 0) => {
     const session = await auth.api.getSession({
         headers: await import("next/headers").then((m) => m.headers()),
     });
@@ -243,11 +245,10 @@ export async function getPersonalizedFeed(limit: number = 10, skip: number = 0) 
         // Fall back to generic feed on error
         return getGenericFeed(limit, skip);
     }
-}
+});
 
 async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
     const db = await getClient();
-    const { ObjectId } = require("mongodb");
 
     const posts = await Post.find()
         .sort({ createdAt: -1 })
@@ -622,10 +623,9 @@ async function getPersonalizedPosts(profile: any, limit: number, skip: number) {
         }));
 }
 
-export async function getGenericFeed(limit: number = 10, skip: number = 0) {
+export const getGenericFeed = cache(async (limit: number = 10, skip: number = 0) => {
     try {
         const db = await getClient();
-        const { ObjectId } = require("mongodb");
 
         const posts = await Post.find()
             .sort({ createdAt: -1 })
@@ -721,7 +721,7 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
             .map((post) => ({
                 ...post,
                 matchScore: Math.round(post.score * 10) / 10,
-                matchReasons: [{ reason: `Generic feed (engagement-based)`, points: Math.round(post.score * 10) / 10 }],
+                matchReasons: [{ reason: "Generic feed (engagement-based)", points: Math.round(post.score * 10) / 10 }],
             }));
 
         return {
@@ -732,4 +732,4 @@ export async function getGenericFeed(limit: number = 10, skip: number = 0) {
         console.error("Failed to get generic feed:", error);
         return { success: false, error: "Failed to load feed", posts: [] };
     }
-}
+});

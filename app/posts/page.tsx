@@ -2,17 +2,10 @@
 import { Suspense } from "react";
 import { getPosts } from "@/app/data/posts/get-posts";
 import { PostListClient } from "@/components/post-list-client";
-import { cacheLife, cacheTag } from "next/cache";
 
 export default async function PostsPage() {
-    "use cache";
-    // Social media feeds should have shorter cache - 5 minutes is good balance
-    cacheLife("minutes");
-
-    // Use time-based bucket for cache granularity
-    // This allows new posts to appear within 5 minutes without invalidating all users' cache
-    const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000)); // 5-minute buckets
-    cacheTag(`posts-feed-${cacheBucket}`);
+    // Note: "use cache" disabled - not compatible with dynamic routes
+    // Using cache() from React in getPosts() instead for request memoization
 
     const postsPromise = getPosts();
 

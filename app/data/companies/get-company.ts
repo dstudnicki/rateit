@@ -1,5 +1,4 @@
 import "server-only";
-
 // Get base URL - localhost in dev, Vercel URL in production
 const BASE_URL =
     process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");

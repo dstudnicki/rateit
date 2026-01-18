@@ -20,19 +20,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
 
                     let user;
                     try {
-                        user = await db
-                            .collection("user")
-                            .findOne(
-                                { _id: new ObjectId(userIdString) },
-                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
-                            );
+                        user = await db.collection("user").findOne(
+                            { _id: new ObjectId(userIdString) },
+                            { projection: { name: 1, _id: 1, image: 1, userImage: 1 } }, // email removed
+                        );
                     } catch (e) {
-                        user = await db
-                            .collection("user")
-                            .findOne(
-                                { _id: userIdString as any },
-                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
-                            );
+                        user = await db.collection("user").findOne(
+                            { _id: userIdString as any },
+                            { projection: { name: 1, _id: 1, image: 1, userImage: 1 } }, // email removed
+                        );
                     }
 
                     if (user) {
@@ -47,7 +43,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
                             ...post,
                             user: {
                                 name: user.name,
-                                email: user.email,
+                                // email removed - GDPR/privacy protection
                                 _id: userIdString,
                                 slug: profile?.slug || user.name,
                                 fullName: profile?.fullName || null,

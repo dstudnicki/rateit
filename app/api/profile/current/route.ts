@@ -4,10 +4,6 @@ import { headers } from "next/headers";
 import { getClient } from "@/lib/mongoose";
 import { ObjectId } from "mongodb";
 
-/**
- * GET /api/profile/current
- * Get current user's profile with image
- */
 export async function GET() {
     try {
         const session = await auth.api.getSession({

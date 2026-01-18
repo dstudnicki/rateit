@@ -43,6 +43,13 @@ export const auth = betterAuth({
     advanced: {
         // Add custom redirect after OAuth success
         useSecureCookies: process.env.NODE_ENV === "production",
+        // Explicitly set cookie options for production to ensure cookies work on Vercel
+        cookieOptions: {
+            sameSite: "lax", // Important: "lax" works with OAuth redirects and cross-origin
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            path: "/", // Ensure cookie is available across entire site
+        },
     },
     plugins: [nextCookies()],
 });

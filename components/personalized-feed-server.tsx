@@ -3,13 +3,9 @@ import { headers } from "next/headers";
 import { getPersonalizedFeed } from "@/app/actions/posts";
 import { PostCard } from "@/components/ui/post";
 import { getClient } from "@/lib/mongoose";
-import { unstable_noStore as noStore } from "next/cache";
 import { OnboardingRedirect } from "@/components/onboarding-redirect";
 
 export async function PersonalizedFeedServer() {
-    // Prevent caching of this component
-    noStore();
-
     try {
         // Check auth
         const session = await auth.api.getSession({
@@ -36,7 +32,7 @@ export async function PersonalizedFeedServer() {
 
         // Check if user has profile
         const db = await getClient();
-        let profile = await db.collection("profiles").findOne({ userId: session.user.id });
+        const profile = await db.collection("profiles").findOne({ userId: session.user.id });
 
         // Create profile if doesn't exist (OAuth users)
         if (!profile) {

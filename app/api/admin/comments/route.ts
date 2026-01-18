@@ -5,6 +5,9 @@ import Company from "@/models/Company";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { ObjectId } from "mongodb";
 
+// Admin routes need auth - disable static generation
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
         await requireAdmin();

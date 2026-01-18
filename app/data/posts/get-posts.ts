@@ -2,10 +2,10 @@ import "server-only";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
 import { ObjectId } from "mongodb";
+import { cache } from "react";
 
-export async function getPosts() {
-    "use cache";
-    // Use time-based bucket for cache - auto-expires every 5 minutes
+export const getPosts = cache(async () => {
+    // React cache for request memoization - deduplicates calls within single render
 
     try {
         const db = await getClient();
@@ -34,4 +34,4 @@ export async function getPosts() {
         console.error("Error fetching posts:", error);
         return [];
     }
-}
+});

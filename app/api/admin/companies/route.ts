@@ -3,6 +3,9 @@ import { getClient } from "@/lib/mongoose";
 import Company from "@/models/Company";
 import { requireAdmin } from "@/lib/auth-helpers";
 
+// Admin routes need auth - disable static generation
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
         await requireAdmin();

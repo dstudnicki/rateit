@@ -18,7 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
         // Find user in database
         const user = await db
             .collection("user")
-            .findOne({ _id: userObjectId as any }, { projection: { userImage: 1, image: 1, name: 1, email: 1 } });
+            .findOne({ _id: userObjectId as any }, { projection: { userImage: 1, image: 1, name: 1 } }); // email removed
 
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
             userImage: user.userImage || null,
             image: user.image || null,
             name: user.name,
-            email: user.email,
+            // email removed - GDPR/privacy protection
         });
     } catch (error) {
         console.error("[API] Get user error:", error);

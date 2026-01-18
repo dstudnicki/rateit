@@ -15,7 +15,7 @@ export interface ProfileSearchResult {
     location: string;
     user: {
         name: string;
-        email: string;
+        // email removed - not needed for public display, GDPR/privacy protection
         image: string | null;
     };
     score?: number;
@@ -187,16 +187,14 @@ export async function GET(request: NextRequest) {
                 profileDocs.map(async (profile: any) => {
                     let user;
                     try {
-                        user = await db
-                            .collection("user")
-                            .findOne(
-                                { _id: new ObjectId(profile.userId) },
-                                { projection: { name: 1, email: 1, image: 1, userImage: 1 } },
-                            );
+                        user = await db.collection("user").findOne(
+                            { _id: new ObjectId(profile.userId) },
+                            { projection: { name: 1, image: 1, userImage: 1 } }, // email removed
+                        );
                     } catch (e) {
                         user = await db
                             .collection("user")
-                            .findOne({ _id: profile.userId }, { projection: { name: 1, email: 1, image: 1, userImage: 1 } });
+                            .findOne({ _id: profile.userId }, { projection: { name: 1, image: 1, userImage: 1 } }); // email removed
                     }
 
                     if (!user) return null;
@@ -210,7 +208,7 @@ export async function GET(request: NextRequest) {
                         location: profile.location || "",
                         user: {
                             name: user.name || "",
-                            email: user.email || "",
+                            // email removed - GDPR/privacy protection
                             image: user.userImage || user.image || null,
                         },
                         score: calculateScore({ ...profile, user }, query, "profile"),
