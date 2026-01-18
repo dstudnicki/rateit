@@ -61,7 +61,7 @@ export default function AdminCommentsPage() {
     };
 
     const handleDeleteComment = async (commentId: string, type: "post" | "company") => {
-        if (!confirm("Are you sure you want to delete this comment?")) return;
+        if (!confirm("Czy na pewno chcesz usunąć ten komentarz?")) return;
 
         try {
             const response = await fetch(`/api/admin/comments/${commentId}?type=${type}`, {
@@ -69,18 +69,18 @@ export default function AdminCommentsPage() {
             });
 
             if (response.ok) {
-                setComments(comments.filter(c => c._id !== commentId));
-                alert("Comment deleted successfully");
+                setComments(comments.filter((c) => c._id !== commentId));
+                alert("Komentarz usunięty pomyślnie");
             } else {
-                alert("Failed to delete comment");
+                alert("Nie udało się usunąć komentarza");
             }
         } catch (error) {
             console.error("Failed to delete comment:", error);
-            alert("Failed to delete comment");
+            alert("Nie udało się usunąć komentarza");
         }
     };
 
-    const filteredComments = comments.filter(comment => {
+    const filteredComments = comments.filter((comment) => {
         if (filter === "all") return true;
         return comment.type === filter.slice(0, -1); // "posts" -> "post"
     });
@@ -97,7 +97,7 @@ export default function AdminCommentsPage() {
         <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold">Comment Moderation</h1>
+                    <h1 className="text-3xl font-bold">Moderacja Komentarzy</h1>
                     <p className="text-gray-600 mt-1">Manage and moderate all comments</p>
                 </div>
                 <Button variant="outline" onClick={() => router.push("/admin")}>
@@ -106,23 +106,14 @@ export default function AdminCommentsPage() {
             </div>
 
             <div className="flex gap-4 mb-6">
-                <Button
-                    variant={filter === "all" ? "default" : "outline"}
-                    onClick={() => setFilter("all")}
-                >
+                <Button variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
                     All Comments ({comments.length})
                 </Button>
-                <Button
-                    variant={filter === "posts" ? "default" : "outline"}
-                    onClick={() => setFilter("posts")}
-                >
-                    Post Comments ({comments.filter(c => c.type === "post").length})
+                <Button variant={filter === "posts" ? "default" : "outline"} onClick={() => setFilter("posts")}>
+                    Post Comments ({comments.filter((c) => c.type === "post").length})
                 </Button>
-                <Button
-                    variant={filter === "companies" ? "default" : "outline"}
-                    onClick={() => setFilter("companies")}
-                >
-                    Company Reviews ({comments.filter(c => c.type === "company").length})
+                <Button variant={filter === "companies" ? "default" : "outline"} onClick={() => setFilter("companies")}>
+                    Company Reviews ({comments.filter((c) => c.type === "company").length})
                 </Button>
             </div>
 
@@ -140,11 +131,13 @@ export default function AdminCommentsPage() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-3">
                                         <MessageSquare className="h-4 w-4 text-gray-600" />
-                                        <div className={`text-xs font-semibold px-2.5 py-0.5 rounded ${
-                                            comment.type === "post" 
-                                                ? "bg-blue-100 text-blue-800"
-                                                : "bg-purple-100 text-purple-800"
-                                        }`}>
+                                        <div
+                                            className={`text-xs font-semibold px-2.5 py-0.5 rounded ${
+                                                comment.type === "post"
+                                                    ? "bg-blue-100 text-blue-800"
+                                                    : "bg-purple-100 text-purple-800"
+                                            }`}
+                                        >
                                             {comment.type === "post" ? "Post Comment" : "Company Review"}
                                         </div>
                                         <span className="text-sm text-gray-600">
@@ -152,9 +145,7 @@ export default function AdminCommentsPage() {
                                         </span>
                                     </div>
 
-                                    <p className="text-gray-900 mb-4 whitespace-pre-wrap">
-                                        {comment.content}
-                                    </p>
+                                    <p className="text-gray-900 mb-4 whitespace-pre-wrap">{comment.content}</p>
 
                                     <div className="flex items-center gap-4 text-sm text-gray-600">
                                         <span>
@@ -171,9 +162,9 @@ export default function AdminCommentsPage() {
                                         onClick={() => {
                                             // Navigate to source
                                             if (comment.type === "post") {
-                                                window.open(`/`, '_blank');
+                                                window.open(`/`, "_blank");
                                             } else {
-                                                window.open(`/companies`, '_blank');
+                                                window.open(`/companies`, "_blank");
                                             }
                                         }}
                                     >
@@ -195,4 +186,3 @@ export default function AdminCommentsPage() {
         </div>
     );
 }
-

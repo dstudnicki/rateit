@@ -24,39 +24,41 @@ export default function DebugCompanyMatchingPage() {
     return (
         <div className="container max-w-4xl mx-auto py-8 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold mb-4">Company Keywords Migration</h1>
+                <h1 className="text-2xl font-bold mb-4">Migracja Słów Kluczowych Firm</h1>
                 <p className="text-muted-foreground mb-4">
-                    This will analyze all company reviews and extract keywords (skills, technologies, benefits) 
-                    to improve content matching.
+                    To przeanalizuje wszystkie opinie o firmach i wyodrębni słowa kluczowe (umiejętności, technologie, benefity)
+                    aby poprawić dopasowywanie treści.
                 </p>
                 <Button onClick={handleMigration} disabled={migrating}>
-                    {migrating ? "Migrating..." : "Migrate Keywords"}
+                    {migrating ? "Migrowanie..." : "Migruj Słowa Kluczowe"}
                 </Button>
             </div>
 
             {migrationData && (
                 <Card className="p-6">
-                    <h2 className="text-xl font-semibold mb-4">Migration Results</h2>
+                    <h2 className="text-xl font-semibold mb-4">Wyniki Migracji</h2>
                     {migrationData.success ? (
                         <div className="space-y-2">
                             <p className="text-green-600 font-semibold">
-                                ✓ Successfully processed {migrationData.processed} companies
+                                ✓ Pomyślnie przetworzono {migrationData.processed}{" "}
+                                {migrationData.processed === 1
+                                    ? "firmę"
+                                    : migrationData.processed >= 2 && migrationData.processed <= 4
+                                      ? "firmy"
+                                      : "firm"}
                             </p>
                             <div className="mt-4">
-                                <h3 className="font-semibold mb-2">Details:</h3>
+                                <h3 className="font-semibold mb-2">Szczegóły:</h3>
                                 <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-[400px] text-sm">
                                     {JSON.stringify(migrationData.results, null, 2)}
                                 </pre>
                             </div>
                         </div>
                     ) : (
-                        <p className="text-red-600">
-                            ✗ Migration failed: {migrationData.error}
-                        </p>
+                        <p className="text-red-600">✗ Migracja nie powiodła się: {migrationData.error}</p>
                     )}
                 </Card>
             )}
         </div>
     );
 }
-

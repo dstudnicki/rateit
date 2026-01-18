@@ -1,207 +1,236 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Star, Plus } from "lucide-react"
-import { addCompanyReview } from "@/app/actions/companies"
-import { useRouter } from "next/navigation"
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Star, Plus } from "lucide-react";
+import { addCompanyReview } from "@/app/actions/companies";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 interface AddReviewDialogProps {
-  companyId: string
+    companyId: string;
+    existingReviews?: any[];
 }
 
-export function AddReviewDialog({ companyId }: AddReviewDialogProps) {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [rating, setRating] = useState(0)
-  const [hoveredRating, setHoveredRating] = useState(0)
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    role: "",
-    reviewType: "work" as "work" | "interview",
-    nick: "",
-  })
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (rating === 0) {
-      setError("Please select a rating")
-      return
-    }
-
-    setIsSubmitting(true)
-    setError(null)
-
-    const result = await addCompanyReview(companyId, {
-      ...formData,
-      rating,
-    })
-
-    if (result.success) {
-      setOpen(false)
-      setRating(0)
-      setFormData({
+export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDialogProps) {
+    const router = useRouter();
+    const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [rating, setRating] = useState(0);
+    const [hoveredRating, setHoveredRating] = useState(0);
+    const [hasReviewed, setHasReviewed] = useState(false);
+    const session = authClient.useSession();
+    const currentUserId = session.data?.user?.id;
+    const [formData, setFormData] = useState({
         title: "",
         content: "",
         role: "",
-        reviewType: "work",
+        reviewType: "work" as "work" | "interview",
         nick: "",
-      })
-      router.refresh()
-    } else {
-      setError(result.error || "Failed to add review")
-    }
+    });
 
-    setIsSubmitting(false)
-  }
+    // Check if user has already reviewed this company
+    useEffect(() => {
+        if (currentUserId && existingReviews) {
+            const userReview = existingReviews.find(
+                (review: any) => review.user?._id === currentUserId || review.user === currentUserId,
+            );
+            if (userReview) {
+                setHasReviewed(true);
+            } else {
+                setHasReviewed(false);
+            }
+        }
+    }, [currentUserId, existingReviews]);
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Review
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add Your Review</DialogTitle>
-          <DialogDescription>
-            Share your experience working at this company or your interview process.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-              {error}
-            </div>
-          )}
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-          <div className="space-y-2">
-            <Label>Overall Rating *</Label>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onMouseEnter={() => setHoveredRating(star)}
-                  onMouseLeave={() => setHoveredRating(0)}
-                  onClick={() => setRating(star)}
-                >
-                  <Star
-                    className={`h-8 w-8 transition-colors ${
-                      star <= (hoveredRating || rating) ? "fill-yellow-500 text-yellow-500" : "fill-muted text-muted"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
+        // Check if user has already reviewed
+        if (hasReviewed) {
+            setError("You have already reviewed this company. Only one review per user is allowed to prevent spam.");
+            return;
+        }
 
-          <div className="space-y-2">
-            <Label>Review Type *</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={formData.reviewType === "work" ? "default" : "outline"}
-                onClick={() => setFormData({ ...formData, reviewType: "work" })}
-                className="flex-1"
-              >
-                Work Experience
-              </Button>
-              <Button
-                type="button"
-                variant={formData.reviewType === "interview" ? "default" : "outline"}
-                onClick={() => setFormData({ ...formData, reviewType: "interview" })}
-                className="flex-1"
-              >
-                Interview Process
-              </Button>
-            </div>
-          </div>
+        if (rating === 0) {
+            setError("Please select a rating");
+            return;
+        }
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Review Title *</Label>
-            <Input
-              id="title"
-              placeholder="Summarize your experience"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-            />
-          </div>
+        setIsSubmitting(true);
+        setError(null);
 
-          <div className="space-y-2">
-            <Label htmlFor="review">Your Review *</Label>
-            <Textarea
-              id="review"
-              placeholder="Share details about your work experience, team culture, management, recruitment process, etc."
-              className="min-h-[150px]"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              required
-            />
-          </div>
+        const result = await addCompanyReview(companyId, {
+            ...formData,
+            rating,
+        });
 
-          <div className="space-y-2">
-            <Label htmlFor="nick">
-              Anonymous Nickname *
-              <span className="text-xs text-muted-foreground ml-2">
-                (Your real name will NOT be shown)
-              </span>
-            </Label>
-            <Input
-              id="nick"
-              placeholder="e.g., TechEnthusiast123"
-              value={formData.nick}
-              onChange={(e) => setFormData({ ...formData, nick: e.target.value })}
-              required
-              maxLength={30}
-            />
-            <p className="text-xs text-muted-foreground">
-              This nickname will be visible instead of your real name to protect your privacy
-            </p>
-          </div>
+        if (result.success) {
+            setOpen(false);
+            setRating(0);
+            setFormData({
+                title: "",
+                content: "",
+                role: "",
+                reviewType: "work",
+                nick: "",
+            });
+            setHasReviewed(true); // Mark as reviewed
+            router.refresh();
+        } else {
+            setError(result.error || "Nie udało się dodać opinii");
+        }
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Your Role *</Label>
-            <Input
-              id="role"
-              placeholder="e.g., Software Engineer, Interview Candidate"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              required
-            />
-          </div>
+        setIsSubmitting(false);
+    };
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Review"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button disabled={hasReviewed}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    {hasReviewed ? "Już ocenione" : "Dodaj opinię"}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Add Your Review</DialogTitle>
+                    <DialogDescription>
+                        Share your experience working at this company or your interview process.
+                    </DialogDescription>
+                    {hasReviewed && (
+                        <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground mt-2">
+                            ℹ️ You have already reviewed this company. Only one review per user is allowed to prevent spam.
+                        </div>
+                    )}
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                    {error && <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">{error}</div>}
+
+                    <div className="space-y-2">
+                        <Label>Ogólna ocena *</Label>
+                        <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    type="button"
+                                    onMouseEnter={() => setHoveredRating(star)}
+                                    onMouseLeave={() => setHoveredRating(0)}
+                                    onClick={() => setRating(star)}
+                                >
+                                    <Star
+                                        className={`h-8 w-8 transition-colors ${
+                                            star <= (hoveredRating || rating)
+                                                ? "fill-yellow-500 text-yellow-500"
+                                                : "fill-muted text-muted"
+                                        }`}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Typ opinii *</Label>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant={formData.reviewType === "work" ? "default" : "outline"}
+                                onClick={() => setFormData({ ...formData, reviewType: "work" })}
+                                className="flex-1"
+                            >
+                                Doświadczenie zawodowe
+                            </Button>
+                            <Button
+                                type="button"
+                                variant={formData.reviewType === "interview" ? "default" : "outline"}
+                                onClick={() => setFormData({ ...formData, reviewType: "interview" })}
+                                className="flex-1"
+                            >
+                                Proces rekrutacji
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Tytuł opinii *</Label>
+                        <Input
+                            id="title"
+                            placeholder="Podsumuj swoje doświadczenie"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="review">Twoja opinia *</Label>
+                        <Textarea
+                            id="review"
+                            placeholder="Podziel się szczegółami dotyczącymi doświadczenia zawodowego, kultury zespołu, zarządzania, procesu rekrutacji itp."
+                            className="min-h-[150px]"
+                            value={formData.content}
+                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="nick">
+                            Pseudonim *
+                            <span className="text-xs text-muted-foreground ml-2">
+                                (Twoje prawdziwe imię NIE będzie wyświetlane)
+                            </span>
+                        </Label>
+                        <Input
+                            id="nick"
+                            placeholder="np. TechEnthusiast123"
+                            value={formData.nick}
+                            onChange={(e) => setFormData({ ...formData, nick: e.target.value })}
+                            required
+                            maxLength={30}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Ten pseudonim będzie widoczny zamiast Twojego prawdziwego imienia, aby chronić Twoją prywatność
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="role">Twoja rola *</Label>
+                        <Input
+                            id="role"
+                            placeholder="np. Inżynier oprogramowania, Kandydat do pracy"
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+                            Anuluj
+                        </Button>
+                        <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isSubmitting || hasReviewed}>
+                            {isSubmitting ? "Wysyłanie..." : hasReviewed ? "Już ocenione" : "Wyślij opinię"}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
 }

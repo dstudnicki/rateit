@@ -5,13 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageSquare, Star } from "lucide-react";
-import { toggleReviewLike } from "@/app/actions/companies";
+import { Heart, MessageSquare, Star, MoreHorizontal, Trash2 } from "lucide-react";
+import { toggleReviewLike, deleteCompanyReview } from "@/app/actions/companies";
 import { useRouter } from "next/navigation";
 import { ReviewCommentSection } from "./review-comment-section";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Review {
     _id: string;
@@ -108,13 +109,24 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
         }
     };
 
+    const handleDelete = async (reviewId: string) => {
+        const confirmed = window.confirm("Are you sure you want to delete this review?");
+        if (!confirmed) return;
+
+        const result = await deleteCompanyReview(companyId, reviewId);
+
+        if (result.success) {
+            router.refresh();
+        } else {
+            alert("Failed to delete the review. Please try again.");
+        }
+    };
+
     if (filteredReviews.length === 0) {
         return (
             <Card className="p-8 text-center">
                 <p className="text-muted-foreground">
-                    {filter === "all"
-                        ? "No reviews yet. Be the first to share your experience!"
-                        : "No reviews found for this filter."}
+                    {filter === "all" ? "Nie ma jeszcze opinii. Bądz pierwszy!" : "No reviews found for this filter."}
                 </p>
             </Card>
         );
@@ -128,6 +140,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                 const commentsCount = review.comments?.length || 0;
                 const isLiked = currentUserId ? review.likes?.includes(currentUserId) : false;
                 const displayName = review.nick || "Anonymous";
+                const isOwnReview = currentUserId === review.user._id;
 
                 return (
                     <Card key={review._id} className="p-6">
@@ -148,6 +161,26 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                         </div>
                                         <p className="text-sm text-muted-foreground">{review.role}</p>
                                     </div>
+
+                                    {/* Dropdown menu for owner only */}
+                                    {isOwnReview && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    className="text-destructive focus:text-destructive cursor-pointer"
+                                                    onClick={() => handleDelete(review._id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Usuń opinię
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-2">
@@ -162,21 +195,23 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
 
                                 <div className="flex flex-wrap gap-2 mt-3">
                                     <Badge variant="secondary" className="text-xs">
-                                        {review.reviewType === "interview" ? "Interview Experience" : "Work Experience"}
+                                        {review.reviewType === "interview"
+                                            ? "Doświadczenie rekrutacyjne"
+                                            : "Doświadczenie zawodowe"}
                                     </Badge>
                                     {review.rating >= 4 && (
                                         <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                                            Positive
+                                            Pozytywna
                                         </Badge>
                                     )}
                                     {review.rating <= 4 && review.rating >= 3 && (
                                         <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
-                                            Mixed
+                                            Mieszana
                                         </Badge>
                                     )}
                                     {review.rating <= 2 && (
                                         <Badge variant="secondary" className="text-xs bg-red-100 text-red-800">
-                                            Negative
+                                            Negatywna
                                         </Badge>
                                     )}
                                 </div>
@@ -192,7 +227,12 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                     {commentsCount > 0 && (
                                         <span className="flex items-center gap-1.5">
                                             <MessageSquare className="h-3.5 w-3.5" />
-                                            {commentsCount} {commentsCount === 1 ? "comment" : "comments"}
+                                            {commentsCount}{" "}
+                                            {commentsCount === 1
+                                                ? "komentarz"
+                                                : commentsCount >= 2 && commentsCount <= 4
+                                                  ? "komentarze"
+                                                  : "komentarzy"}
                                         </span>
                                     )}
                                 </div>
@@ -207,7 +247,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                         disabled={likingReviews.has(review._id)}
                                     >
                                         <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-                                        <span className="text-sm font-medium">Like</span>
+                                        <span className="text-sm font-medium">Lubię to</span>
                                     </Button>
 
                                     <Button
@@ -217,7 +257,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                         onClick={() => setExpandedReview(isExpanded ? null : review._id)}
                                     >
                                         <MessageSquare className="h-4 w-4" />
-                                        <span className="text-sm font-medium">Comment</span>
+                                        <span className="text-sm font-medium">Komentuj</span>
                                     </Button>
                                 </div>
 

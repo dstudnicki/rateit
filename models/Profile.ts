@@ -111,15 +111,19 @@ const ProfileSchema = new Schema(
         education: [EducationSchema],
         skills: [SkillSchema],
         connections: { type: Number, default: 0 },
-        preferences: { type: PreferencesSchema, default: () => ({ industries: [], skills: [], companies: [], onboardingCompleted: false }) },
+        preferences: {
+            type: PreferencesSchema,
+            default: () => ({ industries: [], skills: [], companies: [], onboardingCompleted: false }),
+        },
         interactionHistory: { type: [InteractionSchema], default: [] },
+        rodoConsent: { type: Boolean, default: false }, // GDPR consent
+        rodoConsentSource: { type: String, enum: ["manual", "oauth"] }, // How consent was obtained
     },
     {
         timestamps: true,
-    }
+    },
 );
 
 const Profile: Model<IProfile> = mongoose.models.Profile || mongoose.model<IProfile>("Profile", ProfileSchema);
 
 export default Profile;
-

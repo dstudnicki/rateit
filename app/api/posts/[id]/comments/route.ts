@@ -7,7 +7,7 @@ import Post from "@/models/Post";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         const { id: postId } = await params;
         const post: any = await Post.findById(postId).lean();
@@ -20,25 +20,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             post.comments.map(async (comment: any) => {
                 let commentUser = null;
                 if (comment.user) {
-                    const userIdString = typeof comment.user === 'string' ? comment.user : comment.user.toString();
+                    const userIdString = typeof comment.user === "string" ? comment.user : comment.user.toString();
 
                     try {
-                        commentUser = await db.collection("user").findOne(
-                            { _id: new ObjectId(userIdString) },
-                            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
-                        );
+                        commentUser = await db
+                            .collection("user")
+                            .findOne(
+                                { _id: new ObjectId(userIdString) },
+                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                            );
                     } catch (e) {
-                        commentUser = await db.collection("user").findOne(
-                            { _id: userIdString as any },
-                            { projection: { name: 1, email: 1, _id: 1, image: 1 } }
-                        );
+                        commentUser = await db
+                            .collection("user")
+                            .findOne(
+                                { _id: userIdString as any },
+                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                            );
                     }
 
                     if (commentUser) {
-                        const profile = await db.collection("profiles").findOne(
-                            { userId: userIdString },
-                            { projection: { slug: 1, fullName: 1 } }
-                        );
+                        const profile = await db
+                            .collection("profiles")
+                            .findOne({ userId: userIdString }, { projection: { slug: 1, fullName: 1 } });
 
                         commentUser = {
                             ...commentUser,
@@ -53,25 +56,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                     (comment.replies || []).map(async (reply: any) => {
                         let replyUser = null;
                         if (reply.user) {
-                            const userIdString = typeof reply.user === 'string' ? reply.user : reply.user.toString();
+                            const userIdString = typeof reply.user === "string" ? reply.user : reply.user.toString();
 
                             try {
-                                replyUser = await db.collection("user").findOne(
-                                    { _id: new ObjectId(userIdString) },
-                                    { projection: { name: 1, email: 1, _id: 1, image: 1 } }
-                                );
+                                replyUser = await db
+                                    .collection("user")
+                                    .findOne(
+                                        { _id: new ObjectId(userIdString) },
+                                        { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                                    );
                             } catch (e) {
-                                replyUser = await db.collection("user").findOne(
-                                    { _id: userIdString as any },
-                                    { projection: { name: 1, email: 1, _id: 1, image: 1 } }
-                                );
+                                replyUser = await db
+                                    .collection("user")
+                                    .findOne(
+                                        { _id: userIdString as any },
+                                        { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
+                                    );
                             }
 
                             if (replyUser) {
-                                const profile = await db.collection("profiles").findOne(
-                                    { userId: userIdString },
-                                    { projection: { slug: 1, fullName: 1 } }
-                                );
+                                const profile = await db
+                                    .collection("profiles")
+                                    .findOne({ userId: userIdString }, { projection: { slug: 1, fullName: 1 } });
 
                                 replyUser = {
                                     ...replyUser,
@@ -82,11 +88,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                             }
                         }
                         return { ...reply, user: replyUser };
-                    })
+                    }),
                 );
 
                 return { ...comment, user: commentUser, replies: repliesWithUsers };
-            })
+            }),
         );
 
         return NextResponse.json(commentsWithUsers, { status: 200 });

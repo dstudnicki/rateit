@@ -8,11 +8,7 @@ const client = await getClient();
 export const auth = betterAuth({
     database: mongodbAdapter(client),
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-    trustedOrigins: [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        process.env.BETTER_AUTH_URL || "http://localhost:3000"
-    ],
+    trustedOrigins: ["http://localhost:3000", "http://localhost:3001", process.env.BETTER_AUTH_URL || "http://localhost:3000"],
     appName: "RateIt",
     emailAndPassword: {
         enabled: true,
@@ -27,6 +23,12 @@ export const auth = betterAuth({
             clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
         },
     },
+    account: {
+        accountLinking: {
+            enabled: true,
+            trustedProviders: ["google", "github"],
+        },
+    },
     session: {
         cookieCache: {
             enabled: true,
@@ -39,4 +41,3 @@ export const auth = betterAuth({
     },
     plugins: [nextCookies()],
 });
-

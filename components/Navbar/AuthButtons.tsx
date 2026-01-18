@@ -24,7 +24,7 @@ export default function AuthButtons() {
             if (sessionData?.user) {
                 setUserName(sessionData.user.name || "ME");
                 try {
-                    const profileResponse = await fetch('/api/profile/current');
+                    const profileResponse = await fetch("/api/profile/current");
                     const profileData = await profileResponse.json();
                     if (profileData?.profile?.image) {
                         setUserImage(profileData.profile.image);
@@ -32,7 +32,7 @@ export default function AuthButtons() {
                         setUserImage(sessionData.user.image);
                     }
                 } catch (error) {
-                    console.error('Error fetching profile:', error);
+                    console.error("Error fetching profile:", error);
                 }
             }
         }
@@ -49,31 +49,35 @@ export default function AuthButtons() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="flex items-center gap-2 h-14 pl-2 border-l ml-2">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sessionData?.user?.email || userName}`} />
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage
+                                        className="object-cover object-center"
+                                        src={
+                                            userImage ||
+                                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${sessionData?.user?.email || userName}`
+                                        }
+                                    />
                                     <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
-                                <span className="text-xs font-medium hidden lg:inline">Me</span>
+                                <span className="text-xs font-medium hidden lg:inline">Ja</span>
                                 <ChevronDown className="h-4 w-4 hidden lg:inline" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuLabel>Moje Konto</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <Link href="/profile">
                                 <DropdownMenuItem>
                                     <User className="mr-2 h-4 w-4" />
-                                    View Profile
+                                    Zobacz Profil
                                 </DropdownMenuItem>
                             </Link>
-                            <DropdownMenuItem>
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings & Privacy</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <HelpCircle className="mr-2 h-4 w-4" />
-                                <span>Help Center</span>
-                            </DropdownMenuItem>
+                            <Link href="/profile/settings">
+                                <DropdownMenuItem>
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>Ustawienia i Prywatność</span>
+                                </DropdownMenuItem>
+                            </Link>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>
                                 <LogOut className="mr-2 h-4 w-4" />
@@ -82,7 +86,7 @@ export default function AuthButtons() {
                                     variant={"link"}
                                     onClick={handleLogout}
                                 >
-                                    Log out
+                                    Wyloguj się
                                 </Button>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -92,12 +96,12 @@ export default function AuthButtons() {
                 <>
                     <li className="text-center">
                         <Button asChild>
-                            <Link href="/login">Login</Link>
+                            <Link href="/login">Zaloguj</Link>
                         </Button>
                     </li>
                     <li className="text-center">
                         <Button variant="outline" asChild>
-                            <Link href="/register">Register</Link>
+                            <Link href="/register">Zarejestruj</Link>
                         </Button>
                     </li>
                 </>

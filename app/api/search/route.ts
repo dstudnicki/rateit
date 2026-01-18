@@ -54,31 +54,28 @@ export interface SearchResponse {
 // Calculate match score for ranking
 // Returns 0-100 based on match quality
 // Structure prepared for future fuse.js integration
-function calculateScore(item: any, query: string, type: 'profile' | 'company' | 'post'): number {
+function calculateScore(item: any, query: string, type: "profile" | "company" | "post"): number {
     const searchQuery = query.toLowerCase().trim();
 
     // Get searchable fields based on type
-    let mainField = '';
+    let mainField = "";
     let secondaryFields: string[] = [];
 
     switch (type) {
-        case 'profile':
-            mainField = (item.fullName || item.slug || '').toLowerCase();
+        case "profile":
+            mainField = (item.fullName || item.slug || "").toLowerCase();
             secondaryFields = [
-                (item.headline || '').toLowerCase(),
-                (item.location || '').toLowerCase(),
-                (item.user?.name || '').toLowerCase(),
+                (item.headline || "").toLowerCase(),
+                (item.location || "").toLowerCase(),
+                (item.user?.name || "").toLowerCase(),
             ];
             break;
-        case 'company':
-            mainField = (item.name || item.slug || '').toLowerCase();
-            secondaryFields = [
-                (item.industry || '').toLowerCase(),
-                (item.location || '').toLowerCase(),
-            ];
+        case "company":
+            mainField = (item.name || item.slug || "").toLowerCase();
+            secondaryFields = [(item.industry || "").toLowerCase(), (item.location || "").toLowerCase()];
             break;
-        case 'post':
-            mainField = (item.content || '').toLowerCase();
+        case "post":
+            mainField = (item.content || "").toLowerCase();
             secondaryFields = [];
             break;
     }
@@ -140,19 +137,22 @@ export async function GET(request: NextRequest) {
 
         // If query is too short but not empty, show error
         if (query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH) {
-            return NextResponse.json({
-                profiles: [],
-                companies: [],
-                posts: [],
-                total: 0,
-                page: 1,
-                hasMore: false,
-                message: "Please enter at least 2 characters to search",
-            } as SearchResponse & { page: number; hasMore: boolean; message?: string }, { status: 200 });
+            return NextResponse.json(
+                {
+                    profiles: [],
+                    companies: [],
+                    posts: [],
+                    total: 0,
+                    page: 1,
+                    hasMore: false,
+                    message: "Please enter at least 2 characters to search",
+                } as SearchResponse & { page: number; hasMore: boolean; message?: string },
+                { status: 200 },
+            );
         }
 
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         let profiles: ProfileSearchResult[] = [];
         let companies: CompanySearchResult[] = [];
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
                         { headline: searchRegex },
                         { location: searchRegex },
                         { slug: searchRegex },
-                    ]
+                    ],
                 };
             }
 
@@ -187,15 +187,16 @@ export async function GET(request: NextRequest) {
                 profileDocs.map(async (profile: any) => {
                     let user;
                     try {
-                        user = await db.collection("user").findOne(
-                            { _id: new ObjectId(profile.userId) },
-                            { projection: { name: 1, email: 1, image: 1, userImage: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne(
+                                { _id: new ObjectId(profile.userId) },
+                                { projection: { name: 1, email: 1, image: 1, userImage: 1 } },
+                            );
                     } catch (e) {
-                        user = await db.collection("user").findOne(
-                            { _id: profile.userId },
-                            { projection: { name: 1, email: 1, image: 1, userImage: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: profile.userId }, { projection: { name: 1, email: 1, image: 1, userImage: 1 } });
                     }
 
                     if (!user) return null;
@@ -204,19 +205,19 @@ export async function GET(request: NextRequest) {
                         _id: profile._id.toString(),
                         userId: profile.userId,
                         slug: profile.slug,
-                        fullName: profile.fullName || user.name || '',
-                        headline: profile.headline || '',
-                        location: profile.location || '',
+                        fullName: profile.fullName || user.name || "",
+                        headline: profile.headline || "",
+                        location: profile.location || "",
                         user: {
-                            name: user.name || '',
-                            email: user.email || '',
+                            name: user.name || "",
+                            email: user.email || "",
                             image: user.userImage || user.image || null,
                         },
-                        score: calculateScore({ ...profile, user }, query, 'profile'),
+                        score: calculateScore({ ...profile, user }, query, "profile"),
                     };
 
                     return result;
-                })
+                }),
             );
 
             profiles = profileResults.filter((p): p is ProfileSearchResult => p !== null);
@@ -240,12 +241,7 @@ export async function GET(request: NextRequest) {
             if (isSearchQuery) {
                 const searchRegex = new RegExp(query, "i");
                 companyQuery = {
-                    $or: [
-                        { name: searchRegex },
-                        { industry: searchRegex },
-                        { location: searchRegex },
-                        { slug: searchRegex },
-                    ]
+                    $or: [{ name: searchRegex }, { industry: searchRegex }, { location: searchRegex }, { slug: searchRegex }],
                 };
             }
 
@@ -264,7 +260,7 @@ export async function GET(request: NextRequest) {
                     location: company.location,
                     averageRating: company.averageRating || 0,
                     reviewCount: company.reviews?.length || 0,
-                    score: calculateScore(company, query, 'company'),
+                    score: calculateScore(company, query, "company"),
                 };
                 return result;
             });
@@ -290,53 +286,46 @@ export async function GET(request: NextRequest) {
                 postQuery = { content: searchRegex };
             }
 
-            const postDocs = await Post.find(postQuery)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean();
+            const postDocs = await Post.find(postQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
 
             // Populate author data
             const postResults = await Promise.all(
                 postDocs.map(async (post: any) => {
-                    const userIdString = typeof post.user === 'string' ? post.user : post.user.toString();
+                    const userIdString = typeof post.user === "string" ? post.user : post.user.toString();
 
                     let user;
                     try {
-                        user = await db.collection("user").findOne(
-                            { _id: new ObjectId(userIdString) },
-                            { projection: { name: 1, image: 1, userImage: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: new ObjectId(userIdString) }, { projection: { name: 1, image: 1, userImage: 1 } });
                     } catch (e) {
-                        user = await db.collection("user").findOne(
-                            { _id: userIdString as any },
-                            { projection: { name: 1, image: 1, userImage: 1 } }
-                        );
+                        user = await db
+                            .collection("user")
+                            .findOne({ _id: userIdString as any }, { projection: { name: 1, image: 1, userImage: 1 } });
                     }
 
                     if (!user) return null;
 
                     // Get profile for headline and slug
-                    const profile = await db.collection("profiles").findOne(
-                        { userId: userIdString },
-                        { projection: { slug: 1, headline: 1 } }
-                    );
+                    const profile = await db
+                        .collection("profiles")
+                        .findOne({ userId: userIdString }, { projection: { slug: 1, headline: 1 } });
 
                     const result: PostSearchResult = {
                         _id: post._id.toString(),
                         content: post.content,
                         createdAt: post.createdAt,
                         author: {
-                            name: user.name || '',
+                            name: user.name || "",
                             headline: profile?.headline || null,
                             slug: profile?.slug || user.name,
                             image: user.userImage || user.image || null,
                         },
-                        score: calculateScore(post, query, 'post'),
+                        score: calculateScore(post, query, "post"),
                     };
 
                     return result;
-                })
+                }),
             );
 
             posts = postResults.filter((p): p is PostSearchResult => p !== null);
@@ -367,16 +356,16 @@ export async function GET(request: NextRequest) {
             (type === "company" && companies.length === limit) ||
             (type === "post" && posts.length === limit);
 
-        return NextResponse.json({
-            ...response,
-            page,
-            hasMore,
-        }, { status: 200 });
+        return NextResponse.json(
+            {
+                ...response,
+                page,
+                hasMore,
+            },
+            { status: 200 },
+        );
     } catch (error) {
         console.error("Search error:", error);
-        return NextResponse.json(
-            { message: "Internal server error during search." },
-            { status: 500 }
-        );
+        return NextResponse.json({ message: "Internal server error during search." }, { status: 500 });
     }
 }

@@ -58,31 +58,42 @@ export default function BanCheckWrapper({ children }: { children: React.ReactNod
                         <div className="bg-red-600 px-6 py-4">
                             <div className="flex items-center">
                                 <svg className="h-8 w-8 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                    />
                                 </svg>
-                                <h2 className="text-xl font-bold text-white">Account Suspended</h2>
+                                <h2 className="text-xl font-bold text-white">Konto zawieszone</h2>
                             </div>
                         </div>
 
                         {/* Content */}
                         <div className="px-6 py-4">
                             <p className="text-gray-700 mb-4">
-                                Your account has been {banInfo.isPermanent ? "permanently" : "temporarily"} suspended.
+                                Twoje konto zostało {banInfo.isPermanent ? "trwale" : "tymczasowo"} zawieszone.
                             </p>
 
                             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
                                 <p className="text-sm text-red-800">
-                                    <strong>Reason:</strong> {banInfo.banReason || "No reason provided"}
+                                    <strong>Powód:</strong> {banInfo.banReason || "Nie podano powodu"}
                                 </p>
                                 {!banInfo.isPermanent && banInfo.daysRemaining && (
                                     <p className="text-sm text-red-800 mt-1">
-                                        <strong>Duration:</strong> {banInfo.daysRemaining} day{banInfo.daysRemaining !== 1 ? 's' : ''} remaining
+                                        <strong>Czas trwania:</strong> {banInfo.daysRemaining}{" "}
+                                        {banInfo.daysRemaining === 1
+                                            ? "dzień"
+                                            : banInfo.daysRemaining >= 2 && banInfo.daysRemaining <= 4
+                                              ? "dni"
+                                              : "dni"}{" "}
+                                        pozostało
                                     </p>
                                 )}
                             </div>
 
                             <p className="text-sm text-gray-600 mb-4">
-                                You cannot create posts, comment, or interact with content while suspended.
+                                Nie możesz tworzyć postów, komentować ani wchodzić w interakcje z treścią podczas zawieszenia.
                             </p>
                         </div>
 
@@ -92,7 +103,7 @@ export default function BanCheckWrapper({ children }: { children: React.ReactNod
                                 onClick={() => setShowPopup(false)}
                                 className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium"
                             >
-                                I Understand
+                                Rozumiem
                             </button>
                             <button
                                 onClick={() => {
@@ -101,7 +112,7 @@ export default function BanCheckWrapper({ children }: { children: React.ReactNod
                                 }}
                                 className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
                             >
-                                Account Settings
+                                Ustawienia konta
                             </button>
                         </div>
                     </div>
@@ -110,4 +121,3 @@ export default function BanCheckWrapper({ children }: { children: React.ReactNod
         </>
     );
 }
-

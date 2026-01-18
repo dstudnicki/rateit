@@ -28,7 +28,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Checking permissions...</p>
+                    <p className="mt-4 text-gray-600">Sprawdzanie uprawnień...</p>
                 </div>
             </div>
         );
@@ -38,8 +38,8 @@ export default function AdminPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
-                    <p className="mt-2 text-gray-600">You don't have permission to access this page.</p>
+                    <h1 className="text-2xl font-bold text-red-600">Brak dostępu</h1>
+                    <p className="mt-2 text-gray-600">Nie masz uprawnień do tej strony.</p>
                 </div>
             </div>
         );
@@ -47,42 +47,42 @@ export default function AdminPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-8">Panel Administratora</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <DashboardCard
-                    title="Initialize Admin Roles"
-                    description="Set admin role in database for ADMIN_EMAILS users"
+                    title="Inicjalizacja Ról Administratora"
+                    description="Ustaw rolę administratora dla użytkowników ADMIN_EMAILS"
                     href="/admin/init"
                     icon="🚀"
                 />
                 <DashboardCard
-                    title="User Management"
-                    description="Manage users, roles, and permissions"
+                    title="Zarządzanie Użytkownikami"
+                    description="Zarządzaj użytkownikami, rolami i uprawnieniami"
                     href="/admin/users"
                     icon="👥"
                 />
                 <DashboardCard
-                    title="Post Moderation"
-                    description="Moderate and manage all posts"
+                    title="Moderacja Postów"
+                    description="Moderuj i zarządzaj wszystkimi postami"
                     href="/admin/posts"
                     icon="📝"
                 />
                 <DashboardCard
-                    title="Company Moderation"
-                    description="Moderate and manage all companies"
+                    title="Moderacja Firm"
+                    description="Moderuj i zarządzaj wszystkimi firmami"
                     href="/admin/companies"
                     icon="🏢"
                 />
                 <DashboardCard
-                    title="Comment Moderation"
-                    description="Moderate and manage all comments & reviews"
+                    title="Moderacja Komentarzy"
+                    description="Moderuj i zarządzaj wszystkimi komentarzami i opiniami"
                     href="/admin/comments"
                     icon="💬"
                 />
                 <DashboardCard
-                    title="System Statistics"
-                    description="View platform usage and activity stats"
+                    title="Statystyki Systemu"
+                    description="Zobacz statystyki użytkowania i aktywności platformy"
                     href="/admin/stats"
                     icon="📊"
                 />
@@ -138,4 +138,3 @@ function DashboardCard({ title, description, href, icon }: DashboardCardProps) {
         </div>
     );
 }
-

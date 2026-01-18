@@ -26,26 +26,44 @@ export async function ProfileActivity({ userId }: ProfileActivityProps) {
         const postDate = new Date(date);
         const diffInSeconds = Math.floor((now.getTime() - postDate.getTime()) / 1000);
 
-        if (diffInSeconds < 60) return "Just now";
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-        return postDate.toLocaleDateString();
+        if (diffInSeconds < 60) return "Przed chwilą";
+
+        const minutes = Math.floor(diffInSeconds / 60);
+        if (diffInSeconds < 3600) {
+            const minuteText = minutes === 1 ? "minutę" : minutes >= 2 && minutes <= 4 ? "minuty" : "minut";
+            return `${minutes} ${minuteText} temu`;
+        }
+
+        const hours = Math.floor(diffInSeconds / 3600);
+        if (diffInSeconds < 86400) {
+            const hourText = hours === 1 ? "godzinę" : hours >= 2 && hours <= 4 ? "godziny" : "godzin";
+            return `${hours} ${hourText} temu`;
+        }
+
+        const days = Math.floor(diffInSeconds / 86400);
+        if (diffInSeconds < 604800) {
+            const dayText = days === 1 ? "dzień" : "dni";
+            return `${days} ${dayText} temu`;
+        }
+
+        return postDate.toLocaleDateString("pl-PL");
     };
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Activity</CardTitle>
-                <p className="text-sm text-muted-foreground">{posts.length} posts</p>
+                <CardTitle>Aktywność</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                    {posts.length} {posts.length === 1 ? "post" : posts.length >= 2 && posts.length <= 4 ? "posty" : "postów"}
+                </p>
             </CardHeader>
             <CardContent className="space-y-6">
                 {posts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No posts yet</p>
+                    <p className="text-sm text-muted-foreground italic">Brak postów</p>
                 ) : (
                     <>
                         {posts.slice(0, 3).map((post: any, index: number) => {
-                            const displayName = post.user?.fullName || post.user?.name || "User";
+                            const displayName = post.user?.fullName || post.user?.name || "Użytkownik";
                             return (
                                 <div key={post._id}>
                                     <div className="flex gap-3 mb-3">
@@ -81,7 +99,7 @@ export async function ProfileActivity({ userId }: ProfileActivityProps) {
 
                         {posts.length > 3 && (
                             <button className="text-sm text-primary font-medium hover:underline">
-                                Show all {posts.length} posts →
+                                Pokaż wszystkie {posts.length} postów →
                             </button>
                         )}
                     </>

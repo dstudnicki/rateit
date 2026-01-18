@@ -28,6 +28,7 @@ export async function createCompany(data: {
     industry: string;
     website?: string;
     description?: string;
+    customIndustries?: string[];
 }) {
     const user = await requireAuth();
 
@@ -75,9 +76,13 @@ export async function createCompany(data: {
             console.log("[createCompany] Final slug:", slug);
         }
 
+        // Add custom industries to detectedKeywords
+        const detectedKeywords = data.customIndustries ? data.customIndustries.map((ind) => sanitizeString(ind)) : [];
+
         const newCompany = {
             ...sanitizedData,
             slug,
+            detectedKeywords,
             createdBy: user.id,
             createdAt: new Date(),
             reviews: [],
@@ -198,6 +203,61 @@ export async function addCompanyReview(
     } catch (error) {
         console.error("Failed to add review:", error);
         return { success: false, error: "Failed to add review" };
+    }
+}
+
+export async function deleteCompanyReview(companyId: string, reviewId: string) {
+    const user = await requireAuth();
+
+    // Check if user is banned
+    await requireNotBanned();
+
+    try {
+        await getClient();
+
+        const company = await Company.findById(companyId);
+
+        if (!company) {
+            return { success: false, error: "Company not found" };
+        }
+
+        // Find the review
+        const review = company.reviews.id(reviewId);
+
+        if (!review) {
+            return { success: false, error: "Review not found" };
+        }
+
+        // Check if user owns this review
+        if (review.user.toString() !== user.id) {
+            return { success: false, error: "You can only delete your own reviews" };
+        }
+
+        // Remove the review
+        company.reviews.pull(reviewId);
+
+        // Recalculate average rating
+        if (company.reviews.length > 0) {
+            const totalRating = company.reviews.reduce((sum: number, review: any) => sum + review.rating, 0);
+            company.averageRating = totalRating / company.reviews.length;
+        } else {
+            company.averageRating = 0;
+        }
+
+        await company.save();
+
+        // Update company keywords based on remaining reviews
+        await updateCompanyKeywords(companyId);
+
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
+        const cacheBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+        revalidateTag(`companies-list-${cacheBucket}`, "max");
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete review:", error);
+        return { success: false, error: "Failed to delete review" };
     }
 }
 
@@ -934,7 +994,7 @@ export async function getGenericCompanies(limit: number = 20, skip: number = 0) 
             .map((company) => ({
                 ...company,
                 matchScore: Math.round(company.score * 10) / 10,
-                matchReasons: [{ reason: `Generic feed (popularity-based)`, points: Math.round(company.score * 10) / 10 }],
+                matchReasons: [{ reason: "Generic feed (popularity-based)", points: Math.round(company.score * 10) / 10 }],
             }));
 
         return {
@@ -994,7 +1054,7 @@ export async function uploadCompanyLogo(formData: FormData, companyId: string): 
                 });
                 console.log(`[Companies] Deleted old logo: ${company.logo}`);
             } catch (error) {
-                console.warn(`[Companies] Could not delete old logo:`, error);
+                console.warn("[Companies] Could not delete old logo:", error);
             }
         }
 
@@ -1025,7 +1085,7 @@ export async function uploadCompanyLogo(formData: FormData, companyId: string): 
             message: "Company logo updated successfully",
         };
     } catch (error) {
-        console.error(`[Companies] Logo upload error:`, error);
+        console.error("[Companies] Logo upload error:", error);
         return {
             success: false,
             error: error instanceof Error ? error.message : "Failed to upload logo",
@@ -1067,7 +1127,7 @@ export async function deleteCompanyLogo(companyId: string): Promise<ActionRespon
                 });
                 console.log(`[Companies] Deleted logo: ${company.logo}`);
             } catch (error) {
-                console.warn(`[Companies] Could not delete logo:`, error);
+                console.warn("[Companies] Could not delete logo:", error);
             }
         }
 
@@ -1082,10 +1142,71 @@ export async function deleteCompanyLogo(companyId: string): Promise<ActionRespon
             message: "Company logo removed successfully",
         };
     } catch (error) {
-        console.error(`[Companies] Logo delete error:`, error);
         return {
             success: false,
             error: error instanceof Error ? error.message : "Failed to delete logo",
+        };
+    }
+}
+
+/**
+ * Search companies by name and optionally by location
+ */
+export async function searchCompaniesByName(query: string, location?: string) {
+    try {
+        await getClient();
+
+        // Validate query
+        if (!query || query.trim().length < 2) {
+            return {
+                success: false,
+                error: "Zapytanie musi mieć co najmniej 2 znaki",
+                companies: [],
+            };
+        }
+
+        // Sanitize inputs
+        const sanitizedQuery = sanitizeString(query.trim());
+        const sanitizedLocation = location ? sanitizeString(location.trim()) : undefined;
+
+        // Build search filter
+        const searchFilter: any = {
+            name: { $regex: sanitizedQuery, $options: "i" },
+        };
+
+        if (sanitizedLocation) {
+            searchFilter.location = { $regex: sanitizedLocation, $options: "i" };
+        }
+
+        // Search companies
+        const companies = await Company.find(searchFilter)
+            .select("name slug industry location averageRating logo reviews")
+            .limit(50)
+            .lean();
+
+        // Format results
+        const formattedCompanies = companies.map((company: any) => ({
+            _id: (company._id as any).toString(),
+            name: company.name,
+            slug: company.slug,
+            industry: company.industry,
+            location: company.location,
+            averageRating: company.averageRating || 0,
+            reviewCount: company.reviews?.length || 0,
+            logo: company.logo || null,
+        }));
+
+        return {
+            success: true,
+            companies: formattedCompanies,
+            count: formattedCompanies.length,
+        };
+    } catch (error) {
+        console.error("Failed to search companies:", error);
+        return {
+            success: false,
+            error: "Nie udało się wyszukać firm",
+            companies: [],
         };
     }
 }

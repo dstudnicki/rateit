@@ -162,7 +162,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
     };
 
     const handleDeleteAvatar = async () => {
-        if (!confirm("Are you sure you want to remove your custom avatar? Your OAuth profile picture will be shown instead.")) {
+        if (!confirm("Jesteś pewny że chcesz usunąć zdjęcie profilowe?")) {
             return;
         }
 
@@ -172,9 +172,9 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
             const result = await deleteProfileImage("avatar");
 
             if (result.success) {
-                toast.success("Avatar removed!", {
+                toast.success("Zdjęcie profilowe usunięte", {
                     id: "delete-avatar",
-                    description: "Your OAuth profile picture is now showing",
+                    description: "Twoje zdjęcie profilowe zostało usunięte",
                 });
 
                 // Wait a bit for DB to update, then refresh
@@ -196,19 +196,19 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
     };
 
     const handleDeleteBackground = async () => {
-        if (!confirm("Are you sure you want to remove your background image?")) {
+        if (!confirm("Jesteś pewny że chcesz usunąć tło?")) {
             return;
         }
 
         try {
-            toast.loading("Removing background...", { id: "delete-background" });
+            toast.loading("Usuwanie tła...", { id: "delete-background" });
 
             const result = await deleteProfileImage("background");
 
             if (result.success) {
-                toast.success("Background removed!", {
+                toast.success("Tło usunięte!", {
                     id: "delete-background",
-                    description: "Default background is now showing",
+                    description: "Tło nie będzie się już pokazywać.",
                 });
 
                 // Wait a bit for DB to update, then refresh
@@ -346,26 +346,15 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                                         {profile.location}
                                     </span>
                                 )}
-                                <span className="text-primary font-medium">{connections} connections</span>
                             </div>
                         </div>
                         {isOwnProfile && (
                             <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                                 <Pencil className="h-4 w-4 mr-2" />
-                                Edit Profile
+                                Edytuj profil
                             </Button>
                         )}
                     </div>
-
-                    {/* Action Buttons */}
-                    {isOwnProfile && (
-                        <div className="flex gap-2">
-                            <Button className="flex-1">Open to work</Button>
-                            <Button variant="outline" className="flex-1 bg-transparent">
-                                Add profile section
-                            </Button>
-                        </div>
-                    )}
                 </div>
             </Card>
 
@@ -373,41 +362,41 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
                 <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>Edit Profile</DialogTitle>
-                        <DialogDescription>Make changes to your profile information here</DialogDescription>
+                        <DialogTitle>Edytuj profil</DialogTitle>
+                        <DialogDescription>Wprowadź zmiany w informacjach swojego profilu</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="fullName">Full Name *</Label>
+                            <Label htmlFor="fullName">Pełne imię i nazwisko *</Label>
                             <Input
                                 id="fullName"
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                placeholder="Your full name"
+                                placeholder="Twoje pełne imię i nazwisko"
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="headline">Headline</Label>
+                            <Label htmlFor="headline">Nagłówek</Label>
                             <Input
                                 id="headline"
                                 value={formData.headline}
                                 onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
-                                placeholder="Software Engineer | React Enthusiast"
+                                placeholder="Inżynier oprogramowania | Entuzjasta React"
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="location">Location</Label>
+                            <Label htmlFor="location">Lokalizacja</Label>
                             <Input
                                 id="location"
                                 value={formData.location}
                                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                placeholder="San Francisco, CA"
+                                placeholder="Warszawa, Polska"
                             />
                         </div>
 
                         {/* Image Management */}
                         <div className="border-t pt-4 mt-2">
-                            <Label className="text-base mb-3 block">Profile Images</Label>
+                            <Label className="text-base mb-3 block">Zdjęcia profilu</Label>
                             <div className="space-y-2">
                                 <Button
                                     type="button"
@@ -417,7 +406,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                                     className="w-full justify-start text-destructive hover:text-destructive"
                                 >
                                     <Trash2 className="h-4 w-4 mr-2" />
-                                    Remove custom avatar (show OAuth image)
+                                    Usuń zdjęcie profilowe
                                 </Button>
                                 {backgroundUrl && (
                                     <Button
@@ -428,7 +417,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                                         className="w-full justify-start text-destructive hover:text-destructive"
                                     >
                                         <Trash2 className="h-4 w-4 mr-2" />
-                                        Remove background image
+                                        Usuń zdjęcie tła
                                     </Button>
                                 )}
                             </div>
@@ -436,10 +425,10 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isPending}>
-                            Cancel
+                            Anuluj
                         </Button>
                         <Button onClick={handleSave} disabled={isPending}>
-                            {isPending ? "Saving..." : "Save changes"}
+                            {isPending ? "Zapisywanie..." : "Zapisz zmiany"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

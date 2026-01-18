@@ -48,7 +48,7 @@ export default function StatsPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Checking permissions...</p>
+                    <p className="mt-4 text-gray-600">Sprawdzanie uprawnień...</p>
                 </div>
             </div>
         );
@@ -57,61 +57,28 @@ export default function StatsPage() {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">System Statistics</h1>
-                <p className="text-gray-600">Overview of platform usage and activity</p>
+                <h1 className="text-3xl font-bold mb-2">Statystyki Systemu</h1>
+                <p className="text-gray-600">Przegląd użytkowania i aktywności platformy</p>
             </div>
 
             {loading ? (
                 <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading statistics...</p>
+                    <p className="mt-4 text-gray-600">Ładowanie statystyk...</p>
                 </div>
             ) : stats ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <StatCard
-                        title="Total Users"
-                        value={stats.totalUsers}
-                        icon="👥"
-                        color="blue"
-                    />
-                    <StatCard
-                        title="Administrators"
-                        value={stats.totalAdmins}
-                        icon="👑"
-                        color="purple"
-                    />
-                    <StatCard
-                        title="Moderators"
-                        value={stats.totalModerators}
-                        icon="🛡️"
-                        color="green"
-                    />
-                    <StatCard
-                        title="Banned Users"
-                        value={stats.totalBanned}
-                        icon="🚫"
-                        color="red"
-                    />
-                    <StatCard
-                        title="Total Posts"
-                        value={stats.totalPosts}
-                        icon="📝"
-                        color="indigo"
-                    />
-                    <StatCard
-                        title="Total Companies"
-                        value={stats.totalCompanies}
-                        icon="🏢"
-                        color="orange"
-                    />
+                    <StatCard title="Wszyscy Użytkownicy" value={stats.totalUsers} icon="👥" color="blue" />
+                    <StatCard title="Administratorzy" value={stats.totalAdmins} icon="👑" color="purple" />
+                    <StatCard title="Moderatorzy" value={stats.totalModerators} icon="🛡️" color="green" />
+                    <StatCard title="Zbanowani Użytkownicy" value={stats.totalBanned} icon="🚫" color="red" />
+                    <StatCard title="Wszystkie Posty" value={stats.totalPosts} icon="📝" color="indigo" />
+                    <StatCard title="Total Companies" value={stats.totalCompanies} icon="🏢" color="orange" />
                 </div>
             ) : (
                 <div className="text-center py-12">
                     <p className="text-gray-600">Failed to load statistics</p>
-                    <button
-                        onClick={loadStats}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
+                    <button onClick={loadStats} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         Retry
                     </button>
                 </div>
@@ -171,4 +138,3 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
         </div>
     );
 }
-

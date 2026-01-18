@@ -27,9 +27,7 @@ export async function PersonalizedFeedServer() {
                         posts.map((post) => <PostCard key={post._id} post={post} />)
                     ) : (
                         <div className="text-center py-12">
-                            <p className="text-muted-foreground">
-                                No posts yet. Be the first to share something!
-                            </p>
+                            <p className="text-muted-foreground">No posts yet. Be the first to share something!</p>
                         </div>
                     )}
                 </div>
@@ -43,7 +41,10 @@ export async function PersonalizedFeedServer() {
         // Create profile if doesn't exist (OAuth users)
         if (!profile) {
             const slug = session.user.name
-                ? session.user.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+                ? session.user.name
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]/g, "-")
+                      .replace(/-+/g, "-")
                 : `user-${session.user.id.slice(0, 8)}`;
 
             const slugExists = await db.collection("profiles").findOne({ slug });
@@ -79,11 +80,13 @@ export async function PersonalizedFeedServer() {
                     skills: [],
                     experienceLevel: "intermediate",
                 },
+                rodoConsent: true, // OAuth users automatically consent
+                rodoConsentSource: "oauth", // Mark as OAuth consent
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });
 
-            console.log(`[Feed] Created profile for OAuth user: ${session.user.id} with avatar: ${avatarUrl ? 'Yes' : 'No'}`);
+            console.log(`[Feed] Created profile for OAuth user: ${session.user.id} with avatar: ${avatarUrl ? "Yes" : "No"}`);
 
             // Return redirect component for new users
             return <OnboardingRedirect />;
@@ -104,9 +107,7 @@ export async function PersonalizedFeedServer() {
                     posts.map((post) => <PostCard key={post._id} post={post} />)
                 ) : (
                     <div className="text-center py-12">
-                        <p className="text-muted-foreground">
-                            No posts yet. Be the first to share something!
-                        </p>
+                        <p className="text-muted-foreground">Brak postów. Bądź pierwszy i podziel się czymś!</p>
                     </div>
                 )}
             </div>
@@ -117,12 +118,8 @@ export async function PersonalizedFeedServer() {
         // Fallback UI on error
         return (
             <div className="mt-4 text-center py-12">
-                <p className="text-muted-foreground">
-                    Unable to load feed. Please refresh the page.
-                </p>
+                <p className="text-muted-foreground">Nie można załadować kanału. Odśwież stronę.</p>
             </div>
         );
     }
 }
-
-

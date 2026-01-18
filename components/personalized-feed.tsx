@@ -68,7 +68,7 @@ export function PersonalizedFeed() {
         return (
             <div className="max-w-120 mx-auto my-10 text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-                <p className="mt-4 text-muted-foreground">Loading your feed...</p>
+                <p className="mt-4 text-muted-foreground">Ładowanie kanału...</p>
             </div>
         );
     }
@@ -76,18 +76,12 @@ export function PersonalizedFeed() {
     return (
         <div className="mt-4 space-y-4">
             {posts.length > 0 ? (
-                posts.map((post) => (
-                    <PostCard
-                        key={post._id}
-                        post={post}
-                    />
-                ))
+                posts.map((post) => <PostCard key={post._id} post={post} />)
             ) : (
                 <div className="text-center py-12">
-                    <p className="text-muted-foreground">No posts yet. Be the first to share something!</p>
+                    <p className="text-muted-foreground">Brak postów. Bądź pierwszy i podziel się czymś!</p>
                 </div>
             )}
         </div>
     );
 }
-
