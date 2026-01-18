@@ -10,7 +10,8 @@ export async function ProfileActivity({ userId }: ProfileActivityProps) {
     let posts = [];
 
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/posts/user/${userId}`, {
+        // Use relative path - works automatically on any domain (dev or production)
+        const response = await fetch(`/api/posts/user/${userId}`, {
             next: { tags: [`user-posts-${userId}`] },
         });
 
