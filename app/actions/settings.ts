@@ -105,6 +105,7 @@ export async function deleteAccount(): Promise<ActionResponse> {
         // 1. Get user and profile data for cleanup
         const user = await db.collection("user").findOne({ _id: userObjectId as any });
         const profile = await db.collection("profiles").findOne({ userId });
+        const posts = await db.collection("posts").find({ user: userId }).toArray();
 
         // 2. Delete images from Vercel Blob
         const imagesToDelete: string[] = [];
@@ -115,6 +116,10 @@ export async function deleteAccount(): Promise<ActionResponse> {
 
         if (profile?.backgroundImage && profile.backgroundImage.includes("blob.vercel-storage.com")) {
             imagesToDelete.push(profile.backgroundImage);
+        }
+
+        if (posts?.images && posts.images.includes("blob.vercel-storage.com")) {
+            imagesToDelete.push(posts.images);
         }
 
         // Delete images from blob storage
@@ -129,64 +134,12 @@ export async function deleteAccount(): Promise<ActionResponse> {
             }
         }
 
-        // 3. Update all user's posts - set user to "deleted-user" string
-        // Post model uses ObjectId for user field, so we need to use the ObjectId version
-        try {
-            await Post.updateMany(
-                { user: userObjectId }, // Use ObjectId here
-                {
-                    $set: {
-                        user: "deleted-user",
-                        updatedAt: new Date(),
-                    },
-                },
-            );
-            console.log(`[Settings] Updated posts for deleted user ${userId}`);
-        } catch (postError) {
-            console.warn("[Settings] Could not update posts (user might not have any):", postError);
-        }
-
-        // 3a. Update comments where user is the author
-        try {
-            await Post.updateMany(
-                { "comments.user": userObjectId },
-                {
-                    $set: {
-                        "comments.$[comment].user": "deleted-user",
-                        updatedAt: new Date(),
-                    },
-                },
-                {
-                    arrayFilters: [{ "comment.user": userObjectId }],
-                },
-            );
-            console.log(`[Settings] Updated comments for deleted user ${userId}`);
-        } catch (commentError) {
-            console.warn("[Settings] Could not update comments:", commentError);
-        }
-
-        // 3b. Update replies where user is the author
-        try {
-            await Post.updateMany(
-                { "comments.replies.user": userObjectId },
-                {
-                    $set: {
-                        "comments.$[].replies.$[reply].user": "deleted-user",
-                        updatedAt: new Date(),
-                    },
-                },
-                {
-                    arrayFilters: [{ "reply.user": userObjectId }],
-                },
-            );
-            console.log(`[Settings] Updated replies for deleted user ${userId}`);
-        } catch (replyError) {
-            console.warn("[Settings] Could not update replies:", replyError);
-        }
-
         // 4. Delete profile (uses string userId)
         await db.collection("profiles").deleteOne({ userId }); // String userId
         console.log(`[Settings] Deleted profile for user ${userId}`);
+
+        await db.collection("posts").deleteMany({ userId }); // String userId
+        console.log(`[Settings] Deleted posts for user ${userId}`);
 
         // 5. Delete account from Better Auth (uses string userId) - MUST be before deleting user!
         await db.collection("account").deleteOne({ userId }); // String userId

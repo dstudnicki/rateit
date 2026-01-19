@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { addComment } from "@/app/actions/comments";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface UserData {
     user:
@@ -31,10 +33,22 @@ export function CommentForm({ user, postId, onCommentAdded }: CommentFormProps) 
     const [content, setContent] = useState("");
     const displayName = user?.user?.name;
     const userAvatar = user?.user?.userImage || user?.user?.image;
+    const router = useRouter();
+
+    // Jeśli użytkownik nie jest zalogowany, pokaż CTA do logowania
+    if (!user?.user) {
+        return (
+            <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex-1">
+                    <div className="text-sm text-muted-foreground">Zaloguj się, aby dodać komentarz.</div>
+                </div>
+            </div>
+        );
+    }
 
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!content) return alert("Napisz treść komentarza.");
+        if (!content) return toast.error("Napisz treść komentarza.");
 
         const result = await addComment(content, postId);
 

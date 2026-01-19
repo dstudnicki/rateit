@@ -105,7 +105,7 @@ export default async function ScoringDebugPage() {
             {/* Posts Section */}
             <section>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold">📝 Spersonalizowany Kanał Postów</h2>
+                    <h2 className="text-2xl font-bold"> Spersonalizowany Kanał Postów</h2>
                     {(!profile?.preferences?.onboardingCompleted ||
                         posts.some((p: any) => p.matchReasons?.[0]?.reason?.includes("Generic"))) && (
                         <Badge variant="outline" className="text-yellow-700 border-yellow-400">
@@ -173,17 +173,17 @@ export default async function ScoringDebugPage() {
                                     <div className="flex flex-wrap gap-2">
                                         {post.detectedSkills?.map((skill: string) => (
                                             <Badge key={skill} variant="outline" className="text-xs">
-                                                💡 {skill}
+                                                {skill}
                                             </Badge>
                                         ))}
                                         {post.detectedCompanies?.map((company: string) => (
                                             <Badge key={company} variant="outline" className="text-xs bg-blue-50">
-                                                🏢 {company}
+                                                {company}
                                             </Badge>
                                         ))}
                                         {post.detectedIndustries?.map((industry: string) => (
                                             <Badge key={industry} variant="outline" className="text-xs bg-green-50">
-                                                🏭 {industry}
+                                                {industry}
                                             </Badge>
                                         ))}
                                     </div>
@@ -197,7 +197,7 @@ export default async function ScoringDebugPage() {
             {/* Companies Section */}
             <section>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold">🏢 Personalized Companies</h2>
+                    <h2 className="text-2xl font-bold">Personalized Companies</h2>
                     {(!profile?.preferences?.onboardingCompleted ||
                         companies.some((c: any) => c.matchReasons?.[0]?.reason?.includes("Generic"))) && (
                         <Badge variant="outline" className="text-yellow-700 border-yellow-400">

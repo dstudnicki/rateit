@@ -17,6 +17,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface ReplyData {
     _id: string;
@@ -67,6 +78,8 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(comment.content);
     const [isPending, startTransition] = useTransition();
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         setReplies(comment.replies || []);
@@ -98,7 +111,7 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
             setIsReplying(false);
             onUpdate?.();
         } else {
-            alert(result.error || "Failed to add reply");
+            toast.error("Nie udało się dodać recenzji. Proszę, spróbuj ponownie.");
         }
     };
 
@@ -116,7 +129,7 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                 setIsEditing(false);
                 onUpdate?.();
             } else {
-                alert(result.error || "Failed to update");
+                toast.error("Nie udało się usunąć");
             }
         });
     };
@@ -127,19 +140,26 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
     };
 
     const handleDelete = () => {
-        if (confirm("Are you sure you want to delete this comment?")) {
-            startTransition(async () => {
-                const result = parentCommentId
-                    ? await deleteReply(postId, parentCommentId, comment._id)
-                    : await deleteComment(postId, comment._id);
+        // Otwórz dialog potwierdzenia zamiast natywnego confirm
+        setShowDeleteDialog(true);
+    };
 
-                if (result.success) {
-                    onUpdate?.();
-                } else {
-                    alert(result.error || "Failed to delete");
-                }
-            });
-        }
+    const confirmDelete = async () => {
+        setShowDeleteDialog(false);
+        setIsDeleting(true);
+        startTransition(async () => {
+            const result = parentCommentId
+                ? await deleteReply(postId, parentCommentId, comment._id)
+                : await deleteComment(postId, comment._id);
+
+            setIsDeleting(false);
+
+            if (result.success) {
+                onUpdate?.();
+            } else {
+                toast.error("Nie udało się usunąć");
+            }
+        });
     };
 
     return (
@@ -177,7 +197,7 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onClick={handleDelete}
-                                            disabled={isPending}
+                                            disabled={isPending || isDeleting}
                                             className="text-destructive focus:text-destructive"
                                         >
                                             <Trash2 className="h-3.5 w-3.5 mr-2" />
@@ -279,6 +299,24 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                     )}
                 </div>
             </div>
+
+            {/* AlertDialog potwierdzenia usunięcia */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń komentarz</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Jesteś pewien, że chcesz usunąć ten komentarz? Ta operacja jest nieodwracalna.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -4,7 +4,7 @@ import React, { useState, useTransition, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { CommentSection } from "@/components/comment-section";
@@ -16,6 +16,17 @@ import { useRouter } from "next/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Comment {
     _id: string;
@@ -64,6 +75,8 @@ export function PostCard({ post }: PostCardProps) {
     const [isPending, startTransition] = useTransition();
     const [isOwnPost, setIsOwnPost] = useState(false); // Initialize as false to prevent hydration mismatch
     const router = useRouter();
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Use fallbacks that handle empty strings (not just null/undefined)
     const displayName = (post.user.fullName && post.user.fullName.trim()) || post.user.name || "Anonymous User";
@@ -90,7 +103,9 @@ export function PostCard({ post }: PostCardProps) {
 
     const handleLike = async () => {
         if (!currentUserId) {
-            alert("Please log in to like posts");
+            toast.error("Nie jesteś zalogowany!", {
+                description: "Zaloguj się lub zarejestrowuj, aby dodać polubienie",
+            });
             return;
         }
 
@@ -147,7 +162,7 @@ export function PostCard({ post }: PostCardProps) {
                 setIsEditing(false);
                 router.refresh();
             } else {
-                alert(result.error || "Failed to update post");
+                toast.error("Nie zaktualizowano posta");
             }
         });
     };
@@ -158,16 +173,22 @@ export function PostCard({ post }: PostCardProps) {
     };
 
     const handleDelete = () => {
-        if (confirm("Are you sure you want to delete this post?")) {
-            startTransition(async () => {
-                const result = await deletePost(post._id);
-                if (result.success) {
-                    router.refresh();
-                } else {
-                    alert(result.error || "Failed to delete post");
-                }
-            });
-        }
+        setShowDeleteDialog(true);
+    };
+
+    const confirmDelete = async () => {
+        setShowDeleteDialog(false);
+        setIsDeleting(true);
+        startTransition(async () => {
+            const result = await deletePost(post._id);
+            setIsDeleting(false);
+
+            if (result.success) {
+                router.refresh();
+            } else {
+                toast.error("Nie udało się usunąć posta");
+            }
+        });
     };
 
     return (
@@ -216,7 +237,7 @@ export function PostCard({ post }: PostCardProps) {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         onClick={handleDelete}
-                                        disabled={isPending}
+                                        disabled={isPending || isDeleting}
                                         className="text-destructive focus:text-destructive"
                                     >
                                         <Trash2 className="h-4 w-4 mr-2" />
@@ -337,6 +358,24 @@ export function PostCard({ post }: PostCardProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* AlertDialog for deleting post */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń post</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Czy na pewno chcesz usunąć ten post? Ta operacja jest nieodwracalna.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     );
 }

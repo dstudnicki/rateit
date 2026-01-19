@@ -68,12 +68,12 @@ export default function StatsPage() {
                 </div>
             ) : stats ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <StatCard title="Wszyscy Użytkownicy" value={stats.totalUsers} icon="👥" color="blue" />
-                    <StatCard title="Administratorzy" value={stats.totalAdmins} icon="👑" color="purple" />
-                    <StatCard title="Moderatorzy" value={stats.totalModerators} icon="🛡️" color="green" />
-                    <StatCard title="Zbanowani Użytkownicy" value={stats.totalBanned} icon="🚫" color="red" />
-                    <StatCard title="Wszystkie Posty" value={stats.totalPosts} icon="📝" color="indigo" />
-                    <StatCard title="Total Companies" value={stats.totalCompanies} icon="🏢" color="orange" />
+                    <StatCard title="Wszyscy Użytkownicy" value={stats.totalUsers} color="blue" />
+                    <StatCard title="Administratorzy" value={stats.totalAdmins} color="purple" />
+                    <StatCard title="Moderatorzy" value={stats.totalModerators} color="green" />
+                    <StatCard title="Zbanowani Użytkownicy" value={stats.totalBanned} color="red" />
+                    <StatCard title="Wszystkie Posty" value={stats.totalPosts} color="indigo" />
+                    <StatCard title="Total Companies" value={stats.totalCompanies} color="orange" />
                 </div>
             ) : (
                 <div className="text-center py-12">
@@ -114,11 +114,10 @@ export default function StatsPage() {
 interface StatCardProps {
     title: string;
     value: number;
-    icon: string;
     color: "blue" | "purple" | "green" | "red" | "indigo" | "orange";
 }
 
-function StatCard({ title, value, icon, color }: StatCardProps) {
+function StatCard({ title, value, color }: StatCardProps) {
     const colorClasses = {
         blue: "bg-blue-100 text-blue-800 border-blue-200",
         purple: "bg-purple-100 text-purple-800 border-purple-200",
@@ -132,7 +131,6 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
         <div className={`${colorClasses[color]} rounded-lg p-6 border-2`}>
             <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium uppercase tracking-wide">{title}</h3>
-                <span className="text-3xl">{icon}</span>
             </div>
             <p className="text-4xl font-bold">{value.toLocaleString()}</p>
         </div>

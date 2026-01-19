@@ -205,9 +205,7 @@ export default function RegisterForm() {
                                 </button>
                             </div>
                             <FieldInfo field={field} />
-                            <p className="text-xs text-muted-foreground">
-                                Musi zawierać min. 8 znaków, wielką literę, małą literę i cyfrę
-                            </p>
+                            <p className="text-xs text-muted-foreground">Nowe hasło musi mieć co najmniej 8 znaków</p>
                         </div>
                     )}
                 </form.Field>

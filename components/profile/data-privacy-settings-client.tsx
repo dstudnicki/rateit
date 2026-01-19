@@ -75,19 +75,19 @@ export function DataPrivacySettingsClient({ rodoConsent, rodoConsentSource }: Da
     };
 
     const handleDeleteAccount = async () => {
-        if (confirmText !== "DELETE") {
-            toast.error("Please type DELETE to confirm");
+        if (confirmText !== "USUN") {
+            toast.error("Wpisz USUN aby usunac");
             return;
         }
 
         try {
             setIsDeleting(true);
-            toast.loading("Deleting account...", { id: "delete-account" });
+            toast.loading("Usuwanie konta....", { id: "delete-account" });
 
             const result = await deleteAccount();
 
             if (result.success) {
-                toast.success("Account deleted successfully", { id: "delete-account" });
+                toast.success("Konto zostało pomyślnie usunięte", { id: "delete-account" });
 
                 // Sign out
                 await authClient.signOut({
@@ -98,14 +98,14 @@ export function DataPrivacySettingsClient({ rodoConsent, rodoConsentSource }: Da
                     },
                 });
             } else {
-                toast.error("Failed to delete account", {
+                toast.error("Nie udało się usunąć konta", {
                     id: "delete-account",
                     description: result.error,
                 });
                 setIsDeleting(false);
             }
         } catch {
-            toast.error("Failed to delete account", { id: "delete-account" });
+            toast.error("Nie udało się usunąć konta", { id: "delete-account" });
             setIsDeleting(false);
         }
     };
@@ -178,7 +178,7 @@ export function DataPrivacySettingsClient({ rodoConsent, rodoConsentSource }: Da
                     </AlertDialogHeader>
                     <div className="py-4">
                         <label htmlFor="confirm-delete" className="text-sm font-medium">
-                            Type <strong>DELETE</strong> to confirm:
+                            Wpisz <strong>USUN</strong> aby potwierdzić
                         </label>
                         <input
                             id="confirm-delete"
@@ -186,14 +186,14 @@ export function DataPrivacySettingsClient({ rodoConsent, rodoConsentSource }: Da
                             className="w-full mt-2 px-3 py-2 border rounded-md"
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
-                            placeholder="DELETE"
+                            placeholder="USUN"
                         />
                     </div>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteAccount}
-                            disabled={isDeleting || confirmText !== "DELETE"}
+                            disabled={isDeleting || confirmText !== "USUN"}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             {isDeleting ? "Usuwanie..." : "Usuń konto"}

@@ -7,9 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { addSkill, deleteSkill } from "@/app/actions/profile";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface Skill {
     name: string;
@@ -26,6 +36,9 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
     const [isPending, startTransition] = useTransition();
     const [isAdding, setIsAdding] = useState(false);
     const [newSkill, setNewSkill] = useState("");
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleAdd = async () => {
         if (!newSkill.trim()) return;
@@ -37,23 +50,30 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                 setIsAdding(false);
                 router.refresh();
             } else {
-                console.error("Failed to add skill:", result.error);
-                alert(result.error || "Nie udało się dodać umiejętności");
+                toast.error("Nie udało się dodać umiejętności");
             }
         });
     };
 
-    const handleRemove = async (skillName: string) => {
-        if (!confirm(`Usunąć ${skillName} z Twoich umiejętności?`)) return;
+    const handleRemove = (skillName: string) => {
+        setDeleteTarget(skillName);
+        setShowDeleteDialog(true);
+    };
 
+    const confirmRemove = async () => {
+        if (!deleteTarget) return;
+        setShowDeleteDialog(false);
+        setIsDeleting(true);
         startTransition(async () => {
-            const result = await deleteSkill(skillName);
+            const result = await deleteSkill(deleteTarget);
+            setIsDeleting(false);
             if (result.success) {
                 router.refresh();
             } else {
-                console.error("Failed to remove skill:", result.error);
+                toast.error("Nie udało się usunąć umiejętności");
             }
         });
+        setDeleteTarget(null);
     };
 
     return (
@@ -62,7 +82,7 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle>Umiejętności</CardTitle>
                     {isOwnProfile && (
-                        <Button variant="ghost" size="icon" onClick={handleAdd}>
+                        <Button variant="ghost" size="icon" onClick={() => setIsAdding(true)}>
                             <Plus className="h-4 w-4" />
                         </Button>
                     )}
@@ -85,8 +105,8 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleRemove(skill.name)}
-                                                disabled={isPending}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                                                disabled={isPending || isDeleting}
+                                                className="h-8 w-8"
                                             >
                                                 <X className="h-4 w-4" />
                                             </Button>
@@ -132,6 +152,22 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* AlertDialog for deleting skill */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń umiejętność</AlertDialogTitle>
+                        <AlertDialogDescription>Czy na pewno chcesz usunąć tę umiejętność z profilu?</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmRemove} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }

@@ -10,6 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { addEducation, updateEducation, deleteEducation } from "@/app/actions/profile";
 import { useRouter } from "next/navigation";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Education {
     _id?: string;
@@ -41,6 +52,9 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
         grade: "",
         activities: "",
     });
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleEdit = (edu: Education) => {
         setFormData(edu);
@@ -75,22 +89,30 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
                 setIsEditing(false);
                 router.refresh();
             } else {
-                console.error("Failed to save education:", result.error);
+                toast.error("Nie udało się zapisać edukacji");
             }
         });
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Czy na pewno chcesz usunąć ten wpis o wykształceniu?")) return;
+    const handleDelete = (id: string) => {
+        setDeleteTarget(id);
+        setShowDeleteDialog(true);
+    };
 
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setShowDeleteDialog(false);
+        setIsDeleting(true);
         startTransition(async () => {
-            const result = await deleteEducation(id);
+            const result = await deleteEducation(deleteTarget);
+            setIsDeleting(false);
             if (result.success) {
                 router.refresh();
             } else {
-                console.error("Wystąpił błąd:", result.error);
+                toast.error("Wystąpił błąd podczas usuwania");
             }
         });
+        setDeleteTarget(null);
     };
 
     return (
@@ -127,7 +149,7 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
                                     {edu.activities && <p className="text-sm mt-2">{edu.activities}</p>}
                                 </div>
                                 {isOwnProfile && (
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -140,7 +162,7 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => handleDelete(edu._id!)}
-                                            disabled={isPending}
+                                            disabled={isPending || isDeleting}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -236,6 +258,24 @@ export function ProfileEducation({ educations: initialEducations, isOwnProfile =
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* AlertDialog for deleting education */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń wpis o wykształceniu</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Czy na pewno chcesz usunąć ten wpis? Ta operacja jest nieodwracalna.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }

@@ -10,6 +10,7 @@ import { Send } from "lucide-react";
 import { ReviewCommentItem } from "@/components/companies/review-comment-item";
 import { authClient } from "@/lib/auth-client";
 import { addCommentToReview } from "@/app/actions/companies";
+import { toast } from "sonner";
 
 interface ReplyData {
     _id: string;
@@ -71,18 +72,18 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, 
 
         // Prevent review author from commenting on their own review (client-side UX) - server also enforces this
         if (isReviewAuthor) {
-            alert("Nie możesz komentować własnej opinii.");
+            toast.error("Nie możesz komentować własnej opinii.");
             return;
         }
 
         // Check if user has already commented
         if (hasCommented) {
-            alert("Już skomentowałeś tę opinię. Dozwolony jest tylko jeden komentarz na użytkownika.");
+            toast.error("Proszę, napisz treść.");
             return;
         }
 
-        if (!content.trim()) return alert("Proszę napisać komentarz.");
-        if (!nick.trim()) return alert("Proszę wpisać pseudonim.");
+        if (!content.trim()) return toast.error("Proszę napisać komentarz.");
+        if (!nick.trim()) return toast.error("Proszę wpisać pseudonim.");
 
         setIsSubmitting(true);
         const result = await addCommentToReview(companyId, reviewId, content, nick);
@@ -93,7 +94,7 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, 
             setHasCommented(true); // Mark as commented
             onUpdate();
         } else {
-            alert(result.error || "Nie udało się dodać komentarza");
+            toast.error("Nie udało się dodać komentarza");
         }
         setIsSubmitting(false);
     };

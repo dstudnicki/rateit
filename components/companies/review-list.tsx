@@ -13,6 +13,17 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface Review {
     _id: string;
@@ -77,6 +88,9 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
     const router = useRouter();
     const [expandedReview, setExpandedReview] = useState<string | null>(null);
     const [likingReviews, setLikingReviews] = useState<Set<string>>(new Set());
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const session = authClient.useSession();
     const currentUserId = session.data?.user?.id;
@@ -109,17 +123,24 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
         }
     };
 
-    const handleDelete = async (reviewId: string) => {
-        const confirmed = window.confirm("Are you sure you want to delete this review?");
-        if (!confirmed) return;
+    const handleDelete = (reviewId: string) => {
+        setDeleteTarget(reviewId);
+        setShowDeleteDialog(true);
+    };
 
-        const result = await deleteCompanyReview(companyId, reviewId);
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setShowDeleteDialog(false);
+        setIsDeleting(true);
+        const result = await deleteCompanyReview(companyId, deleteTarget);
+        setIsDeleting(false);
 
         if (result.success) {
             router.refresh();
         } else {
-            alert("Failed to delete the review. Please try again.");
+            toast.error("Nie udało się usunąć recenzji. Proszę, spróbuj ponownie.");
         }
+        setDeleteTarget(null);
     };
 
     if (filteredReviews.length === 0) {
@@ -174,6 +195,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                                 <DropdownMenuItem
                                                     className="text-destructive focus:text-destructive cursor-pointer"
                                                     onClick={() => handleDelete(review._id)}
+                                                    disabled={isDeleting}
                                                 >
                                                     <Trash2 className="h-4 w-4 mr-2" />
                                                     Usuń opinię
@@ -278,6 +300,24 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                     </Card>
                 );
             })}
+
+            {/* AlertDialog for deleting review */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń opinię</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Czy na pewno chcesz usunąć tę opinię? Ta operacja jest nieodwracalna.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trash2, AlertTriangle, Eye, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Post {
     _id: string;
@@ -69,13 +70,13 @@ export default function AdminPostsPage() {
 
             if (response.ok) {
                 setPosts(posts.filter((p) => p._id !== postId));
-                alert("Post usunięty pomyślnie");
+                toast.error("Nie możesz komentować własnej opinii.");
             } else {
-                alert("Nie udało się usunąć posta");
+                toast.error("Nie możesz komentować własnej opinii.");
             }
         } catch (error) {
             console.error("Failed to delete post:", error);
-            alert("Nie udało się usunąć posta");
+            toast.error("Nie udało się usunąć posta");
         }
     };
 

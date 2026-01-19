@@ -11,6 +11,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { addExperience, updateExperience, deleteExperience } from "@/app/actions/profile";
 import { useRouter } from "next/navigation";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Experience {
     _id?: string;
@@ -42,6 +53,9 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
         current: false,
         description: "",
     });
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleEdit = (exp: Experience) => {
         setFormData(exp);
@@ -76,22 +90,30 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
                 setIsEditing(false);
                 router.refresh();
             } else {
-                console.error("Failed to save experience:", result.error);
+                toast.error("Nie udało się zapisać doświadczenia");
             }
         });
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Czy na pewno chcesz usunąć to doświadczenie?")) return;
+    const handleDelete = (id: string) => {
+        setDeleteTarget(id);
+        setShowDeleteDialog(true);
+    };
 
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setShowDeleteDialog(false);
+        setIsDeleting(true);
         startTransition(async () => {
-            const result = await deleteExperience(id);
+            const result = await deleteExperience(deleteTarget);
+            setIsDeleting(false);
             if (result.success) {
                 router.refresh();
             } else {
-                console.error("Wystąpił błąd:", result.error);
+                toast.error("Wystąpił błąd podczas usuwania");
             }
         });
+        setDeleteTarget(null);
     };
 
     const formatDate = (date: string) => {
@@ -135,7 +157,7 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
                                     <p className="text-sm mt-2 leading-relaxed">{exp.description}</p>
                                 </div>
                                 {isOwnProfile && (
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -148,7 +170,7 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => handleDelete(exp._id!)}
-                                            disabled={isPending}
+                                            disabled={isPending || isDeleting}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -253,6 +275,24 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* AlertDialog for deleting experience */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń doświadczenie</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Czy na pewno chcesz usunąć to doświadczenie? Ta operacja jest nieodwracalna.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }

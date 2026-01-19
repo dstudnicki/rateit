@@ -13,6 +13,16 @@ import { uploadProfileImage, deleteProfileImage } from "@/app/actions/images";
 import { compressImage } from "@/lib/image-compression";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogFooter,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface ProfileHeaderProps {
     user: {
@@ -38,6 +48,10 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
     const [isEditing, setIsEditing] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [isUploadingBackground, setIsUploadingBackground] = useState(false);
+    const [showDeleteAvatarDialog, setShowDeleteAvatarDialog] = useState(false);
+    const [showDeleteBackgroundDialog, setShowDeleteBackgroundDialog] = useState(false);
+    const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
+    const [isDeletingBackground, setIsDeletingBackground] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const backgroundInputRef = useRef<HTMLInputElement>(null);
 
@@ -91,10 +105,9 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                 });
             }
         } catch (error) {
-            console.error("Avatar upload error:", error);
-            toast.error("Upload failed", {
+            toast.error("Przesłanie nie powiodło się", {
                 id: "avatar-upload",
-                description: "An error occurred while uploading",
+                description: "Podczas przesyłania wystąpił błąd",
             });
         } finally {
             setIsUploadingAvatar(false);
@@ -133,25 +146,24 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
             const result = await uploadProfileImage(formData, "background");
 
             if (result.success && result.url) {
-                toast.success("Background updated!", {
+                toast.success("Tło zaktualizowane", {
                     id: "background-upload",
-                    description: "Your cover photo has been updated",
+                    description: "Tło zostało zaaktualizowane",
                 });
 
                 // Wait a bit for DB to update, then refresh
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 router.refresh();
             } else {
-                toast.error("Upload failed", {
+                toast.error("Przesłanie nie powiodło się", {
                     id: "background-upload",
-                    description: result.error || "Failed to upload background",
+                    description: result.error || "Nie udało się przesłać tła",
                 });
             }
         } catch (error) {
-            console.error("Background upload error:", error);
-            toast.error("Upload failed", {
+            toast.error("Przesłanie nie powiodło się", {
                 id: "background-upload",
-                description: "An error occurred while uploading",
+                description: "Podczas przesyłania wystąpił błąd",
             });
         } finally {
             setIsUploadingBackground(false);
@@ -161,14 +173,15 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
         }
     };
 
-    const handleDeleteAvatar = async () => {
-        if (!confirm("Jesteś pewny że chcesz usunąć zdjęcie profilowe?")) {
-            return;
-        }
+    const handleDeleteAvatar = () => {
+        setShowDeleteAvatarDialog(true);
+    };
 
+    const confirmDeleteAvatar = async () => {
+        setShowDeleteAvatarDialog(false);
+        setIsDeletingAvatar(true);
         try {
-            toast.loading("Removing avatar...", { id: "delete-avatar" });
-
+            toast.loading("Usuwania zdjęcia profilowego...", { id: "delete-avatar" });
             const result = await deleteProfileImage("avatar");
 
             if (result.success) {
@@ -181,25 +194,28 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 router.refresh();
             } else {
-                toast.error("Delete failed", {
+                toast.error("Usunięcie nieudane", {
                     id: "delete-avatar",
-                    description: result.error || "Failed to remove avatar",
+                    description: result.error || "Nie udało się usunąć awatara",
                 });
             }
         } catch (error) {
-            console.error("Avatar delete error:", error);
-            toast.error("Delete failed", {
+            toast.error("Usunięcie nieudane", {
                 id: "delete-avatar",
-                description: "An error occurred while removing avatar",
+                description: "Podczas usuwania awatara wystąpił błąd",
             });
+        } finally {
+            setIsDeletingAvatar(false);
         }
     };
 
-    const handleDeleteBackground = async () => {
-        if (!confirm("Jesteś pewny że chcesz usunąć tło?")) {
-            return;
-        }
+    const handleDeleteBackground = () => {
+        setShowDeleteBackgroundDialog(true);
+    };
 
+    const confirmDeleteBackground = async () => {
+        setShowDeleteBackgroundDialog(false);
+        setIsDeletingBackground(true);
         try {
             toast.loading("Usuwanie tła...", { id: "delete-background" });
 
@@ -215,17 +231,18 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 router.refresh();
             } else {
-                toast.error("Delete failed", {
+                toast.error("Usunięcie nieudane", {
                     id: "delete-background",
-                    description: result.error || "Failed to remove background",
+                    description: result.error || "Nie udało się usunąć tła",
                 });
             }
         } catch (error) {
-            console.error("Background delete error:", error);
-            toast.error("Delete failed", {
+            toast.error("Usunięcie nieudane", {
                 id: "delete-background",
                 description: "An error occurred while removing background",
             });
+        } finally {
+            setIsDeletingBackground(false);
         }
     };
 
@@ -242,13 +259,12 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                     router.refresh();
                 }
             } else {
-                console.error("Failed to update profile:", result.error);
+                toast.error("Nie udało się zaktualizować profilu");
             }
         });
     };
 
     const displayName = profile.fullName || user.name || "User";
-    const connections = profile.connections > 500 ? "500+" : profile.connections.toString();
     const avatarUrl = user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`;
     const backgroundUrl = profile.backgroundImage;
 
@@ -433,6 +449,41 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* AlertDialogs for avatar/background deletion */}
+            <AlertDialog open={showDeleteAvatarDialog} onOpenChange={setShowDeleteAvatarDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń zdjęcie profilowe</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Czy na pewno chcesz usunąć zdjęcie profilowe? Ta operacja spowoduje usunięcie awatara z profilu.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteAvatarDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteAvatar} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showDeleteBackgroundDialog} onOpenChange={setShowDeleteBackgroundDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń tło</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Czy na pewno chcesz usunąć tło profilu? Tło zostanie przywrócone do domyślnego.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteBackgroundDialog(false)}>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteBackground} className="bg-destructive">
+                            Usuń
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
