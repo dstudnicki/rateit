@@ -127,7 +127,7 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="skill">Skill *</Label>
+                            <Label htmlFor="skill">Umiejętność *</Label>
                             <Input
                                 id="skill"
                                 value={newSkill}
@@ -144,10 +144,10 @@ export function ProfileSkills({ skills: initialSkills, isOwnProfile = true }: Pr
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsAdding(false)} disabled={isPending}>
-                            Cancel
+                            Anuluj
                         </Button>
                         <Button onClick={handleAdd} disabled={isPending}>
-                            {isPending ? "Adding..." : "Add Skill"}
+                            {isPending ? "Zapisywanie" : "Zapisz"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

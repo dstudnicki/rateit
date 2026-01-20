@@ -1,6 +1,6 @@
 import "server-only";
 // Get base URL - localhost in dev, Vercel URL in production
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 
 const BASE_URL =
     process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
@@ -20,9 +20,9 @@ export async function getCompany(id: string) {
 }
 
 export async function getCompanyBySlug(slug: string) {
-    const h = await headers();
+    const cookieStore = await cookies();
     const data = await fetch(`${BASE_URL}/api/companies/slug/${slug}`, {
-        headers: h,
+        headers: { cookie: cookieStore.toString() },
         cache: "no-store",
     });
 

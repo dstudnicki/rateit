@@ -131,7 +131,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
 
         try {
             setIsUploadingBackground(true);
-            toast.loading("Uploading background...", { id: "background-upload" });
+            toast.loading("Dodawanie tła...", { id: "background-upload" });
 
             // Compress image
             const compressedFile = await compressImage(file, {
@@ -146,9 +146,8 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
             const result = await uploadProfileImage(formData, "background");
 
             if (result.success && result.url) {
-                toast.success("Tło zaktualizowane", {
+                toast.success("Tło zostało zaaktualizowane", {
                     id: "background-upload",
-                    description: "Tło zostało zaaktualizowane",
                 });
 
                 // Wait a bit for DB to update, then refresh

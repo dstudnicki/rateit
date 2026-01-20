@@ -22,27 +22,27 @@ function FieldInfo({ field }: { field: AnyFieldApi }) {
                     {field.state.meta.errors.map((err: any) => (typeof err === "string" ? err : err.message)).join(", ")}
                 </em>
             ) : null}
-            {field.state.meta.isValidating ? "Validating..." : null}
+            {field.state.meta.isValidating ? "Walidowanie..." : null}
         </>
     );
 }
 
 const formSchema = z
     .object({
-        name: z.string().min(2, "Name must be at least 2 characters long"),
+        name: z.string().min(2, "Imię musi mieć co najmniej 2 znaki"),
         email: z
             .string()
-            .email({ message: "This is not a valid email" })
-            .min(8, "Password must be at least 8 characters long")
-            .max(50, "Password must be at most 50 characters long"),
-        password: z.string().min(8, "Password must be at least 8 characters long"),
+            .email({ message: "To nie jest prawidłowy adres email" })
+            .min(8, "Hasło musi mieć co najmniej 8 znaków")
+            .max(50, "Hasło musi mieć maksymalnie 50 znaków"),
+        password: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
         confirmPassword: z.string(),
     })
     .superRefine(({ confirmPassword, password }, ctx) => {
         if (confirmPassword !== password) {
             ctx.addIssue({
                 code: "custom",
-                message: "The passwords did not match",
+                message: "Hasła do siebie nie pasują",
                 path: ["confirmPassword"],
             });
         }
