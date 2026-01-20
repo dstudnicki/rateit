@@ -286,7 +286,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                             Pozytywna
                                         </Badge>
                                     )}
-                                    {(review.rating ?? 0) <= 4 && (review.rating ?? 0) >= 3 && (
+                                    {(review.rating ?? 0) < 4 && (review.rating ?? 0) >= 3 && (
                                         <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
                                             Mieszana
                                         </Badge>
