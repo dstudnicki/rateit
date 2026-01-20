@@ -102,8 +102,8 @@ const ProfileSchema = new Schema(
         userId: { type: String, required: true, unique: true },
         slug: { type: String, required: true, unique: true },
         fullName: { type: String },
-        image: { type: String }, // Avatar from OAuth or uploaded
-        backgroundImage: { type: String }, // Profile banner
+        image: { type: String },
+        backgroundImage: { type: String },
         headline: { type: String },
         location: { type: String },
         about: { type: String },
@@ -116,8 +116,8 @@ const ProfileSchema = new Schema(
             default: () => ({ industries: [], skills: [], companies: [], onboardingCompleted: false }),
         },
         interactionHistory: { type: [InteractionSchema], default: [] },
-        rodoConsent: { type: Boolean, default: false }, // GDPR consent
-        rodoConsentSource: { type: String, enum: ["manual", "oauth"] }, // How consent was obtained
+        rodoConsent: { type: Boolean, default: false },
+        rodoConsentSource: { type: String, enum: ["manual", "oauth"] },
     },
     {
         timestamps: true,

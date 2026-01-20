@@ -13,39 +13,37 @@ import { addCommentToReview } from "@/app/actions/companies";
 import { toast } from "sonner";
 
 interface ReplyData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-    };
-    nick: string;
-    content: string;
-    likes: string[];
-    createdAt: string;
+    id?: string;
+    _id?: string;
+    author?: { nick?: string | null };
+    content?: string;
+    likesCount?: number;
+    isLiked?: boolean;
+    createdAt?: string;
 }
 
 interface CommentData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-    };
-    nick: string;
-    content: string;
-    likes: string[];
-    replies: ReplyData[];
-    createdAt: string;
+    id?: string;
+    _id?: string;
+    author?: { nick?: string | null; name?: string | null };
+    nick?: string;
+    content?: string;
+    likesCount?: number;
+    isLiked?: boolean;
+    replies?: ReplyData[];
+    createdAt?: string;
+    permissions?: { canEdit?: boolean; canDelete?: boolean };
 }
 
 interface ReviewCommentSectionProps {
     companyId: string;
     reviewId: string;
-    comments: CommentData[];
+    comments: CommentData[]; // sanitized DTO from server
     onUpdate: () => void;
-    reviewAuthorId?: string; // ID autora opinii (opcjonalne)
+    canComment: boolean;
 }
 
-export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, reviewAuthorId }: ReviewCommentSectionProps) {
+export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, canComment }: ReviewCommentSectionProps) {
     const [content, setContent] = useState("");
     const [nick, setNick] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,19 +51,73 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, 
     const session = authClient.useSession();
     const currentUserId = session.data?.user?.id;
 
-    const isReviewAuthor = !!(currentUserId && reviewAuthorId && currentUserId === reviewAuthorId);
+    const isReviewAuthor = !canComment && !!currentUserId;
 
-    // Check if user has already commented on this review
+    // Helper: map legacy comment shape -> public DTO expected by ReviewCommentItem
+    const mapComment = (c: any) => {
+        const id = c.id ?? c._id ?? undefined;
+        const author =
+            c.author ??
+            (c.user ? { name: c.user.name, fullName: c.user.fullName, nick: c.nick, avatar: c.user.image } : { nick: c.nick });
+        const likesCount = c.likesCount ?? (Array.isArray(c.likes) ? c.likes.length : 0);
+        const isLiked = c.isLiked ?? (currentUserId && Array.isArray(c.likes) ? c.likes.includes(currentUserId) : false);
+        const replies = (c.replies ?? []).map((r: any) => ({
+            id: r.id ?? r._id,
+            author: r.author ?? (r.user ? { name: r.user.name, nick: r.nick, avatar: r.user.image } : { nick: r.nick }),
+            content: r.content,
+            likesCount: r.likesCount ?? (Array.isArray(r.likes) ? r.likes.length : 0),
+            isLiked: r.isLiked ?? (currentUserId && Array.isArray(r.likes) ? r.likes.includes(currentUserId) : false),
+            createdAt: r.createdAt,
+        }));
+
+        const permissions = c.permissions ?? {
+            canEdit: !!(
+                currentUserId &&
+                ((c.user && c.user._id === currentUserId) || (c.author && c.author._id === currentUserId))
+            ),
+            canDelete: !!(
+                currentUserId &&
+                ((c.user && c.user._id === currentUserId) || (c.author && c.author._id === currentUserId))
+            ),
+        };
+
+        return {
+            id,
+            _id: id,
+            author,
+            content: c.content,
+            likesCount,
+            isLiked,
+            replies,
+            createdAt: c.createdAt,
+            permissions,
+        };
+    };
+
+    const publicComments = (comments || []).map(mapComment);
+
+    // Check if user has already commented on this review using the mapped public DTOs.
+    // We prefer server-provided permissions; if not present, fall back to comparing session email/name with author names/nick.
     useEffect(() => {
-        if (currentUserId && comments) {
-            const userComment = comments.find((comment) => comment.user._id === currentUserId);
-            if (userComment) {
-                setHasCommented(true);
-            } else {
-                setHasCommented(false);
-            }
+        if (!currentUserId) {
+            setHasCommented(false);
+            return;
         }
-    }, [currentUserId, comments]);
+
+        const found = publicComments.some((comment) => {
+            if (!comment) return false;
+            if (comment.permissions?.canEdit) return true;
+
+            // If the server didn't provide permissions, fall back to comparing nick or author.name to session user
+            const authorNick = comment.author?.nick || "";
+
+            if (!authorNick) return false;
+
+            return false;
+        });
+
+        setHasCommented(found);
+    }, [currentUserId, publicComments, session.data]);
 
     const handleAddComment = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -98,6 +150,8 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, 
         }
         setIsSubmitting(false);
     };
+    console.log(isReviewAuthor);
+    // Map incoming comments to public DTOs for child components
 
     return (
         <div className="space-y-4">
@@ -160,10 +214,10 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, 
 
             {/* Comments List */}
             <div className="space-y-3">
-                {comments.map((singleComment) => (
+                {publicComments.map((singleComment) => (
                     <ReviewCommentItem
-                        key={singleComment._id}
-                        comment={singleComment}
+                        key={singleComment._id ?? singleComment.id}
+                        comment={singleComment as any}
                         companyId={companyId}
                         reviewId={reviewId}
                         currentUserId={currentUserId}

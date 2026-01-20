@@ -3,101 +3,50 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
-import { ObjectId } from "mongodb";
+import { toCommentPublicDTO } from "@/lib/dto/public";
+import Profile from "@/models/Profile";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const db = await getClient();
+        await getClient();
 
         const { id: postId } = await params;
-        const post: any = await Post.findById(postId).lean();
+        const post: any = await Post.findById(postId).select("comments user").lean();
 
         if (!post) {
             return NextResponse.json({ message: "Post not found." }, { status: 404 });
         }
 
-        const commentsWithUsers = await Promise.all(
-            post.comments.map(async (comment: any) => {
-                let commentUser = null;
+        // optional session for permissions
+        let sessionUserId: string | undefined = undefined;
+        try {
+            const session = await auth.api.getSession({ headers: await headers() });
+            sessionUserId = session?.user?.id;
+        } catch {
+            sessionUserId = undefined;
+        }
+
+        const commentsPublic = await Promise.all(
+            (post.comments || []).map(async (comment: any) => {
+                let authorProfile = null;
                 if (comment.user) {
                     const userIdString = typeof comment.user === "string" ? comment.user : comment.user.toString();
-
                     try {
-                        commentUser = await db
-                            .collection("user")
-                            .findOne(
-                                { _id: new ObjectId(userIdString) },
-                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
-                            );
-                    } catch (e) {
-                        commentUser = await db
-                            .collection("user")
-                            .findOne(
-                                { _id: userIdString as any },
-                                { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
-                            );
-                    }
-
-                    if (commentUser) {
-                        const profile = await db
-                            .collection("profiles")
-                            .findOne({ userId: userIdString }, { projection: { slug: 1, fullName: 1 } });
-
-                        commentUser = {
-                            ...commentUser,
-                            _id: userIdString,
-                            slug: profile?.slug || commentUser.name,
-                            fullName: profile?.fullName || null,
-                        };
+                        authorProfile = await Profile.findOne({ userId: userIdString }).select("slug fullName image").lean();
+                    } catch {
+                        authorProfile = null;
                     }
                 }
 
-                const repliesWithUsers = await Promise.all(
-                    (comment.replies || []).map(async (reply: any) => {
-                        let replyUser = null;
-                        if (reply.user) {
-                            const userIdString = typeof reply.user === "string" ? reply.user : reply.user.toString();
-
-                            try {
-                                replyUser = await db
-                                    .collection("user")
-                                    .findOne(
-                                        { _id: new ObjectId(userIdString) },
-                                        { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
-                                    );
-                            } catch (e) {
-                                replyUser = await db
-                                    .collection("user")
-                                    .findOne(
-                                        { _id: userIdString as any },
-                                        { projection: { name: 1, email: 1, _id: 1, image: 1, userImage: 1 } },
-                                    );
-                            }
-
-                            if (replyUser) {
-                                const profile = await db
-                                    .collection("profiles")
-                                    .findOne({ userId: userIdString }, { projection: { slug: 1, fullName: 1 } });
-
-                                replyUser = {
-                                    ...replyUser,
-                                    _id: userIdString,
-                                    slug: profile?.slug || replyUser.name,
-                                    fullName: profile?.fullName || null,
-                                };
-                            }
-                        }
-                        return { ...reply, user: replyUser };
-                    }),
-                );
-
-                return { ...comment, user: commentUser, replies: repliesWithUsers };
+                // Map comment and its replies to public DTO (no user/userId in output), pass session id
+                return toCommentPublicDTO(comment, authorProfile, sessionUserId);
             }),
         );
 
-        return NextResponse.json(commentsWithUsers, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching comments:", error);
+        return NextResponse.json(commentsPublic, { status: 200 });
+    } catch {
         return NextResponse.json({ message: "Internal server error." }, { status: 500 });
     }
 }

@@ -89,7 +89,8 @@ export async function createCompany(data: {
             averageRating: 0,
         };
 
-        console.log("[createCompany] Creating company with data:", { ...newCompany, slug });
+        // Avoid logging full company object (may contain user ids). Keep a lightweight message.
+        console.log("[createCompany] Creating company with slug:", slug);
 
         const result = await Company.create(newCompany);
 
@@ -185,7 +186,6 @@ export async function addCompanyReview(
 
         company.reviews.push(newReview);
 
-        // Calculate new average rating
         const totalRating = company.reviews.reduce((sum: number, review: any) => sum + review.rating, 0);
         company.averageRating = totalRating / company.reviews.length;
 
@@ -533,6 +533,11 @@ export async function addCommentToReview(companyId: string, reviewId: string, co
             return { success: false, error: "Nie możesz komentować własnej opinii" };
         }
 
+        // Prevent same user from adding multiple top-level comments under the same review
+        if (Array.isArray(review.comments) && review.comments.some((c: any) => c.user && c.user.toString() === user.id)) {
+            return { success: false, error: "Już skomentowałeś tę opinię" };
+        }
+
         const newComment = {
             content: sanitizedContent,
             user: user.id,
@@ -558,7 +563,13 @@ export async function addCommentToReview(companyId: string, reviewId: string, co
 /**
  * Add reply to comment with anonymous nickname
  */
-export async function addReplyToComment(companyId: string, reviewId: string, commentId: string, content: string, nick: string) {
+export async function addReplyToComment(
+    companyId: string,
+    reviewId: string,
+    commentId: string | undefined,
+    content: string,
+    nick: string,
+) {
     const user = await requireAuth();
     await requireNotBanned();
 
@@ -606,6 +617,11 @@ export async function addReplyToComment(companyId: string, reviewId: string, com
             return { success: false, error: "Nie możesz odpowiadać na komentarze pod własną opinią" };
         }
 
+        // Prevent same user from adding multiple replies to the same comment (per-account)
+        if (Array.isArray(comment.replies) && comment.replies.some((r: any) => r.user && r.user.toString() === user.id)) {
+            return { success: false, error: "Już odpowiedziałeś na ten komentarz" };
+        }
+
         const newReply = {
             content: sanitizedContent,
             user: user.id,
@@ -627,8 +643,12 @@ export async function addReplyToComment(companyId: string, reviewId: string, com
     }
 }
 
-// Helper to sanitize company data
-function sanitizeCompany(company: any): any {
+// Helper to sanitize company data for public consumption
+// Accept an optional session (Better Auth) so callers can resolve session once and pass it in.
+async function sanitizeCompany(company: any, session?: any): Promise<any> {
+    const userId = session?.user?.id;
+    const userRole = session?.user?.role;
+
     const plain: any = {
         _id: String(company._id || ""),
         name: String(company.name || ""),
@@ -639,7 +659,7 @@ function sanitizeCompany(company: any): any {
         website: company.website ? String(company.website) : null,
         description: company.description ? String(company.description) : null,
         detectedKeywords: Array.isArray(company.detectedKeywords) ? company.detectedKeywords.map((k: any) => String(k)) : [],
-        createdBy: String(company.createdBy || ""),
+        // DO NOT expose createdBy in public DTO
         averageRating: Number(company.averageRating || 0),
         createdAt: company.createdAt
             ? company.createdAt instanceof Date
@@ -656,7 +676,6 @@ function sanitizeCompany(company: any): any {
         lastReviewDate: null,
     };
 
-    // Sanitize reviews
     if (company.reviews && Array.isArray(company.reviews)) {
         plain.reviewCount = company.reviews.length;
         plain.lastReviewDate =
@@ -666,26 +685,124 @@ function sanitizeCompany(company: any): any {
                     : String(company.reviews[company.reviews.length - 1].createdAt)
                 : null;
 
-        plain.reviews = company.reviews.map((r: any) => ({
-            _id: String(r._id || ""),
-            title: String(r.title || ""),
-            content: String(r.content || ""),
-            rating: Number(r.rating || 0),
-            role: String(r.role || ""),
-            reviewType: String(r.reviewType || "work"),
-            user: String(r.user || ""),
-            likes: Array.isArray(r.likes) ? r.likes.map((l: any) => String(l)) : [],
-            createdAt: r.createdAt
-                ? r.createdAt instanceof Date
-                    ? r.createdAt.toISOString()
-                    : String(r.createdAt)
-                : new Date().toISOString(),
-            updatedAt: r.updatedAt ? (r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt)) : null,
-            comments: [],
-        }));
+        plain.reviews = company.reviews.map((r: any) => {
+            // owner id may be stored on r.user or r.author (various shapes). Resolve to string when possible but DO NOT expose it.
+            let ownerId: string | undefined = undefined;
+            if (r.user) {
+                if (typeof r.user === "string") ownerId = r.user;
+                else if (typeof r.user === "object") ownerId = String((r.user as any)._id ?? (r.user as any).id ?? "");
+            } else if (r.author) {
+                if (typeof r.author === "string") ownerId = r.author;
+                else if (typeof r.author === "object") ownerId = String((r.author as any)._id ?? (r.author as any).id ?? "");
+            }
+
+            const computedOwn = !!(userId && ownerId && userId === ownerId);
+            const computedIsAdmin = userRole === "admin";
+            const canEdit = computedOwn || computedIsAdmin;
+            const canDelete = computedOwn || computedIsAdmin;
+
+            const likesCount = Array.isArray(r.likes) ? r.likes.length : 0;
+            const isLiked = !!(userId && Array.isArray(r.likes) && r.likes.includes(userId));
+
+            const comments = Array.isArray(r.comments)
+                ? r.comments.map((c: any) => {
+                      const commentLikesCount = Array.isArray(c.likes) ? c.likes.length : 0;
+                      const commentIsLiked = !!(userId && Array.isArray(c.likes) && c.likes.includes(userId));
+
+                      const replies = Array.isArray(c.replies)
+                          ? c.replies.map((rep: any) => ({
+                                id: String(rep._id || rep.id || ""),
+                                _id: String(rep._id || rep.id || ""),
+                                content: String(rep.content || ""),
+                                likesCount: Array.isArray(rep.likes) ? rep.likes.length : 0,
+                                isLiked: !!(userId && Array.isArray(rep.likes) && rep.likes.includes(userId)),
+                                createdAt:
+                                    rep.createdAt instanceof Date
+                                        ? rep.createdAt.toISOString()
+                                        : String(rep.createdAt || new Date().toISOString()),
+                                author: { nick: String(rep.nick || (rep.author && rep.author.nick) || "Anonymous") },
+                                permissions: {
+                                    canEdit: !!(userId && rep.user && String(rep.user) === userId) || userRole === "admin",
+                                    canDelete: !!(userId && rep.user && String(rep.user) === userId) || userRole === "admin",
+                                },
+                            }))
+                          : [];
+
+                      return {
+                          id: String(c._id || c.id || ""),
+                          _id: String(c._id || c.id || ""),
+                          content: String(c.content || ""),
+                          likesCount: commentLikesCount,
+                          isLiked: commentIsLiked,
+                          createdAt:
+                              c.createdAt instanceof Date
+                                  ? c.createdAt.toISOString()
+                                  : String(c.createdAt || new Date().toISOString()),
+                          replies,
+                          author: { nick: String(c.nick || (c.author && c.author.nick) || "Anonymous") },
+                          permissions: {
+                              canEdit: !!(userId && c.user && String(c.user) === userId) || userRole === "admin",
+                              canDelete: !!(userId && c.user && String(c.user) === userId) || userRole === "admin",
+                          },
+                      };
+                  })
+                : [];
+
+            return {
+                id: String(r._id || r.id || ""),
+                _id: String(r._id || r.id || ""),
+                title: String(r.title || ""),
+                content: String(r.content || ""),
+                rating: Number(r.rating || 0),
+                role: String(r.role || ""),
+                reviewType: String(r.reviewType || "work"),
+                nick: String(r.nick || "Anonymous"),
+                likesCount,
+                isLiked,
+                createdAt: r.createdAt
+                    ? r.createdAt instanceof Date
+                        ? r.createdAt.toISOString()
+                        : String(r.createdAt)
+                    : new Date().toISOString(),
+                updatedAt: r.updatedAt ? (r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt)) : null,
+                comments,
+                permissions: {
+                    canEdit,
+                    canDelete,
+                },
+            };
+        });
+    }
+
+    // DEV RG: assert DTO doesn't contain sensitive user identifiers
+    if (process.env.NODE_ENV !== "production") {
+        try {
+            assertNoSensitiveFields(plain);
+        } catch (e) {
+            // Throwing here helps catch regressions during development
+            console.error("Sensitive field leak detected in sanitizeCompany:", e);
+            throw e;
+        }
     }
 
     return plain;
+}
+
+function assertNoSensitiveFields(obj: any, path = "") {
+    if (!obj || typeof obj !== "object") return;
+    const sensitiveKeys = ["user", "userId", "createdBy", "password"];
+    for (const key of Object.keys(obj)) {
+        const fullPath = path ? `${path}.${key}` : key;
+        if (sensitiveKeys.includes(key)) {
+            throw new Error(`Sensitive key found in DTO: ${fullPath}`);
+        }
+        const val = obj[key];
+        if (Array.isArray(val)) {
+            val.forEach((v, idx) => assertNoSensitiveFields(v, `${fullPath}[${idx}]`));
+        } else if (val && typeof val === "object") {
+            assertNoSensitiveFields(val, fullPath);
+        }
+    }
 }
 
 export async function getPersonalizedCompanies(limit: number = 20, skip: number = 0) {
@@ -751,7 +868,12 @@ export async function getPersonalizedCompanies(limit: number = 20, skip: number 
 async function getPersonalizedCompaniesInternal(profile: any, limit: number, skip: number) {
     const companies = await Company.find().sort({ createdAt: -1 }).limit(100).lean();
 
-    const companiesPlain = companies.map((company: any) => sanitizeCompany(company));
+    // when available, we may compute permissions for reviews using profile.userId
+    const currentUserId = profile?.userId ?? null;
+    const isAdmin = profile?.role === "admin";
+    // We don't have the Better Auth session object here; sanitizeCompany without session will compute permisssions as false.
+    // If this function is invoked from a server context where session is available, consider passing session down.
+    const companiesPlain = await Promise.all(companies.map((company: any) => sanitizeCompany(company)));
 
     // Extract user data for matching
     const userExperience = profile.experience || [];
@@ -982,7 +1104,21 @@ export async function getGenericCompanies(limit: number = 20, skip: number = 0) 
 
         const companies = await Company.find().sort({ createdAt: -1 }).limit(50).lean();
 
-        const companiesPlain = companies.map((company: any) => sanitizeCompany(company));
+        // Try to resolve session to compute permissions; if not available, pass nulls
+        let currentUserId: string | null = null;
+        let isAdmin = false;
+        let session: any = null;
+        try {
+            session = await auth.api.getSession({ headers: await import("next/headers").then((m) => m.headers()) });
+            if (session) {
+                currentUserId = (session as any).user.id;
+                isAdmin = (session as any).user?.role === "admin";
+            }
+        } catch (e) {
+            // ignore - unauthenticated
+        }
+
+        const companiesPlain = await Promise.all(companies.map((company: any) => sanitizeCompany(company, session)));
 
         // Score companies based on engagement and quality
         const scoredCompanies = companiesPlain.map((company: any) => {

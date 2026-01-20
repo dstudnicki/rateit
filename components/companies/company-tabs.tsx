@@ -17,7 +17,6 @@ interface CompanyTabsProps {
 
 export function CompanyTabs({ company }: CompanyTabsProps) {
     const [activeTab, setActiveTab] = useState<TabType>("all");
-
     return (
         <div className="space-y-4">
             <Card className="p-4">

@@ -62,7 +62,6 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
     const session = authClient.useSession();
     const currentUserId = session.data?.user?.id;
-
     // Initialize likes based on post data
     const initialLikesCount = Array.isArray(post.likes) ? post.likes.length : 0;
     const initialIsLiked = currentUserId ? Array.isArray(post.likes) && post.likes.includes(currentUserId) : false;

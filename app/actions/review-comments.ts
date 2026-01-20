@@ -16,7 +16,7 @@ export async function addReviewComment(content: string, companyId: string, revie
             user: session.user.id,
             createdAt: new Date(),
             likes: [],
-            replies: []
+            replies: [],
         };
 
         const company = await Company.findById(companyId);
@@ -54,8 +54,8 @@ export async function addReviewComment(content: string, companyId: string, revie
             console.error("[addReviewComment] Failed to track interaction:", error);
         }
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to create comment:", error);
@@ -68,7 +68,7 @@ export async function addReviewReply(
     companyId: string,
     reviewId: string,
     commentId: string,
-    replyToUsername?: string
+    replyToUsername?: string,
 ) {
     const session = await requireUser();
 
@@ -95,14 +95,14 @@ export async function addReviewReply(
             content: replyContent,
             user: session.user.id,
             createdAt: new Date(),
-            likes: []
+            likes: [],
         };
 
         comment.replies.push(newReply);
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to create reply:", error);
@@ -141,8 +141,8 @@ export async function toggleReviewCommentLike(companyId: string, reviewId: strin
 
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true, isLiked: likeIndex === -1, likesCount: comment.likes.length };
     } catch (error) {
         console.error("Failed to toggle like:", error);
@@ -150,12 +150,7 @@ export async function toggleReviewCommentLike(companyId: string, reviewId: strin
     }
 }
 
-export async function toggleReviewReplyLike(
-    companyId: string,
-    reviewId: string,
-    commentId: string,
-    replyId: string
-) {
+export async function toggleReviewReplyLike(companyId: string, reviewId: string, commentId: string, replyId: string) {
     const session = await requireUser();
 
     try {
@@ -191,8 +186,8 @@ export async function toggleReviewReplyLike(
 
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true, isLiked: likeIndex === -1, likesCount: reply.likes.length };
     } catch (error) {
         console.error("Failed to toggle reply like:", error);
@@ -200,12 +195,7 @@ export async function toggleReviewReplyLike(
     }
 }
 
-export async function updateReviewComment(
-    companyId: string,
-    reviewId: string,
-    commentId: string,
-    content: string
-) {
+export async function updateReviewComment(companyId: string, reviewId: string, commentId: string, content: string) {
     const session = await requireUser();
 
     try {
@@ -233,8 +223,8 @@ export async function updateReviewComment(
         comment.content = content;
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to update comment:", error);
@@ -270,8 +260,8 @@ export async function deleteReviewComment(companyId: string, reviewId: string, c
         review.comments.pull(commentId);
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to delete comment:", error);
@@ -284,7 +274,7 @@ export async function updateReviewReply(
     reviewId: string,
     commentId: string,
     replyId: string,
-    content: string
+    content: string,
 ) {
     const session = await requireUser();
 
@@ -318,8 +308,8 @@ export async function updateReviewReply(
         reply.content = content;
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to update reply:", error);
@@ -327,12 +317,7 @@ export async function updateReviewReply(
     }
 }
 
-export async function deleteReviewReply(
-    companyId: string,
-    reviewId: string,
-    commentId: string,
-    replyId: string
-) {
+export async function deleteReviewReply(companyId: string, reviewId: string, commentId: string, replyId: string) {
     const session = await requireUser();
 
     try {
@@ -365,12 +350,11 @@ export async function deleteReviewReply(
         comment.replies.pull(replyId);
         await company.save();
 
-        revalidateTag(`company-${companyId}`, 'max');
-        revalidateTag(`company-slug-${company.slug}`, 'max');
+        revalidateTag(`company-${companyId}`, "max");
+        revalidateTag(`company-slug-${company.slug}`, "max");
         return { success: true };
     } catch (error) {
         console.error("Failed to delete reply:", error);
         return { success: false, error: "Failed to delete reply" };
     }
 }
-

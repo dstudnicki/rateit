@@ -8,7 +8,6 @@ import { ObjectId } from "mongodb";
 // Types for search results
 export interface ProfileSearchResult {
     _id: string;
-    userId: string;
     slug: string;
     fullName: string;
     headline: string;
@@ -201,7 +200,6 @@ export async function GET(request: NextRequest) {
 
                     const result: ProfileSearchResult = {
                         _id: profile._id.toString(),
-                        userId: profile.userId,
                         slug: profile.slug,
                         fullName: profile.fullName || user.name || "",
                         headline: profile.headline || "",

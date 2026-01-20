@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-    addReviewReply,
     toggleReviewCommentLike,
     toggleReviewReplyLike,
     updateReviewComment,
@@ -18,7 +17,6 @@ import {
 } from "@/app/actions/review-comments";
 import { addReplyToComment } from "@/app/actions/companies";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
@@ -32,35 +30,37 @@ import {
     AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
+interface AuthorPublic {
+    fullName?: string | null;
+    name?: string | null;
+    nick?: string | null;
+    avatar?: string | null;
+}
+
 interface ReplyData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-        slug?: string;
-        fullName?: string | null;
-        image?: string | null;
-    };
-    nick: string;
+    id: string;
+    _id?: string;
+    author: AuthorPublic;
     content: string;
-    likes: string[];
+    likesCount: number;
+    isLiked?: boolean;
     createdAt: string;
 }
 
 interface CommentData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-        slug?: string;
-        fullName?: string | null;
-        image?: string | null;
-    };
-    nick: string;
+    id: string;
+    _id?: string;
+    author: AuthorPublic;
     content: string;
-    likes: string[];
+    likesCount: number;
+    isLiked?: boolean;
     replies: ReplyData[];
     createdAt: string;
+    permissions?: {
+        canEdit: boolean;
+        canDelete: boolean;
+        canComment?: boolean;
+    };
 }
 
 interface ReviewCommentItemProps {
@@ -82,8 +82,8 @@ export function ReviewCommentItem({
     onUpdate,
     parentCommentId,
 }: ReviewCommentItemProps) {
-    const [isLiked, setIsLiked] = useState(comment.likes.includes(currentUserId || ""));
-    const [likesCount, setLikesCount] = useState(comment.likes.length);
+    const [isLiked, setIsLiked] = useState(!!comment.isLiked);
+    const [likesCount, setLikesCount] = useState(comment.likesCount || 0);
     const [isReplying, setIsReplying] = useState(false);
     const [replyContent, setReplyContent] = useState("");
     const [replyNick, setReplyNick] = useState("");
@@ -96,20 +96,22 @@ export function ReviewCommentItem({
 
     useEffect(() => {
         setReplies(comment.replies || []);
-    }, [comment.replies]);
+        setIsLiked(!!comment.isLiked);
+        setLikesCount(comment.likesCount || 0);
+    }, [comment.replies, comment.isLiked, comment.likesCount]);
 
-    const targetCommentId = parentCommentId || comment._id;
-    const isOwnComment = currentUserId === comment.user._id;
-    const displayName = comment.nick || "Anonymous";
+    const targetCommentId = parentCommentId || comment.id || comment._id;
+    const isOwnComment = !!comment.permissions?.canEdit || !!comment.permissions?.canDelete;
+    const displayName = comment.author?.fullName || comment.author?.name || comment.author?.nick || "Anonymous";
 
     const handleLike = async () => {
         const result = parentCommentId
-            ? await toggleReviewReplyLike(companyId, reviewId, parentCommentId, comment._id)
-            : await toggleReviewCommentLike(companyId, reviewId, comment._id);
+            ? await toggleReviewReplyLike(companyId, reviewId, parentCommentId, comment.id || comment._id || "")
+            : await toggleReviewCommentLike(companyId, reviewId, comment.id || comment._id || "");
 
         if (result.success) {
-            setIsLiked(result.isLiked!);
-            setLikesCount(result.likesCount!);
+            setIsLiked(!!result.isLiked);
+            setLikesCount(result.likesCount ?? likesCount);
         }
     };
 
@@ -149,8 +151,8 @@ export function ReviewCommentItem({
     const handleSaveEdit = () => {
         startTransition(async () => {
             const result = parentCommentId
-                ? await updateReviewReply(companyId, reviewId, parentCommentId, comment._id, editedContent)
-                : await updateReviewComment(companyId, reviewId, comment._id, editedContent);
+                ? await updateReviewReply(companyId, reviewId, parentCommentId, comment.id || comment._id || "", editedContent)
+                : await updateReviewComment(companyId, reviewId, comment.id || comment._id || "", editedContent);
 
             if (result.success) {
                 setIsEditing(false);
@@ -175,8 +177,8 @@ export function ReviewCommentItem({
         setIsDeleting(true);
         startTransition(async () => {
             const result = parentCommentId
-                ? await deleteReviewReply(companyId, reviewId, parentCommentId, comment._id)
-                : await deleteReviewComment(companyId, reviewId, comment._id);
+                ? await deleteReviewReply(companyId, reviewId, parentCommentId, comment.id || comment._id || "")
+                : await deleteReviewComment(companyId, reviewId, comment.id || comment._id || "");
 
             setIsDeleting(false);
 
@@ -192,7 +194,10 @@ export function ReviewCommentItem({
         <div className={cn("space-y-3", depth > 0 && "ml-10")}>
             <div className="flex gap-3">
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.nick}`} alt={displayName} />
+                    <AvatarImage
+                        src={comment.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
+                        alt={displayName}
+                    />
                     <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
 
@@ -322,14 +327,14 @@ export function ReviewCommentItem({
                         <div className="mt-3 space-y-3">
                             {replies.map((reply) => (
                                 <ReviewCommentItem
-                                    key={reply._id}
+                                    key={reply.id || reply._id}
                                     comment={reply as any}
                                     companyId={companyId}
                                     reviewId={reviewId}
                                     currentUserId={currentUserId}
                                     onUpdate={onUpdate}
                                     depth={1}
-                                    parentCommentId={comment._id}
+                                    parentCommentId={comment.id || comment._id}
                                 />
                             ))}
                         </div>

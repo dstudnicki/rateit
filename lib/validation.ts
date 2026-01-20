@@ -120,41 +120,26 @@ export function validateSearchQuery(query: string): ValidationResult {
     return { valid: true };
 }
 
-/**
- * Sanitize string input (remove potentially dangerous characters)
- */
 export function sanitizeString(input: string): string {
     if (!input || typeof input !== "string") {
         return "";
     }
 
-    // Remove null bytes
     let sanitized = input.replace(/\0/g, "");
 
-    // Trim whitespace
     sanitized = sanitized.trim();
 
     return sanitized;
 }
 
-/**
- * Check for suspicious patterns in content
- */
 function containsSuspiciousPatterns(content: string): boolean {
     const suspiciousPatterns = [
-        // Script tags
         /<script[^>]*>.*?<\/script>/gi,
-        // Iframe tags
         /<iframe[^>]*>.*?<\/iframe>/gi,
-        // Event handlers
         /on\w+\s*=\s*["'][^"']*["']/gi,
-        // JavaScript protocol
         /javascript:/gi,
-        // Data URLs
         /data:text\/html/gi,
     ];
 
-    return suspiciousPatterns.some(pattern => pattern.test(content));
+    return suspiciousPatterns.some((pattern) => pattern.test(content));
 }
-
-

@@ -6,6 +6,7 @@ import "server-only";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getClient } from "@/lib/mongoose";
+import { ObjectId } from "mongodb";
 
 export type UserRole = "user" | "moderator" | "admin";
 
@@ -16,11 +17,6 @@ export interface AuthUser {
     role: UserRole;
 }
 
-/**
- * Get current user session with role information
- * Note: For server components/actions that just need session without role,
- * use requireUser() from @/app/data/user/require-user instead
- */
 export async function getCurrentUser(): Promise<AuthUser | null> {
     try {
         const session = await auth.api.getSession({
@@ -32,19 +28,16 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         }
 
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
 
         let user;
         try {
-            user = await db.collection("user").findOne(
-                { _id: new ObjectId(session.user.id) },
-                { projection: { email: 1, name: 1, role: 1 } }
-            );
+            user = await db
+                .collection("user")
+                .findOne({ _id: new ObjectId(session.user.id) }, { projection: { email: 1, name: 1, role: 1 } });
         } catch (e) {
-            user = await db.collection("user").findOne(
-                { _id: session.user.id as any },
-                { projection: { email: 1, name: 1, role: 1 } }
-            );
+            user = await db
+                .collection("user")
+                .findOne({ _id: session.user.id as any }, { projection: { email: 1, name: 1, role: 1 } });
         }
 
         if (!user) {
@@ -89,18 +82,11 @@ export async function requireModerator(): Promise<AuthUser> {
     return user;
 }
 
-/**
- * Check if user has admin role
- */
 export async function requireAdmin(): Promise<AuthUser> {
     const user = await requireAuth();
 
-    // Check environment variable for admin emails
-    const adminEmails = process.env.ADMIN_EMAILS
+    const adminEmails = process.env.ADMIN_EMAILS;
 
-    // User is admin if:
-    // 1. Their email is in ADMIN_EMAILS OR
-    // 2. They have role: "admin" in database
     const isAdminByEmail = adminEmails?.includes(user.email);
     const isAdminByRole = user.role === "admin";
 
@@ -111,9 +97,6 @@ export async function requireAdmin(): Promise<AuthUser> {
     return user;
 }
 
-/**
- * Check if user is admin (returns boolean)
- */
 export async function isAdmin(userId?: string): Promise<boolean> {
     try {
         const user = userId ? await getUserById(userId) : await getCurrentUser();
@@ -134,9 +117,6 @@ export async function isAdmin(userId?: string): Promise<boolean> {
     }
 }
 
-/**
- * Check if user is moderator or admin (returns boolean)
- */
 export async function isModerator(userId?: string): Promise<boolean> {
     try {
         const user = userId ? await getUserById(userId) : await getCurrentUser();
@@ -175,19 +155,15 @@ export async function canModifyResource(resourceOwnerId: string): Promise<boolea
 async function getUserById(userId: string): Promise<AuthUser | null> {
     try {
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         let user;
         try {
-            user = await db.collection("user").findOne(
-                { _id: new ObjectId(userId) },
-                { projection: { email: 1, name: 1, role: 1 } }
-            );
+            user = await db
+                .collection("user")
+                .findOne({ _id: new ObjectId(userId) }, { projection: { email: 1, name: 1, role: 1 } });
         } catch (e) {
-            user = await db.collection("user").findOne(
-                { _id: userId as any },
-                { projection: { email: 1, name: 1, role: 1 } }
-            );
+            user = await db.collection("user").findOne({ _id: userId as any }, { projection: { email: 1, name: 1, role: 1 } });
         }
 
         if (!user) {
@@ -215,19 +191,13 @@ export async function setUserRole(userId: string, role: UserRole): Promise<boole
         await requireAdmin();
 
         const db = await getClient();
-        const { ObjectId } = require('mongodb');
+        const { ObjectId } = require("mongodb");
 
         let result;
         try {
-            result = await db.collection("user").updateOne(
-                { _id: new ObjectId(userId) },
-                { $set: { role } }
-            );
+            result = await db.collection("user").updateOne({ _id: new ObjectId(userId) }, { $set: { role } });
         } catch (e) {
-            result = await db.collection("user").updateOne(
-                { _id: userId as any },
-                { $set: { role } }
-            );
+            result = await db.collection("user").updateOne({ _id: userId as any }, { $set: { role } });
         }
 
         return result.modifiedCount > 0;
@@ -236,4 +206,3 @@ export async function setUserRole(userId: string, role: UserRole): Promise<boole
         return false;
     }
 }
-

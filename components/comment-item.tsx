@@ -30,34 +30,40 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface ReplyData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-        slug?: string;
+    id: string;
+    _id?: string;
+    author: {
         fullName?: string | null;
-        image?: string | null;
-        userImage?: string | null;
+        name?: string | null;
+        nick?: string | null;
+        avatar?: string | null;
     };
     content: string;
-    likes: string[];
+    likesCount: number;
+    isLiked?: boolean;
+    replies: ReplyData[];
     createdAt: string;
 }
 
 interface CommentData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-        slug?: string;
+    id: string;
+    _id?: string;
+    author: {
         fullName?: string | null;
-        image?: string | null;
-        userImage?: string | null;
+        name?: string | null;
+        nick?: string | null;
+        avatar?: string | null;
     };
     content: string;
-    likes: string[];
+    likesCount: number;
+    isLiked?: boolean;
     replies: ReplyData[];
     createdAt: string;
+    permissions?: {
+        canEdit: boolean;
+        canDelete: boolean;
+        canComment?: boolean;
+    };
 }
 
 interface CommentItemProps {
@@ -70,8 +76,9 @@ interface CommentItemProps {
 }
 
 export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdate, parentCommentId }: CommentItemProps) {
-    const [isLiked, setIsLiked] = useState(comment.likes.includes(currentUserId || ""));
-    const [likesCount, setLikesCount] = useState(comment.likes.length);
+    // use DTO fields (likesCount, isLiked)
+    const [isLiked, setIsLiked] = useState(!!comment.isLiked);
+    const [likesCount, setLikesCount] = useState(comment.likesCount || 0);
     const [isReplying, setIsReplying] = useState(false);
     const [replyContent, setReplyContent] = useState("");
     const [replies, setReplies] = useState<ReplyData[]>(comment.replies || []);
@@ -83,29 +90,31 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
 
     useEffect(() => {
         setReplies(comment.replies || []);
-    }, [comment.replies]);
+        setIsLiked(!!comment.isLiked);
+        setLikesCount(comment.likesCount || 0);
+    }, [comment.replies, comment.isLiked, comment.likesCount]);
 
-    const targetCommentId = parentCommentId || comment._id;
-    const isOwnComment = currentUserId === comment.user._id;
-    const displayName = comment.user.fullName || comment.user.name;
-    const profileSlug = comment.user.slug || comment.user.name;
-    const userAvatar = comment.user.userImage || comment.user.image;
+    const targetCommentId = parentCommentId || comment.id || comment._id;
+    const isOwnComment = !!(comment.permissions?.canEdit || comment.permissions?.canDelete);
+    const displayName = comment.author?.fullName || comment.author?.name || comment.author?.nick || "Anonymous";
+    const profileSlug = comment.author?.nick || comment.author?.name || "";
+    const userAvatar = comment.author?.avatar || undefined;
 
     const handleLike = async () => {
         const result = parentCommentId
-            ? await toggleReplyLike(postId, parentCommentId, comment._id)
-            : await toggleCommentLike(postId, comment._id);
+            ? await toggleReplyLike(postId, parentCommentId, comment.id || comment._id || "")
+            : await toggleCommentLike(postId, comment.id || comment._id || "");
 
         if (result.success) {
-            setIsLiked(result.isLiked!);
-            setLikesCount(result.likesCount!);
+            setIsLiked(!!result.isLiked);
+            setLikesCount(result.likesCount ?? likesCount);
         }
     };
 
     const handleReply = async (replyToUsername?: string) => {
         if (!replyContent.trim()) return;
 
-        const result = await addReply(replyContent, postId, targetCommentId, replyToUsername);
+        const result = await addReply(replyContent, postId, targetCommentId!, replyToUsername);
         if (result.success) {
             setReplyContent("");
             setIsReplying(false);
@@ -122,8 +131,8 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
     const handleSaveEdit = () => {
         startTransition(async () => {
             const result = parentCommentId
-                ? await updateReply(postId, parentCommentId, comment._id, editedContent)
-                : await updateComment(postId, comment._id, editedContent);
+                ? await updateReply(postId, parentCommentId, comment.id || comment._id || "", editedContent)
+                : await updateComment(postId, comment.id || comment._id || "", editedContent);
 
             if (result.success) {
                 setIsEditing(false);
@@ -149,8 +158,8 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
         setIsDeleting(true);
         startTransition(async () => {
             const result = parentCommentId
-                ? await deleteReply(postId, parentCommentId, comment._id)
-                : await deleteComment(postId, comment._id);
+                ? await deleteReply(postId, parentCommentId, comment.id || comment._id || "")
+                : await deleteComment(postId, comment.id || comment._id || "");
 
             setIsDeleting(false);
 
@@ -168,7 +177,7 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                 <Link href={`/${profileSlug}`}>
                     <Avatar className="h-8 w-8">
                         <AvatarImage
-                            src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user.name}`}
+                            src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
                             alt={displayName}
                         />
                         <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
@@ -286,13 +295,13 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                         <div className="mt-3 space-y-3">
                             {replies.map((reply) => (
                                 <CommentItem
-                                    key={reply._id}
-                                    comment={reply as any}
+                                    key={reply.id || reply._id}
+                                    comment={reply as unknown as ReplyData}
                                     postId={postId}
                                     currentUserId={currentUserId}
                                     onUpdate={onUpdate}
                                     depth={1}
-                                    parentCommentId={comment._id}
+                                    parentCommentId={comment.id || comment._id}
                                 />
                             ))}
                         </div>

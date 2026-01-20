@@ -37,18 +37,16 @@ export const auth = betterAuth({
     session: {
         cookieCache: {
             enabled: true,
-            maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
+            maxAge: 5 * 60,
         },
     },
     advanced: {
-        // Add custom redirect after OAuth success
         useSecureCookies: process.env.NODE_ENV === "production",
-        // Explicitly set cookie options for production to ensure cookies work on Vercel
         cookieOptions: {
-            sameSite: "lax", // Important: "lax" works with OAuth redirects and cross-origin
+            sameSite: "lax",
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            path: "/", // Ensure cookie is available across entire site
+            path: "/",
         },
     },
     plugins: [nextCookies()],

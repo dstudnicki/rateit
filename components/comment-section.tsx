@@ -6,35 +6,37 @@ import { authClient } from "@/lib/auth-client";
 import { CommentForm } from "@/components/comment-form";
 import { getComments } from "@/app/data/posts/get-comments";
 
+interface AuthorPublic {
+    fullName?: string | null;
+    name?: string | null;
+    nick?: string | null;
+    avatar?: string | null;
+}
+
 interface ReplyData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-        slug?: string;
-        fullName?: string | null;
-        image?: string | null;
-        userImage?: string | null;
-    };
+    id: string;
+    _id?: string;
+    author: AuthorPublic;
     content: string;
-    likes: string[];
+    likesCount: number;
+    isLiked?: boolean;
     createdAt: string;
 }
 
 interface CommentData {
-    _id: string;
-    user: {
-        _id: string | undefined;
-        name: string;
-        slug?: string;
-        fullName?: string | null;
-        image?: string | null;
-        userImage?: string | null;
-    };
+    id: string;
+    _id?: string;
+    author: AuthorPublic;
     content: string;
-    likes: string[];
+    likesCount: number;
+    isLiked?: boolean;
     replies: ReplyData[];
     createdAt: string;
+    permissions?: {
+        canEdit: boolean;
+        canDelete: boolean;
+        canComment?: boolean;
+    };
 }
 
 interface CommentSectionProps {
@@ -60,7 +62,8 @@ export function CommentSection({ postId }: CommentSectionProps) {
     const fetchComments = useCallback(async () => {
         try {
             const data = await getComments(postId);
-            setComments(data);
+            // assume server returns CommentPublicDTO[]
+            setComments(data || []);
         } catch {
             // Error fetching comments
         } finally {
@@ -113,8 +116,8 @@ export function CommentSection({ postId }: CommentSectionProps) {
             <div className="space-y-3">
                 {comments.map((singleComment) => (
                     <CommentItem
-                        key={singleComment._id}
-                        comment={singleComment}
+                        key={singleComment.id || singleComment._id}
+                        comment={singleComment as any}
                         postId={postId}
                         currentUserId={currentUser?.id}
                         onUpdate={handleCommentAdded}

@@ -43,7 +43,8 @@ export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDi
         reviewType: "work" as "work" | "interview",
         nick: "",
     });
-
+    console.log(existingReviews);
+    console.log(hasReviewed);
     // Check if user has already reviewed this company
     useEffect(() => {
         if (currentUserId && existingReviews) {

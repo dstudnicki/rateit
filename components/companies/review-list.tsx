@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { ReviewCommentSection } from "./review-comment-section";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
@@ -25,25 +24,44 @@ import {
     AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
+interface CommentDTO {
+    id?: string;
+    _id?: string;
+    content?: string;
+    likesCount?: number;
+    isLiked?: boolean;
+    createdAt?: string;
+    replies?: CommentDTO[];
+    author?: { nick?: string | null };
+    permissions?: { canEdit?: boolean; canDelete?: boolean };
+}
+
 interface Review {
-    _id: string;
-    title: string;
-    content: string;
-    rating: number;
-    role: string;
-    reviewType: "work" | "interview";
-    nick: string;
+    _id?: string;
+    id?: string;
+    title?: string;
+    content?: string;
+    rating?: number;
+    role?: string;
+    reviewType?: "work" | "interview";
+    nick?: string | null;
+    author?: { nick?: string | null } | null;
     user: {
-        _id: string;
+        _id: string | undefined;
         name: string;
         slug?: string;
         fullName?: string | null;
-        image?: string;
-        email?: string;
-    };
-    likes: string[];
-    comments: any[];
-    createdAt: string;
+        headline?: string | null;
+        image?: string | null;
+    }; // internal use only, not exposed in DTO
+    likes?: string[]; // legacy
+    likesCount?: number; // DTO
+    isLiked?: boolean; // DTO
+    comments?: CommentDTO[];
+    commentsCount?: number;
+    createdAt?: string;
+    updatedAt?: string | null;
+    permissions?: { canEdit?: boolean; canDelete?: boolean; canComment?: boolean };
 }
 
 interface ReviewListProps {
@@ -65,10 +83,11 @@ function StarRating({ rating }: { rating: number }) {
     );
 }
 
-function getTimeAgo(date: string): string {
+function getTimeAgo(date?: string): string {
+    if (!date) return "just now";
     const now = new Date();
     const reviewDate = new Date(date);
-    const diffMs = now.getTime() - reviewDate.getTime();
+    const diffMs = Math.max(0, now.getTime() - reviewDate.getTime());
     const diffMins = Math.floor(diffMs / 60000);
 
     if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
@@ -97,11 +116,12 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
 
     // Filter reviews based on rating and type
     const filteredReviews = reviews.filter((review) => {
+        const rating = review.rating ?? 0;
         if (filter === "all") return true;
         if (filter === "interviews") return review.reviewType === "interview";
-        if (filter === "positive") return review.rating >= 4;
-        if (filter === "mixed") return review.rating >= 3 && review.rating <= 4;
-        if (filter === "negative") return review.rating <= 2;
+        if (filter === "positive") return rating >= 4;
+        if (filter === "mixed") return rating >= 3 && rating <= 4;
+        if (filter === "negative") return rating <= 2;
         return true;
     });
 
@@ -156,18 +176,60 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
     return (
         <div className="space-y-4">
             {filteredReviews.map((review) => {
-                const isExpanded = expandedReview === review._id;
-                const likesCount = review.likes?.length || 0;
-                const commentsCount = review.comments?.length || 0;
-                const isLiked = currentUserId ? review.likes?.includes(currentUserId) : false;
-                const displayName = review.nick || "Anonymous";
-                const isOwnReview = currentUserId === review.user._id;
+                const reviewId = String((review as any)._id ?? (review as any).id ?? "");
+                if (!reviewId) return null;
+
+                const isExpanded = expandedReview === reviewId;
+
+                // support both legacy shape (likes array, user._id) and new public DTO (likesCount, isLiked, permissions)
+                const likesCount =
+                    (review as any).likesCount ?? (Array.isArray((review as any).likes) ? (review as any).likes.length : 0);
+                const commentsCount =
+                    (review as any).commentsCount ??
+                    (Array.isArray((review as any).comments) ? (review as any).comments.length : 0);
+                const isLiked =
+                    (review as any).isLiked ??
+                    (currentUserId && Array.isArray((review as any).likes)
+                        ? (review as any).likes.includes(currentUserId)
+                        : false);
+
+                const displayName = (review as any).nick || (review as any).author?.nick || "Anonymous";
+
+                // Normalize possible owner id shapes: review.user can be an object {_id}, a string id, or missing; author likewise
+                const rawUser = (review as any).user;
+                const rawAuthor = (review as any).author;
+                const userIdFromReview =
+                    rawUser && typeof rawUser === "object" && rawUser._id
+                        ? String(rawUser._id)
+                        : typeof rawUser === "string"
+                          ? rawUser
+                          : undefined;
+                const userIdFromAuthor =
+                    rawAuthor && typeof rawAuthor === "object" && rawAuthor._id
+                        ? String(rawAuthor._id)
+                        : typeof rawAuthor === "string"
+                          ? rawAuthor
+                          : undefined;
+
+                const resolvedAuthorId = userIdFromReview ?? userIdFromAuthor ?? undefined;
+
+                // Prefer permissions computed on server (no userId leaked). Fall back to client-side id compare only if permissions missing.
+                const isOwnReview = !!(
+                    (review as any).permissions?.canDelete ||
+                    (review as any).permissions?.canEdit ||
+                    (currentUserId && resolvedAuthorId && currentUserId === resolvedAuthorId)
+                );
+
+                // Pass normalized author id down only for legacy shapes; keep it undefined if permissions are present (no userId leak)
+                const reviewAuthorId = review.permissions ? undefined : resolvedAuthorId;
 
                 return (
-                    <Card key={review._id} className="p-6">
+                    <Card key={reviewId} className="p-6">
                         <div className="flex items-start gap-4">
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${review.nick}`} />
+                                <AvatarImage
+                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(review.nick || review.author?.nick || "anon")}`}
+                                />
                                 <AvatarFallback>{displayName?.slice(0, 2).toUpperCase() || "AN"}</AvatarFallback>
                             </Avatar>
 
@@ -180,21 +242,26 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                                 {getTimeAgo(review.createdAt)}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">{review.role}</p>
+                                        <p className="text-sm text-muted-foreground">{(review as any).role}</p>
                                     </div>
 
                                     {/* Dropdown menu for owner only */}
                                     {isOwnReview && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    aria-label="Opcje opinii"
+                                                >
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem
                                                     className="text-destructive focus:text-destructive cursor-pointer"
-                                                    onClick={() => handleDelete(review._id)}
+                                                    onClick={() => handleDelete(reviewId)}
                                                     disabled={isDeleting}
                                                 >
                                                     <Trash2 className="h-4 w-4 mr-2" />
@@ -206,8 +273,8 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-2">
-                                    <StarRating rating={review.rating} />
-                                    <span className="text-sm font-medium">{review.rating}/5</span>
+                                    <StarRating rating={review.rating ?? 0} />
+                                    <span className="text-sm font-medium">{review.rating ?? 0}/5</span>
                                 </div>
 
                                 <h4 className="font-semibold mt-3">{review.title}</h4>
@@ -221,17 +288,17 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                             ? "Doświadczenie rekrutacyjne"
                                             : "Doświadczenie zawodowe"}
                                     </Badge>
-                                    {review.rating >= 4 && (
+                                    {(review.rating ?? 0) >= 4 && (
                                         <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
                                             Pozytywna
                                         </Badge>
                                     )}
-                                    {review.rating <= 4 && review.rating >= 3 && (
+                                    {(review.rating ?? 0) <= 4 && (review.rating ?? 0) >= 3 && (
                                         <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
                                             Mieszana
                                         </Badge>
                                     )}
-                                    {review.rating <= 2 && (
+                                    {(review.rating ?? 0) <= 2 && (
                                         <Badge variant="secondary" className="text-xs bg-red-100 text-red-800">
                                             Negatywna
                                         </Badge>
@@ -265,8 +332,8 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                         variant="ghost"
                                         size="sm"
                                         className={cn("flex-1 gap-2 h-9", isLiked && "text-destructive hover:text-destructive")}
-                                        onClick={() => handleLike(review._id)}
-                                        disabled={likingReviews.has(review._id)}
+                                        onClick={() => handleLike(reviewId)}
+                                        disabled={likingReviews.has(reviewId)}
                                     >
                                         <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
                                         <span className="text-sm font-medium">Lubię to</span>
@@ -276,7 +343,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                         variant="ghost"
                                         size="sm"
                                         className={cn("flex-1 gap-2 h-9", isExpanded && "bg-secondary")}
-                                        onClick={() => setExpandedReview(isExpanded ? null : review._id)}
+                                        onClick={() => setExpandedReview(isExpanded ? null : reviewId)}
                                     >
                                         <MessageSquare className="h-4 w-4" />
                                         <span className="text-sm font-medium">Komentuj</span>
@@ -288,10 +355,10 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                     <div className="mt-4 pt-4 border-t">
                                         <ReviewCommentSection
                                             companyId={companyId}
-                                            reviewId={review._id}
+                                            reviewId={reviewId}
                                             comments={review.comments || []}
                                             onUpdate={() => router.refresh()}
-                                            reviewAuthorId={review.user._id}
+                                            canComment={review.permissions?.canComment ?? false}
                                         />
                                     </div>
                                 )}
