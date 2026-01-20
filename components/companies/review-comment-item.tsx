@@ -193,14 +193,6 @@ export function ReviewCommentItem({
     return (
         <div className={cn("space-y-3", depth > 0 && "ml-10")}>
             <div className="flex gap-3">
-                <Avatar className="h-8 w-8">
-                    <AvatarImage
-                        src={comment.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
-                        alt={displayName}
-                    />
-                    <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-
                 <div className="flex-1 min-w-0">
                     <div className="bg-secondary/50 rounded-lg p-3">
                         <div className="flex items-start justify-between gap-2">

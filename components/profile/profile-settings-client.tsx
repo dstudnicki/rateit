@@ -58,7 +58,7 @@ export function ProfileSettingsClient({ user, profile }: ProfileSettingsClientPr
 
         try {
             setIsUploadingAvatar(true);
-            toast.loading("Uploading avatar...", { id: "avatar-upload" });
+            toast.loading("Dodawanie zdjęcia profilowego...", { id: "avatar-upload" });
 
             const compressedFile = await compressImage(file, {
                 maxSizeMB: 1,

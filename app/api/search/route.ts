@@ -14,8 +14,9 @@ export interface ProfileSearchResult {
     location: string;
     user: {
         name: string;
-        // email removed - not needed for public display, GDPR/privacy protection
         image: string | null;
+        userImage: string | null;
+        avatar: string | null;
     };
     score?: number;
 }
@@ -107,13 +108,6 @@ function calculateScore(item: any, query: string, type: "profile" | "company" | 
             return 40;
         }
     }
-
-    // TODO: If useFuzzy option enabled, integrate fuse.js here for better matching
-    // const fuseOptions = {
-    //   profile: { keys: ['fullName', 'headline', 'slug'], threshold: 0.4 },
-    //   company: { keys: ['name', 'industry', 'slug'], threshold: 0.4 },
-    //   post: { keys: ['content'], threshold: 0.5 }
-    // }
 
     return 0;
 }
@@ -208,6 +202,8 @@ export async function GET(request: NextRequest) {
                             name: user.name || "",
                             // email removed - GDPR/privacy protection
                             image: user.userImage || user.image || null,
+                            userImage: user.userImage || null,
+                            avatar: user.avatar || null,
                         },
                         score: calculateScore({ ...profile, user }, query, "profile"),
                     };

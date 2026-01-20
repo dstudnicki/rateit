@@ -100,7 +100,7 @@ export function AddCompanyDialog() {
             });
 
             if (!result.success) {
-                setError(result.error || "Failed to create company");
+                setError(result.error || "Nie udało się dodać firmy");
                 setIsSubmitting(false);
                 return;
             }
@@ -152,7 +152,7 @@ export function AddCompanyDialog() {
                 router.push(`/companies/${result.slug}`);
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError("Wystąpił niespodziewany błąd");
         } finally {
             setIsSubmitting(false);
         }
@@ -344,7 +344,7 @@ export function AddCompanyDialog() {
                         <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
                             Anuluj
                         </Button>
-                        <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? "Dodawanie..." : "Dodaj firmę"}
                         </Button>
                     </div>

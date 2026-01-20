@@ -34,7 +34,7 @@ export function DataPrivacySettingsClient({ rodoConsent, rodoConsentSource }: Da
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [confirmText, setConfirmText] = useState("");
-
+    console.log(rodoConsentSource);
     const isOAuthConsent = rodoConsentSource === "oauth";
 
     const handleConsentChange = async (newConsent: boolean) => {

@@ -226,7 +226,7 @@ export function AddReviewDialog({ companyId, existingReviews = [] }: AddReviewDi
                         <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
                             Anuluj
                         </Button>
-                        <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isSubmitting || hasReviewed}>
+                        <Button type="submit" disabled={isSubmitting || hasReviewed}>
                             {isSubmitting ? "Wysyłanie..." : hasReviewed ? "Już ocenione" : "Wyślij opinię"}
                         </Button>
                     </DialogFooter>

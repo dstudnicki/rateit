@@ -140,9 +140,6 @@ export default function AdminCommentsPage() {
                                         >
                                             {comment.type === "post" ? "Post Comment" : "Company Review"}
                                         </div>
-                                        <span className="text-sm text-gray-600">
-                                            by {comment.user.name} ({comment.user.email})
-                                        </span>
                                     </div>
 
                                     <p className="text-gray-900 mb-4 whitespace-pre-wrap">{comment.content}</p>

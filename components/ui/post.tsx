@@ -196,11 +196,14 @@ export function PostCard({ post }: PostCardProps) {
             <div className="flex items-start gap-3">
                 <Link href={`/${profileSlug}`}>
                     <Avatar>
-                        <AvatarImage
-                            src={post.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.name}`}
-                            alt={displayName}
-                        />
-                        <AvatarFallback>{displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={post.user.image || undefined} alt={displayName} />
+                        <AvatarFallback>
+                            {displayName
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                        </AvatarFallback>
                     </Avatar>
                 </Link>
 

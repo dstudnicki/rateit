@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MessageCircle, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -53,6 +53,7 @@ interface CommentData {
         name?: string | null;
         nick?: string | null;
         avatar?: string | null;
+        userImage?: string | null | undefined;
     };
     content: string;
     likesCount: number;
@@ -93,12 +94,13 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
         setIsLiked(!!comment.isLiked);
         setLikesCount(comment.likesCount || 0);
     }, [comment.replies, comment.isLiked, comment.likesCount]);
-
+    console.log(comment);
     const targetCommentId = parentCommentId || comment.id || comment._id;
     const isOwnComment = !!(comment.permissions?.canEdit || comment.permissions?.canDelete);
     const displayName = comment.author?.fullName || comment.author?.name || comment.author?.nick || "Anonymous";
     const profileSlug = comment.author?.nick || comment.author?.name || "";
-    const userAvatar = comment.author?.avatar || undefined;
+    const userAvatar = comment.author?.avatar ?? undefined;
+    console.log(displayName);
 
     const handleLike = async () => {
         const result = parentCommentId
@@ -176,11 +178,14 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
             <div className="flex gap-3">
                 <Link href={`/${profileSlug}`}>
                     <Avatar className="h-8 w-8">
-                        <AvatarImage
-                            src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
-                            alt={displayName}
-                        />
-                        <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={userAvatar || undefined} alt={displayName} />
+                        <AvatarFallback>
+                            {displayName
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                        </AvatarFallback>
                     </Avatar>
                 </Link>
 

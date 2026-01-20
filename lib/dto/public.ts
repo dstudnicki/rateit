@@ -6,6 +6,7 @@ export type AuthorPublicPost = {
     name?: string | null;
     nick?: string | null;
     avatar?: string | null;
+    userImage?: string | null;
 };
 
 export type AuthorPublicCompany = {
@@ -84,7 +85,10 @@ export type PostPublicDTO = {
 };
 
 // Helper to safely convert a comment/reply doc to CommentPublicDTO
-export function toCommentPublicDTO(commentDoc: any, authorProfile?: any, sessionUserId?: string): CommentPublicDTO {
+// NOTE: 2nd arg can be either:
+// - authorProfile (old usage), OR
+// - profileMap: Record<userId, authorProfile> (new usage for nested replies)
+export function toCommentPublicDTO(commentDoc: any, authorProfileOrMap?: any, sessionUserId?: string): CommentPublicDTO {
     const id = commentDoc._id ? String(commentDoc._id) : commentDoc.id || "";
     const likesCount = Array.isArray(commentDoc.likes) ? commentDoc.likes.length : 0;
     const createdAt = commentDoc.createdAt ? new Date(commentDoc.createdAt).toISOString() : new Date().toISOString();
@@ -96,16 +100,41 @@ export function toCommentPublicDTO(commentDoc: any, authorProfile?: any, session
         commentDoc.likes.map((x: any) => String(x)).includes(String(sessionUserId))
     );
 
-    // author: prefer provided authorProfile, then comment.nick
+    const userIdString = commentDoc.user ? String(commentDoc.user) : undefined;
+
+    // Back-compat: accept either authorProfile OR profileMap
+    let profileMap: Record<string, any> | undefined = undefined;
+    let authorProfile: any = undefined;
+
+    if (authorProfileOrMap && typeof authorProfileOrMap === "object") {
+        const hasProfileFields =
+            "slug" in authorProfileOrMap ||
+            "fullName" in authorProfileOrMap ||
+            "image" in authorProfileOrMap ||
+            "userImage" in authorProfileOrMap;
+
+        if (hasProfileFields) {
+            authorProfile = authorProfileOrMap;
+        } else {
+            profileMap = authorProfileOrMap as Record<string, any>;
+        }
+    }
+
+    // If profileMap provided, use the correct author for this (comment or reply)
+    if (profileMap && userIdString) {
+        authorProfile = profileMap[userIdString];
+    }
+
+    // author: prefer authorProfile, then fallback fields stored on commentDoc
     const author: AuthorPublicPost = {
         fullName: authorProfile?.fullName || commentDoc.fullName || undefined,
-        name: undefined,
         nick: commentDoc.nick || authorProfile?.slug || undefined,
-        avatar: authorProfile?.image || commentDoc.image || undefined,
+        userImage: authorProfile?.userImage ?? null,
+        avatar: authorProfile?.userImage || authorProfile?.image || commentDoc.image || null,
     };
 
     // permissions: server should compute based on DB-user vs session.user.id
-    const isOwner = !!(sessionUserId && commentDoc.user && String(commentDoc.user) === String(sessionUserId));
+    const isOwner = !!(sessionUserId && userIdString && String(userIdString) === String(sessionUserId));
     const permissions: Permissions = {
         canEdit: !!isOwner,
         canDelete: !!isOwner,
@@ -120,7 +149,10 @@ export function toCommentPublicDTO(commentDoc: any, authorProfile?: any, session
         isLiked,
         createdAt,
         replies: Array.isArray(commentDoc.replies)
-            ? commentDoc.replies.map((r: any) => toCommentPublicDTO(r, undefined, sessionUserId))
+            ? commentDoc.replies.map((r: any) =>
+                  // IMPORTANT: pass profileMap further so nested replies can resolve authors
+                  toCommentPublicDTO(r, profileMap, sessionUserId),
+              )
             : [],
         author,
         permissions,
@@ -140,6 +172,7 @@ export function toReviewPublicDTO(reviewDoc: any, authorProfile?: any, sessionUs
         nick: reviewDoc.nick || authorProfile?.slug || undefined,
         avatar: authorProfile?.image || undefined,
     };
+
     const reviewUserId =
         typeof reviewDoc.user === "string"
             ? reviewDoc.user
@@ -188,7 +221,6 @@ export function toCompanyPublicDTO(
 
     const reviews = Array.isArray(companyDoc.reviews)
         ? companyDoc.reviews.map((r: any) => {
-              // authorProfile might be looked up in profileMap by r.user (userId) if provided by caller
               const authorProfile = r.user ? profileMap?.[String(r.user)] : undefined;
               return toReviewPublicDTO(r, authorProfile, sessionUserId);
           })
@@ -213,7 +245,7 @@ export function toCompanyPublicDTO(
 }
 
 export function toPostPublicDTO(postDoc: any, authorProfile?: any, sessionUserId?: string): PostPublicDTO {
-    const id = postDoc._id ? String(postDoc._1) : postDoc.id || "";
+    const id = postDoc._id ? String(postDoc._id) : postDoc.id || "";
     const likesCount = Array.isArray(postDoc.likes) ? postDoc.likes.length : 0;
     const isLiked = !!(
         sessionUserId &&
@@ -225,7 +257,8 @@ export function toPostPublicDTO(postDoc: any, authorProfile?: any, sessionUserId
         fullName: authorProfile?.fullName || null,
         name: undefined,
         nick: authorProfile?.slug || null,
-        avatar: authorProfile?.image || null,
+        avatar: authorProfile?.userImage || authorProfile?.image || null,
+        userImage: authorProfile?.userImage ?? null,
     };
 
     const permissions: Permissions = {

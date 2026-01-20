@@ -166,7 +166,7 @@ export default function OnboardingPage() {
             const result = await saveUserPreferences(preferences);
 
             if (result.success) {
-                router.push("/profile/settings");
+                router.push("/profile");
             } else {
                 setError(result.error || "Nie udało się zapisać preferencji");
                 setIsSubmitting(false);
@@ -192,7 +192,7 @@ export default function OnboardingPage() {
             const result = await saveUserPreferences(preferences);
 
             if (result.success) {
-                router.push("/profile/settings");
+                router.push("/profile");
             } else {
                 setError(result.error || "Nie udało się zapisać preferencji");
                 setIsSubmitting(false);

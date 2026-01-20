@@ -67,15 +67,15 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
 
         // Validate file size
         if (file.size > 5 * 1024 * 1024) {
-            toast.error("File too large", {
-                description: "Avatar must be less than 5MB",
+            toast.error("Plik za duży", {
+                description: "Zdjęcie profilowe musi mieć mniej niż 5MB",
             });
             return;
         }
 
         try {
             setIsUploadingAvatar(true);
-            toast.loading("Uploading avatar...", { id: "avatar-upload" });
+            toast.loading("Dodawanie zdjęcia profilowego...", { id: "avatar-upload" });
 
             // Compress image
             const compressedFile = await compressImage(file, {
@@ -92,7 +92,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
             if (result.success && result.url) {
                 toast.success("Avatar updated!", {
                     id: "avatar-upload",
-                    description: "Your profile picture has been updated",
+                    description: "Twoje zdjęcie profilowe zostało zaktualizowane",
                 });
 
                 // Wait a bit for DB to update, then refresh
@@ -101,7 +101,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
             } else {
                 toast.error("Upload failed", {
                     id: "avatar-upload",
-                    description: result.error || "Failed to upload avatar",
+                    description: result.error || "Nie udało się przesłać zdjęcia profilowego",
                 });
             }
         } catch (error) {
@@ -264,7 +264,7 @@ export function ProfileHeader({ user, profile, isOwnProfile = true }: ProfileHea
     };
 
     const displayName = profile.fullName || user.name || "User";
-    const avatarUrl = user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`;
+    const avatarUrl = user.image || undefined;
     const backgroundUrl = profile.backgroundImage;
 
     return (

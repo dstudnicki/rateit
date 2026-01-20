@@ -68,12 +68,7 @@ export async function ProfileActivity({ userId }: ProfileActivityProps) {
                                 <div key={post._id}>
                                     <div className="flex gap-3 mb-3">
                                         <Avatar className="h-10 w-10">
-                                            <AvatarImage
-                                                src={
-                                                    post.user?.image ||
-                                                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user?.email || post.user?.name}`
-                                                }
-                                            />
+                                            <AvatarImage src={post.user?.image || undefined} />
                                             <AvatarFallback>{displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1">

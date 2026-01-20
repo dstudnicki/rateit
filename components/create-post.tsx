@@ -91,11 +91,14 @@ export function CreatePost() {
             {sessionData ? (
                 <div className="flex gap-3">
                     <Avatar className="h-12 w-12">
-                        <AvatarImage
-                            src={userImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
-                            className=" object-center object-cover"
-                        />
-                        <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={userImage || undefined} className=" object-center object-cover" />
+                        <AvatarFallback>
+                            {userName
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                        </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1">

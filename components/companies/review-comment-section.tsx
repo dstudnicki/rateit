@@ -11,6 +11,7 @@ import { ReviewCommentItem } from "@/components/companies/review-comment-item";
 import { authClient } from "@/lib/auth-client";
 import { addCommentToReview } from "@/app/actions/companies";
 import { toast } from "sonner";
+import DefaultAvatar from "../../public/default-profile.png";
 
 interface ReplyData {
     id?: string;
@@ -157,12 +158,6 @@ export function ReviewCommentSection({ companyId, reviewId, comments, onUpdate, 
         <div className="space-y-4">
             {/* Inline Comment Form */}
             <div className="flex gap-3">
-                <Avatar className="h-9 w-9">
-                    <AvatarImage
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.data?.user?.email || session.data?.user?.name}`}
-                    />
-                    <AvatarFallback>Ty</AvatarFallback>
-                </Avatar>
                 <div className="flex-1 space-y-2">
                     {isReviewAuthor ? (
                         <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">

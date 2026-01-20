@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { getPersonalizedSearchResults } from "@/app/actions/search";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,8 +19,8 @@ interface ProfileResult {
     location: string;
     user: {
         name: string;
-        email: string;
         image: string | null;
+        userImage: string | null;
     };
     score?: number;
 }
@@ -166,6 +166,7 @@ export default function SearchPage() {
     const showCompanies = activeTab === "all" || activeTab === "company";
 
     const users = results?.profiles || [];
+    console.log(users);
     const companies = results?.companies || [];
     const posts = results?.posts || [];
 
@@ -253,14 +254,14 @@ export default function SearchPage() {
                                         <Card key={user._id} className="p-6">
                                             <div className="flex items-start gap-4">
                                                 <Avatar className="h-16 w-16">
-                                                    <AvatarImage
-                                                        src={
-                                                            user.user.image ||
-                                                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user.name}`
-                                                        }
-                                                    />
+                                                    <AvatarImage src={user.user.userImage || user.user.image || undefined} />
+
                                                     <AvatarFallback>
-                                                        {user.user.name.charAt(0).toUpperCase() || "User"}
+                                                        {user.user.name
+                                                            .split(" ")
+                                                            .map((n) => n[0])
+                                                            .join("")
+                                                            .toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex-1">
@@ -299,14 +300,13 @@ export default function SearchPage() {
                                             <div className="flex items-start gap-3 mb-3">
                                                 <Link href={`/${post.user?.slug || "unknown"}`}>
                                                     <Avatar className="h-12 w-12 cursor-pointer">
-                                                        <AvatarImage
-                                                            src={
-                                                                post.user?.image ||
-                                                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user?.name}`
-                                                            }
-                                                        />
+                                                        <AvatarImage src={post.user?.image || undefined} />
                                                         <AvatarFallback>
-                                                            {post.user?.name?.charAt(0).toUpperCase() || "U"}
+                                                            {post.user?.name
+                                                                .split(" ")
+                                                                .map((n) => n[0])
+                                                                .join("")
+                                                                .toUpperCase()}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                 </Link>

@@ -72,14 +72,14 @@ export default function AuthButtons({ setMobileMenuOpen }: AuthButtonsProps) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="flex items-center gap-2 h-14 pl-2 border-l ml-2">
                             <Avatar className="h-9 w-9">
-                                <AvatarImage
-                                    className="object-cover object-center"
-                                    src={
-                                        userImage ||
-                                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${sessionData?.user?.email || userName}`
-                                    }
-                                />
-                                <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                <AvatarImage className="object-cover object-center" src={userImage || undefined} />
+                                <AvatarFallback>
+                                    {userName
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")
+                                        .toUpperCase()}
+                                </AvatarFallback>
                             </Avatar>
                             <ChevronDown className="h-4 w-4 hidden lg:inline" />
                         </Button>

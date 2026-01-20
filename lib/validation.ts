@@ -7,9 +7,6 @@ export interface ValidationResult {
     error?: string;
 }
 
-/**
- * Validate post content
- */
 export function validatePostContent(content: string): ValidationResult {
     if (!content || typeof content !== "string") {
         return { valid: false, error: "Content is required" };
@@ -25,7 +22,6 @@ export function validatePostContent(content: string): ValidationResult {
         return { valid: false, error: "Content must be less than 5000 characters" };
     }
 
-    // Check for malicious patterns
     if (containsSuspiciousPatterns(trimmed)) {
         return { valid: false, error: "Content contains suspicious patterns" };
     }
@@ -33,9 +29,6 @@ export function validatePostContent(content: string): ValidationResult {
     return { valid: true };
 }
 
-/**
- * Validate comment content
- */
 export function validateCommentContent(content: string): ValidationResult {
     if (!content || typeof content !== "string") {
         return { valid: false, error: "Comment is required" };
@@ -58,9 +51,6 @@ export function validateCommentContent(content: string): ValidationResult {
     return { valid: true };
 }
 
-/**
- * Validate company review
- */
 export function validateCompanyReview(review: {
     rating: number;
     role: string;
@@ -98,23 +88,6 @@ export function validateCompanyReview(review: {
 
     if (containsSuspiciousPatterns(review.comment)) {
         return { valid: false, error: "Review contains suspicious patterns" };
-    }
-
-    return { valid: true };
-}
-
-/**
- * Validate search query
- */
-export function validateSearchQuery(query: string): ValidationResult {
-    if (!query || typeof query !== "string") {
-        return { valid: false, error: "Search query is required" };
-    }
-
-    const trimmed = query.trim();
-
-    if (trimmed.length > 200) {
-        return { valid: false, error: "Search query must be less than 200 characters" };
     }
 
     return { valid: true };

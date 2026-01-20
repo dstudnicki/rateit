@@ -1,5 +1,3 @@
-// GET COMMENTS FOR POST
-
 import { type NextRequest, NextResponse } from "next/server";
 import { getClient } from "@/lib/mongoose";
 import Post from "@/models/Post";
@@ -7,6 +5,17 @@ import { toCommentPublicDTO } from "@/lib/dto/public";
 import Profile from "@/models/Profile";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+
+// Collect userIds from comments + nested replies
+function collectUserIdsFromComments(comments: any[], out = new Set<string>()) {
+    for (const c of comments || []) {
+        if (c?.user) out.add(String(c.user));
+        if (Array.isArray(c?.replies) && c.replies.length) {
+            collectUserIdsFromComments(c.replies, out);
+        }
+    }
+    return out;
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -28,21 +37,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             sessionUserId = undefined;
         }
 
-        const commentsPublic = await Promise.all(
-            (post.comments || []).map(async (comment: any) => {
-                let authorProfile = null;
-                if (comment.user) {
-                    const userIdString = typeof comment.user === "string" ? comment.user : comment.user.toString();
-                    try {
-                        authorProfile = await Profile.findOne({ userId: userIdString }).select("slug fullName image").lean();
-                    } catch {
-                        authorProfile = null;
-                    }
-                }
+        // Build userId -> profile map for ALL comment authors (comments + replies)
+        const ids = Array.from(collectUserIdsFromComments(post.comments || []));
+        const profiles = ids.length
+            ? await Profile.find({ userId: { $in: ids } })
+                  .select("userId slug fullName image userImage")
+                  .lean()
+            : [];
 
-                // Map comment and its replies to public DTO (no user/userId in output), pass session id
-                return toCommentPublicDTO(comment, authorProfile, sessionUserId);
-            }),
+        const profileMap: Record<string, any> = {};
+        for (const p of profiles as any[]) profileMap[String(p.userId)] = p;
+
+        // Map comments and replies using profileMap
+        const commentsPublic = (post.comments || []).map((comment: any) =>
+            toCommentPublicDTO(comment, profileMap, sessionUserId),
         );
 
         return NextResponse.json(commentsPublic, { status: 200 });

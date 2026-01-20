@@ -31,7 +31,7 @@ interface CommentFormProps {
 
 export function CommentForm({ user, postId, onCommentAdded }: CommentFormProps) {
     const [content, setContent] = useState("");
-    const displayName = user?.user?.name;
+    const displayName = user?.user?.name || "User";
     const userAvatar = user?.user?.userImage || user?.user?.image;
     const router = useRouter();
 
@@ -61,11 +61,14 @@ export function CommentForm({ user, postId, onCommentAdded }: CommentFormProps) 
     return (
         <div className="flex items-center gap-2 sm:gap-3">
             <Avatar className="h-8 w-8 shrink-0">
-                <AvatarImage
-                    src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
-                    alt={displayName || "User"}
-                />
-                <AvatarFallback>{displayName?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                <AvatarImage src={userAvatar || undefined} alt={displayName || "User"} />
+                <AvatarFallback>
+                    {displayName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                </AvatarFallback>
             </Avatar>
             <div className="flex-1 flex items-center gap-1 sm:gap-2  px-2 sm:px-4 py-1.5 sm:py-2 focus-within:border-primary/50 transition-colors min-w-0">
                 <input

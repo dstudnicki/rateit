@@ -44,6 +44,7 @@ export interface IProfile extends Document {
     slug?: string; // URL-friendly slug for profile (optional for backwards compatibility)
     fullName?: string;
     image?: string; // Avatar URL (from OAuth or uploaded)
+    userImage?: string;
     backgroundImage?: string; // Profile banner/background image
     headline?: string;
     location?: string;

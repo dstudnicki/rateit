@@ -226,13 +226,6 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                 return (
                     <Card key={reviewId} className="p-6">
                         <div className="flex items-start gap-4">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage
-                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(review.nick || review.author?.nick || "anon")}`}
-                                />
-                                <AvatarFallback>{displayName?.slice(0, 2).toUpperCase() || "AN"}</AvatarFallback>
-                            </Avatar>
-
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
@@ -306,7 +299,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
                                 </div>
 
                                 {/* Engagement Stats */}
-                                <div className="flex items-center gap-4 mt-3 pt-2 border-t text-xs text-muted-foreground">
+                                <div className="flex items-center gap-4 mt-3 pt-2  text-xs text-muted-foreground">
                                     {likesCount > 0 && (
                                         <span className="flex items-center gap-1.5">
                                             <Heart className="h-3.5 w-3.5 fill-current text-destructive" />
