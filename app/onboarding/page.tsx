@@ -55,12 +55,15 @@ export default function OnboardingPage() {
 
     const totalSteps = 2;
 
-    // Check if user already completed onboarding
+    // Determine if we are in edit mode (from settings)
     useEffect(() => {
         let isMounted = true;
 
         const checkOnboarding = async () => {
             try {
+                const params = new URLSearchParams(window.location.search);
+                const editMode = params.get("edit") === "true";
+
                 const result = await getUserPreferences();
 
                 if (!isMounted) return;
@@ -71,13 +74,28 @@ export default function OnboardingPage() {
                     return;
                 }
 
-                if (result.preferences?.onboardingCompleted) {
+                // If editing, allow to stay on this page even if onboardingCompleted
+                if (result.preferences?.onboardingCompleted && !editMode) {
                     // Already completed - redirect to home
                     window.location.href = "/";
                     return;
                 }
+
+                // If editing and preferences exist, prefill the form
+                if (editMode && result.preferences) {
+                    setIndustries(result.preferences.industries || []);
+                    setSkills(result.preferences.skills || []);
+                }
             } catch (error) {
                 console.error("Error checking onboarding status:", error);
+                // If error while checking, allow user to continue in edit mode if URL requests it
+                const params = new URLSearchParams(window.location.search);
+                const editMode = params.get("edit") === "true";
+                if (!editMode) {
+                    // fallback redirect to login
+                    window.location.href = "/login";
+                    return;
+                }
             } finally {
                 if (isMounted) {
                     setIsLoading(false);
@@ -148,7 +166,7 @@ export default function OnboardingPage() {
             const result = await saveUserPreferences(preferences);
 
             if (result.success) {
-                window.location.href = "/";
+                router.push("/profile/settings");
             } else {
                 setError(result.error || "Nie udało się zapisać preferencji");
                 setIsSubmitting(false);
@@ -174,7 +192,7 @@ export default function OnboardingPage() {
             const result = await saveUserPreferences(preferences);
 
             if (result.success) {
-                window.location.href = "/";
+                router.push("/profile/settings");
             } else {
                 setError(result.error || "Nie udało się zapisać preferencji");
                 setIsSubmitting(false);

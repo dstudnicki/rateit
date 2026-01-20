@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Lock, Shield, UserCircle } from "lucide-react";
+import { Lock, Shield, UserCircle, Settings as SettingsIcon } from "lucide-react";
 import { ProfileSettingsClient } from "@/components/profile/profile-settings-client";
 import { SecuritySettingsClient } from "@/components/profile/security-settings-client";
 import { DataPrivacySettingsClient } from "@/components/profile/data-privacy-settings-client";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 interface SettingsPageClientProps {
     user: {
@@ -30,11 +32,13 @@ interface SettingsPageClientProps {
 
 export default function SettingsPageClient({ user, profile, accountType, provider, privacy }: SettingsPageClientProps) {
     const [activeSection, setActiveSection] = useState("profile");
+    const router = useRouter();
 
     const menuItems = [
         { id: "profile", label: "Profil", icon: UserCircle },
         { id: "security", label: "Logowanie i Bezpieczeństwo", icon: Lock },
         { id: "data", label: "Prywatność Danych", icon: Shield },
+        { id: "preferences", label: "Preferencje", icon: SettingsIcon },
     ];
 
     return (
@@ -51,7 +55,7 @@ export default function SettingsPageClient({ user, profile, accountType, provide
                         <Card className="p-2">
                             <nav className="space-y-1">
                                 {menuItems.map((item) => {
-                                    const Icon = item.icon;
+                                    const Icon = item.icon as any;
                                     return (
                                         <button
                                             key={item.id}
@@ -86,6 +90,26 @@ export default function SettingsPageClient({ user, profile, accountType, provide
                                 rodoConsent={privacy.rodoConsent}
                                 rodoConsentSource={privacy.rodoConsentSource}
                             />
+                        )}
+
+                        {activeSection === "preferences" && (
+                            <div className="space-y-6">
+                                <Card>
+                                    <div className="p-4">
+                                        <h2 className="text-lg font-semibold">Preferencje</h2>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                            Edytuj swoje preferencje, które wpływają na dobór treści i firm pokazywanych w
+                                            kanale.
+                                        </p>
+
+                                        <div className="mt-4">
+                                            <Button onClick={() => router.push("/onboarding?edit=true")} variant="default">
+                                                Edytuj preferencje (onboarding)
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
                         )}
                     </div>
                 </div>
