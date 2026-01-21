@@ -116,15 +116,6 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
         setDeleteTarget(null);
     };
 
-    const formatDate = (date: string) => {
-        if (!date) return "Obecnie";
-        const [year, month] = date.split("-");
-        return new Date(Number.parseInt(year), Number.parseInt(month) - 1).toLocaleDateString("pl-PL", {
-            month: "short",
-            year: "numeric",
-        });
-    };
-
     return (
         <>
             <Card>
@@ -151,8 +142,7 @@ export function ProfileExperience({ experiences: initialExperiences, isOwnProfil
                                     <h3 className="font-semibold">{exp.title}</h3>
                                     <p className="text-sm text-foreground">{exp.company}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {formatDate(exp.startDate)} - {exp.current ? "Obecnie" : formatDate(exp.endDate || "")}{" "}
-                                        · {exp.location}
+                                        {exp.startDate} - {exp.endDate ? exp.endDate : "Obecnie"}
                                     </p>
                                     <p className="text-sm mt-2 leading-relaxed">{exp.description}</p>
                                 </div>

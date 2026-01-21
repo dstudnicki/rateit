@@ -207,7 +207,7 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={handleEdit} disabled={isPending}>
                                             <Pencil className="h-3.5 w-3.5 mr-2" />
-                                            Edit
+                                            Edytuj
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onClick={handleDelete}
@@ -215,7 +215,7 @@ export function CommentItem({ comment, postId, currentUserId, depth = 0, onUpdat
                                             className="text-destructive focus:text-destructive"
                                         >
                                             <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                            Delete
+                                            Usuń
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

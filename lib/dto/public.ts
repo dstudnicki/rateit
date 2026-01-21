@@ -11,7 +11,6 @@ export type AuthorPublicPost = {
 
 export type AuthorPublicCompany = {
     nick?: string | null;
-    avatar?: string | null;
 };
 
 export type Permissions = {
@@ -170,7 +169,6 @@ export function toReviewPublicDTO(reviewDoc: any, authorProfile?: any, sessionUs
 
     const author: AuthorPublicCompany = {
         nick: reviewDoc.nick || authorProfile?.slug || undefined,
-        avatar: authorProfile?.image || undefined,
     };
 
     const reviewUserId =

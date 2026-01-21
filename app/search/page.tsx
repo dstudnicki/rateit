@@ -321,7 +321,7 @@ export default function SearchPage() {
                                                         {post.score !== undefined && post.score > 80 && (
                                                             <Badge variant="secondary" className="text-xs">
                                                                 <Sparkles className="h-3 w-3 mr-1" />
-                                                                Best match
+                                                                Najlepsze dopasowanie
                                                             </Badge>
                                                         )}
                                                     </div>

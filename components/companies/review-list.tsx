@@ -120,7 +120,7 @@ export function ReviewList({ companyId, reviews, filter }: ReviewListProps) {
         if (filter === "all") return true;
         if (filter === "interviews") return review.reviewType === "interview";
         if (filter === "positive") return rating >= 4;
-        if (filter === "mixed") return rating >= 3 && rating <= 4;
+        if (filter === "mixed") return rating >= 3 && rating < 4;
         if (filter === "negative") return rating <= 2;
         return true;
     });
