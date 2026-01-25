@@ -6,6 +6,8 @@ import { Navbar } from "@/components/Navbar/Navbar";
 import BanCheckWrapper from "@/components/BanCheckWrapper";
 import { Toaster } from "sonner";
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -29,6 +31,8 @@ export default function RootLayout({
                         <Navbar />
                         {children}
                     </BanCheckWrapper>
+                    <Analytics />
+                    <SpeedInsights />
                 </Suspense>
             </body>
         </html>
