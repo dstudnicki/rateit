@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="pl">
-            <body className={`font-sans antialiased`}>
+            <body className={"font-sans antialiased"}>
                 <Toaster position="top-center" richColors />
                 <Suspense fallback={null}>
                     <BanCheckWrapper>
